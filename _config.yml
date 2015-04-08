@@ -67,8 +67,8 @@ theme: next
 # Deployment
 ## Docs: http://hexo.io/docs/deployment.html
 deploy:
-  type: github
-  repository: git@gitcafe.com:callmewhy/callmewhy.git
+  type: git
+  repo: git@gitcafe.com:callmewhy/callmewhy.git
   branch: gitcafe-pages
 
 
@@ -83,6 +83,3 @@ creative_commons: by-nc-sa
 social:
   github: https://github.com/callmewhy
   weibo: http://weibo.com/small1030light
-
-
-  
