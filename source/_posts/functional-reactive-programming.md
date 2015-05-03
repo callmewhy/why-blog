@@ -147,7 +147,7 @@ description: 换个思路，换个心情，写一些有趣的代码。
 - 将数组元素中的每个元素乘以2
 - 在结果中选出大于10的元素
 
-指令式编程通过下达指令完成任务，侧重于具体流程以及状态变化；而函数式编程则专注于注结果，以及为了得到结果需要做哪些转换。
+指令式编程通过下达指令完成任务，侧重于具体流程以及状态变化；而函数式编程则专注于结果，以及为了得到结果需要做哪些转换。
 
 
 ### 反应型 - Reactive
@@ -224,32 +224,39 @@ The big idea behind FRP in general and ReactiveCocoa in particular is that you c
 ***
 参考文献：
 
-- [ReactiveCocoa](https://github.com/ReactiveCocoa/ReactiveCocoa)
-- [Input and Output](http://blog.maybeapps.com/post/42894317939/input-and-output)
-- [Functional Reactive Programming on iOS](https://leanpub.com/iosfrp/)
-- [Reactive​Cocoa](http://nshipster.cn/reactivecocoa/)
-- [ReactiveCocoa Tutorial – The Definitive Introduction: Part 1/2](http://www.raywenderlich.com/62699/reactivecocoa-tutorial-pt1)
-- [ReactiveCocoa Tutorial – The Definitive Introduction: Part 2/2](http://www.raywenderlich.com/62796/reactivecocoa-tutorial-pt2)
-- [MVVM Tutorial with ReactiveCocoa: Part 1/2](http://www.raywenderlich.com/74106/mvvm-tutorial-with-reactivecocoa-part-1)
-- [MVVM Tutorial with ReactiveCocoa: Part 2/2](http://www.raywenderlich.com/74131/mvvm-tutorial-with-reactivecocoa-part-2)
-- [函数式反应型编程(FRP) - 实时互动应用开发的新思路](http://www.infoq.com/cn/articles/functional-reactive-programming)
-- [](https://medium.com/swift-programming/reactive-swift-3b6050375534)
-- [](http://www.infoq.com/cn/articles/functional-reactive-programming)
-- [](http://en.wikipedia.org/wiki/Programming_paradigm)
-- [](http://blog.leezhong.com/ios/2013/06/19/frp-reactivecocoa.html)
-- [](http://en.wikipedia.org/wiki/Functional_reactive_programming)
-- [](http://blog.zhaojie.me/2010/09/async-programming-and-reactive-framework.html)
-- [](http://lambdor.net/?p=171)
-- [](http://www.alexcurylo.com/blog/2013/03/27/reactivecocoa/)
-- [](http://stackoverflow.com/questions/13341937/whats-the-status-of-current-functional-reactive-programming-implementations)
-- [](http://rasic.info/from-mvc-to-mvvm-in-swift/)
-- [](http://rasic.info/bindings-generics-swift-and-mvvm/)
-- [](http://napora.org/a-swift-reaction/)
-- [](http://jamesonquave.com/blog/functional-programming-in-swift/)
-- [](http://napora.org/a-swift-reaction/)
-- [](http://rasic.info/bindings-generics-swift-and-mvvm/)
-- [](http://www.ruanyifeng.com/blog/2012/04/functional_programming.html)
-- [](http://coolshell.cn/articles/10822.html)
-- [](http://xumingming.sinaapp.com/302/clojure-functional-programming-for-the-jvm-clojure-tutorial/)
-- [](http://learnxinyminutes.com/docs/clojure/)
-- [Functional Programming vs. Imperative Programming](https://msdn.microsoft.com/en-us/library/bb669144.aspx)
+- Wiki
+    - [Programming paradigm](http://en.wikipedia.org/wiki/Programming_paradigm)
+    - [Functional reactive programming](http://en.wikipedia.org/wiki/Functional_reactive_programming)
+
+
+- ReactiveCocoa
+    - [ReactiveCocoa](https://github.com/ReactiveCocoa/ReactiveCocoa)
+    - [Reactive​Cocoa](http://nshipster.cn/reactivecocoa/)
+    - [ReactiveCocoa Tutorial – The Definitive Introduction: Part 1/2](http://www.raywenderlich.com/62699/reactivecocoa-tutorial-pt1)
+    - [ReactiveCocoa Tutorial – The Definitive Introduction: Part 2/2](http://www.raywenderlich.com/62796/reactivecocoa-tutorial-pt2)
+    - [MVVM Tutorial with ReactiveCocoa: Part 1/2](http://www.raywenderlich.com/74106/mvvm-tutorial-with-reactivecocoa-part-1)
+    - [MVVM Tutorial with ReactiveCocoa: Part 2/2](http://www.raywenderlich.com/74131/mvvm-tutorial-with-reactivecocoa-part-2)
+    - [ReactiveCocoa](http://www.alexcurylo.com/blog/2013/03/27/reactivecocoa/)
+
+- Functional
+    - [Input and Output](http://blog.maybeapps.com/post/42894317939/input-and-output)
+    - [What's the status of current FRP implementations?](http://stackoverflow.com/questions/13341937/whats-the-status-of-current-functional-reactive-programming-implementations)
+    - [Learn X in Y minutes - Where X=clojure](http://learnxinyminutes.com/docs/clojure/)
+    - [Functional Programming vs. Imperative Programming](https://msdn.microsoft.com/en-us/library/bb669144.aspx)
+    - [Functional Programming in Swift](http://jamesonquave.com/blog/functional-programming-in-swift/)
+
+- Reactive
+    - [Functional Reactive Programming on iOS](https://leanpub.com/iosfrp/)
+    - [Reactive Swift](https://medium.com/swift-programming/reactive-swift-3b6050375534)
+    - [The introduction to Reactive Programming you've been missing](https://gist.github.com/staltz/868e7e9bc2a7b8c1f754)
+    - [A Swift Reaction](http://napora.org/a-swift-reaction/)
+    - [From MVC to MVVM in Swift](http://rasic.info/from-mvc-to-mvvm-in-swift/)
+    - [Bindings, Generics, Swift and MVVM](http://rasic.info/bindings-generics-swift-and-mvvm/)
+
+- 中文博客
+    - [函数式反应型编程(FRP) - 实时互动应用开发的新思路](http://www.infoq.com/cn/articles/functional-reactive-programming)
+    - [函数式编程初探](http://www.ruanyifeng.com/blog/2012/04/functional_programming.html)
+    - [函数式编程](http://coolshell.cn/articles/10822.html)
+    - [Clojure入门教程: Clojure – Functional Programming for the JVM中文版](http://xumingming.sinaapp.com/302/clojure-functional-programming-for-the-jvm-clojure-tutorial/)
+    - [ReactiveCocoa 与 Functional Reactive Programming](http://blog.leezhong.com/ios/2013/06/19/frp-reactivecocoa.html)
+    - [异步编程与响应式框架](http://blog.zhaojie.me/2010/09/async-programming-and-reactive-framework.html)
