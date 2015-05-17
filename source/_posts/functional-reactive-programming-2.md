@@ -78,8 +78,12 @@ ReactiveUI 是一个轻量级的 target-action 替换方案，可以使用 closu
 再回头看下这个项目，其实 `ReactiveUI` 并不能算是 FRP 框架，只是把 `UIKit` 的事件用 `closure` 封装了起来。
 
 
-
 ## ReactiveSwift
+
+ReactiveSwift 是一个很有意思的库。
+
+
+
 
 
 
@@ -156,3 +160,7 @@ The big idea behind FRP in general and ReactiveCocoa in particular is that you c
     - [Reactive Cocoa Tutorial [2] = 百变RACStream](http://blog.sunnyxx.com/2014/03/06/rac_2_racstream/)
     - [Reactive Cocoa Tutorial [3] = RACSignal的巧克力工厂](http://blog.sunnyxx.com/2014/03/06/rac_3_racsignal/)
     - [Reactive Cocoa Tutorial [4] = 只取所需的Filters](http://blog.sunnyxx.com/2014/04/19/rac_4_filters/)
+
+- 其他
+    - [What is the Sink protocol in swift?](http://stackoverflow.com/questions/24164933/what-is-the-sink-protocol-in-swift)
+    - [Archive for the ‘Swift’ Category](http://ericasadun.com/category/swift/page/4/)
