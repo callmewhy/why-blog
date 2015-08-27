@@ -157,5 +157,6 @@ ReactKit 是 Github 上小有名气的反应型框架。
 - [ReactiveCocoa/ReactiveCocoa](https://github.com/ReactiveCocoa/ReactiveCocoa)
 - [ReactKit/ReactKit](https://github.com/ReactKit/ReactKit)
 - [kzaher/RxSwift](https://github.com/kzaher/RxSwift)
+- [Interstellar](https://github.com/JensRavens/Interstellar)
 - [JJJayway/ReactiveSwift](https://github.com/JJJayway/ReactiveSwift)
 - [zhxnlai/ReactiveUI](https://github.com/zhxnlai/ReactiveUI)
