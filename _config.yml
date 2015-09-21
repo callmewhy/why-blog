@@ -39,8 +39,8 @@ relative_link: false
 future: true
 highlight:
   enable: true
-  line_number: true
-  tab_replace:
+  line_number: false
+  tab_replace: true
 
 # Category & Tag
 default_category: 开发笔记

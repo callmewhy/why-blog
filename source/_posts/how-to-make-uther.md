@@ -26,7 +26,7 @@ AppStore 下载地址： [Uther](https://itunes.apple.com/cn/app/uther/id1024104
 ### Git
 通过 `git init` 初始化仓库，然后在 [gitignore.io](http://gitignore.io/) 找上对应的配置，填入 `.gitignore` 文件。至此， git 初始化完毕。可以提交一次 `commit` 保存。注意，个人习惯把 Pods 文件夹目录也放到 `.gitignore` 中，如果使用自动生成的配置文件，取消那一行注释即可。
 
-### Cococapods
+### Cocoapods
 创建 Podfile 文件，然后通过 `def` 按照模块定义，然后再配置各个 `target` ：
 
     platform :ios, '8.0'
