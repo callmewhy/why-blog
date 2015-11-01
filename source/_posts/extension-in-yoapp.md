@@ -203,25 +203,27 @@ extension UIView {
 这里有个问题没太理解。请看下面两段代码：
 
 ```swift
+import UIKit
+
 extension UITableView {
-    func dequeueCell1<T: UITableViewCell>(cell: T.Type) {
+    static func dequeueCell1<T: UITableViewCell>(name: String, cell: T.Type) {
         print(cell)
     }
-
+    
     static func dequeueCell2<T: UITableViewCell>(cell: T.Type) {
         print(cell)
     }
 }
 ```
     
-唯一的区别就是一个是实例方法一个是静态方法，但是调用的时候：
+唯一的区别就是参数数目不同，但是调用的时候：
 
 ```swift
-UITableView().dequeueCell1(RankingCell)
-UITableView.dequeueCell2(RankingCell.self)
+UITableView.dequeueCell1("", cell: UITableViewCell.self)
+UITableView.dequeueCell2(UITableViewCell)
 ```
 
-静态方法的参数需要添加 `.self` 而实例方法不需要。=。=没太搞懂这是哪出，还望赐教！
+两个参数的需要 `.self` 而另一个则不需要。=。=没太搞懂这是哪出，还望赐教！
 
 ***
 
