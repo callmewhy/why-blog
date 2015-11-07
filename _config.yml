@@ -5,7 +5,7 @@
 # Site
 title: Why's Blog
 subtitle: 从明天起，做一个幸福的人。面朝汪海，春暖花开。
-description: Why's blog - 汪海的实验室
+description: 汪海的实验室
 author: CallMeWhy
 language: zh-Hans
 timezone:
@@ -70,16 +70,3 @@ deploy:
   type: git
   repo: git@gitcafe.com:callmewhy/callmewhy.git
   branch: gitcafe-pages
-
-
-
-# NexT 主题相关配置 ==========================
-
-avatar: http://tp4.sinaimg.cn/1641167047/180/5691306924/1
-since: 2014
-duoshuo_shortname: callmewhy
-creative_commons: by-nc-sa
-
-social:
-  github: https://github.com/callmewhy
-  weibo: http://weibo.com/small1030light

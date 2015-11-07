@@ -1,15 +1,11 @@
 title: 关于汪海
 date: 2015-03-09 19:50:34
+comments: false
 ---
 
-汪海，全名汪海洋，一名普通的小程序员儿。
+一名普通的小程序员。
 
-目前主修 iOS ，辅修 PS4 ，除了 Android 不搞，其他基本都可以聊聊。
-
-- [Github](https://github.com/callmewhy)
-- [CSDN](http://blog.csdn.net/pleasecallmewhy)
-- [Weibo](http://weibo.com/small1030light)
-- [Twitter](https://twitter.com/PleaseCallMeWhy)
+目前在南京创业，除了 Android 不搞，其他基本都可以聊聊。
 
 我的邮箱是 [whywanghai@gmail.com](mailto:whywanghai@gmail.com) 。
 
