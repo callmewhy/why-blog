@@ -1,11 +1,11 @@
-title: 使用 Tesseract 识别字符[未完成未完成未完成]
+title: 使用 Tesseract 识别字符
 date: 2015-11-16 15:53:47
 tags: OCR
 categories: 开发笔记
 description: 调教调教，调教出属于你的文字识别系统。
 ---
 
-最近在做一个微信公众账号，很多地方需要用到字符识别([OCR](https://en.wikipedia.org/wiki/Optical_character_recognition))。补了补一些基础知识之后，决定基于 [Tesseract](https://github.com/tesseract-ocr/tesseract/) 进行开发。接下来会整理一系列文章，记录整个开发过程，包括：训练自定义字体集、部署到 Docker 、通过 NodeJS 调用、等等。
+最近在做一个微信公众账号，很多地方需要用到字符识别([OCR](https://en.wikipedia.org/wiki/Optical_character_recognition))。补了补一些基础知识之后，决定基于 [Tesseract](https://github.com/tesseract-ocr/tesseract/) 进行开发。
 
 ## [Tesseract](https://github.com/tesseract-ocr/tesseract)
 
@@ -133,17 +133,49 @@ G8F19167111
 
 好吧并没有，多识别了一个 1 。原始图片还是需要做一些简单的处理，比如做一下腐蚀、膨胀、二值化等等。
 
-## Docker
+## NodeJS
 
-接下来要把训练结果部署到服务器上，各种噼里啪啦的配置就不再赘述了，假设已经都搞定了。
+接下来就是写个后端接口来调用这个 `tesseract` 方法。有了 [multer](https://github.com/expressjs/multer) 这个库来处理文件上传，以及 [node-tesseract](https://github.com/desmondmorris/node-tesseract) 这个库来封装 `tesseract` 命令，代码十分简单：
 
-挖坑。
+```js
+var fs = require('fs');
+var multer = require('multer')
+var upload = multer({
+  dest: 'uploads/'
+})
+var express = require('express');
+var app = express();
+var tesseract = require('node-tesseract');
 
+app.post('/mourney', upload.single('image'), function(req, res, next) {
+  var image = req.file;
+  var options = {
+    l: 'mon',
+    psm: 7
+  };
+  tesseract.process(image.path, options, function(err, text) {
+    console.log(text);
+    if (err) {
+      console.error(err);
+    } else {
+      res.send(text);
+    }
+  });
+});
 
+var server = app.listen(3000, function() {
+  var host = server.address().address;
+  var port = server.address().port;
 
+  console.log('listening at http://%s:%s', host, port);
+});
+```
 
+部署到服务器上，用 `Paw` 测试一下：
 
+![](http://ww4.sinaimg.cn/large/61d238c7gw1ey5c36wusej21iw0e0di5.jpg)
 
+成功，后端初步调试完成。
 
 
 ***
