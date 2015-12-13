@@ -1,7 +1,7 @@
 title: Clojure 每日练习
 date: 2015-06-29 19:59:42
 tags: Clojure
-categories: 开发笔记
+categories: 记录笔记
 description: 函数式的启迪，小括号的逆袭。
 ---
 
@@ -53,7 +53,7 @@ description: 函数式的启迪，小括号的逆袭。
 
 ### [#005: Lists: conj](http://www.4clojure.com/problem/5)
 
-    ;; When operating on a list, the conj function will return 
+    ;; When operating on a list, the conj function will return
     ;; a new list with one or more items "added" to the front.
     ;; (= __ (conj '(2 3 4) 1))
 

@@ -1,7 +1,7 @@
 title: 阅读周记
 date: 2015-11-28 13:27:29
 tags: Reading
-categories: 个人计划
+categories: 记录笔记
 description: 整理每天的 Pocket 阅读记录。
 ---
 
@@ -11,8 +11,58 @@ description: 整理每天的 Pocket 阅读记录。
 
 以下内容通过 [汪海的实验室 - Pocket 周记生成器](http://why-wechat.avosapps.com/pocket/) 自动生成，完整源码托管在 [why-wechat](https://github.com/callmewhy/why-wechat) 上。
 
+# 2015-12-13
+
+## 前端
+
+- [A JavaScript glossary: ECMAScript, TC39, etc.](http://www.2ality.com/2011/06/ecmascript.html)
+- [Node.js 探秘（一）- 初识单线程的 Node.js](http://taobaofed.org/blog/2015/10/29/deep-into-node-1/)
+- [Node.js 探秘(二) - 求异存同](http://taobaofed.org/blog/2015/12/03/deep-into-node-2/)
+- [使用 AMD、CommonJS 及 ES Harmony 编写模块化的 JavaScript](http://justineo.github.io/singles/writing-modular-js/)
+- [前端工程精粹（二）：静态资源管理与模板框架](http://www.infoq.com/cn/articles/front-end-engineering-and-performance-optimization-part2)
+- [前端工程精粹（一）：静态资源版本更新与缓存](http://www.infoq.com/cn/articles/front-end-engineering-and-performance-optimization-part1)
+- [You might not need jQuery](http://youmightnotneedjquery.com/)
+- [H5动效的常见制作手法](http://isux.tencent.com/h5active.html)
+- [说说大家都熟悉的网页动画技术](http://f2e.souche.com/blog/shuo-shuo-da-jia-du-shou-xi-de-wang-ye-dong-hua-ji-zhu/)
+- [【译】Web 权限验证方法说明](http://segmentfault.com/a/1190000004086946)
+
+## 语言
+
+- [Options](http://swifter.tips/options/)
+- [斐波那契数列型-从数学角度学习 Swift 序列](http://swift.gg/2015/12/04/the-fibonacci-sequencetype/)
+- [What's new in Swift 2](https://www.hackingwithswift.com/swift2)
+- [Math.random() 二三事](http://taobaofed.org/blog/2015/12/07/some-thing-about-random/)
+- [几个 Swift 代码规范](http://swift.gg/2015/12/07/a-handful-of-swift-style-rules-swiftlang/)
+
+## iOS
+
+- [如何在 iOS 中实现一个可展开的 Table View](http://swift.gg/2015/12/03/expandable-table-view/)
+- [iOS Architecture Patterns](https://medium.com/ios-os-x-development/ios-architecture-patterns-ecba4c38de52)
+- [Xcode7 免证书真机调试](http://www.altair21.com/156.html)
+- [NSCache 源码分析](https://github.com/nixzhu/dev-blog/blob/master/2015-12-09-nscache.md)
+
+## 其他
+
+- [想要打造极致的用户体验？用 AppSee](http://blog.zhowkev.in/2015/12/11/xiang-yao-da-zao-ji-zhi-de-yong-hu-ti-yan-yong-appsee/)
+- [揭秘高效协作工具背后的技术架构](http://segmentfault.com/a/1190000004120281)
+- [如何成为移动端架构师](http://mp.weixin.qq.com/s?__biz=MjM5NTIyNTUyMQ==&mid=431264183&idx=1&sn=de4598dc3b6aca5a980d994cf21a2188&scene=0)
+- [微信斑马系统：微信朋友圈广告背后的利器](http://www.infoq.com/cn/articles/wechat-banma-dmp)
+- [Coding 全栈工程师杜万：打造最好用的在线代码阅读工具 CodeInsight](http://www.infoq.com/cn/news/2015/12/coding-interview-codeinsight)
+
+## 后端
+
+- [Flask + Gunicorn + Nginx 部署](http://www.cnblogs.com/Ray-liang/p/4837850.html)
+- [浅谈 Node.js 和 PHP 进程管理](http://taobaofed.org/blog/2015/11/24/nodejs-php-process-manager/)
+- [阿里云部署 Flask + WSGI + Nginx 详解](http://www.cnblogs.com/Ray-liang/p/4173923.html)
+- [Express 4/Node.js: 服务器加入更人性化的错误Log](https://www.mgenware.com/blog/?p=2960)
+- [Choosing an HTTP Status Code — Stop Making It Hard](http://racksburg.com/choosing-an-http-status-code/)
+- [玩转 React 服务器端渲染](https://blog.coding.net/blog/React-server-rendering)
+- [python web 部署：nginx + gunicorn + supervisor + flask 部署笔记](http://www.jianshu.com/p/be9dd421fb8d)
+- [Nginx 配置 location 总结及 rewrite规则写法](http://seanlook.com/2015/05/17/nginx-location-rewrite/)
+
 
 # 2015-12-06
+
 ## 前端
 - [前端工程--基础篇](https://github.com/fouber/blog/issues/10)
 - [如何进行前端自动化测试](https://github.com/fouber/blog/issues/7)
