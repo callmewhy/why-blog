@@ -68,5 +68,5 @@ theme: next
 ## Docs: http://hexo.io/docs/deployment.html
 deploy:
   type: git
-  repo: git@git.coding.net:callmewhy/blog.git
-  branch: gh-pages
+  repo: git@gitcafe.com:callmewhy/callmewhy.git
+  branch: gitcafe-pages
