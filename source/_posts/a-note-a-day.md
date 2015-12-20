@@ -11,6 +11,59 @@ description: 整理每天的 Pocket 阅读记录。
 
 以下内容通过 [汪海的实验室 - Pocket 周记生成器](http://why-wechat.avosapps.com/pocket/) 自动生成，完整源码托管在 [why-wechat](https://github.com/callmewhy/why-wechat) 上。
 
+# 2015-12-20
+
+## Linux
+
+- [Ubuntu 用vsftpd 配置 FTP 服务器](http://www.cnblogs.com/CSGrandeur/p/3754126.html)
+- [【翻译】Linux概念架构的理解](http://www.jianshu.com/p/c5ae8f061cfe)
+
+## JS
+
+- [Flow: A static type checker for javascript](https://github.com/amfe/article/issues/32)
+- [用脚本实现自动抢红包](http://segmentfault.com/a/1190000004131102)
+- [Why I use TapeInstead of Mocha &So Should You](https://medium.com/javascript-scene/why-i-use-tape-instead-of-mocha-so-should-you-6aa105d8eaf4#.jaeqpkvq0)
+- [React Server Side Rendering 解决 SPA 应用的 SEO 问题](http://segmentfault.com/a/1190000004120539)
+- [phantomjs 小试](http://imweb.io/topic/556c287879878a3b386dd026)
+- [Vue.js 为什么不支持 templateUrl模式](http://www.jianshu.com/p/7f7f050c9edf)
+- [为什么说 DOM 操作很慢](http://leozdgao.me/why-dom-slow/)
+- [使用 gulp 生成 sprites 图片和样式表](http://www.w3ctrain.com/2015/12/09/generating-sprites-with-gulp/)
+- [【译】JavaScript ES6 模块指南](http://segmentfault.com/a/1190000004100661)
+- [一篇给小白看的 JavaScript 引擎指南](http://gold.xitu.io/entry/56629b9f60b204d55d4758d7)
+
+## Web
+
+- [H5 缓存机制浅析 移动端 Web 加载性能优化](http://segmentfault.com/a/1190000004132566)
+- [QQ空间实战！聊聊打造HTML 5动感影集的爱恨情仇（动画性能篇）](http://www.uisdc.com/html5-animation-performance-analysis)
+- [SSLStrip 的未来 —— HTTPS 前端劫持](http://www.cnblogs.com/index-html/p/ssl-frontend-hijack.html)
+- [前端性能优化 - 资源预加载](http://bubkoo.com/2015/11/19/prefetching-preloading-prebrowsing/)
+- [你知道URL、URI和URN三者之间的区别吗？](http://gold.xitu.io/entry/566902ca60b25974ff5c7a3c)
+- [大型网站架构演化历程](http://www.hollischuang.com/archives/728)
+
+## NodeJS
+
+- [Node.js 单元测试之我要写测试](http://taobaofed.org/blog/2015/12/10/nodejs-unit-tests/)
+
+## iOS
+
+- [Facebook 是如何缩短 iOS 应用启动时间的](http://www.infoq.com/cn/news/2015/12/facebook-ios-launch-time)
+- [彻底理解 position 与 anchorPoint](http://wonderffee.github.io/blog/2013/10/13/understand-anchorpoint-and-position/)
+
+## Git
+
+- [如何在Git工作流中推行提交规范？](http://gold.xitu.io/entry/56685e5760b2d140a97d32ef)
+
+## Other
+
+- [网络知识拾遗](http://yikun.github.io/2015/11/23/%E7%BD%91%E7%BB%9C%E7%9F%A5%E8%AF%86%E6%8B%BE%E9%81%97/)
+- [Pinterest 的 Feed 架构与算法](http://timyang.net/architecture/pinterest-feed/)
+- [浅析 TCP 握手欺骗](http://www.infoq.com/cn/news/2015/12/TCP-Handshake-cheat)
+- [Reactive Streams介绍](http://www.infoq.com/cn/news/2015/12/reactive-streams-introduction)
+- [试简介视频编码技术？](http://www.zhihu.com/question/22567173/answer/73610451)
+- [人人都应该懂点 TCP](http://www.kawabangga.com/posts/1501)
+
+
+
 # 2015-12-13
 
 ## 前端
