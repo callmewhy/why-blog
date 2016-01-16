@@ -17,16 +17,20 @@ description: 换个思路，换个心情，写一些有趣的代码。
 
 例如 +1 这样一个简单的操作，传统的做法是这样的：
 
-	var foo = 0
-	func increment() {
-		foo++
-	}
+```swift
+var foo = 0
+func increment() {
+  foo++
+}
+```
 
 函数式的写法是这样的：
 
-	func increment(foo: Int) -> Int {
-		return foo + 1
-	}
+```swift
+func increment(foo: Int) -> Int {
+  return foo + 1
+}
+```
 
 从这个例子中可以看到，函数式编程不依赖于外部的数据，而且也不修改外部数据的值，而是返回一个运算之后的新值。
 
@@ -40,8 +44,10 @@ description: 换个思路，换个心情，写一些有趣的代码。
 
 比如我们可以用 map 将数组通过指定的函数映射成另一个数组：
 
-	let increment = { return $0 + 1 }
-	[1,2,3].map(increment)  // [2,3,4]
+```swift
+let increment = { return $0 + 1 }
+[1,2,3].map(increment)  // [2,3,4]
+```
 
 这里的 increment 便是作为一个函数传入的。这个技术可以让你的函数就像变量一样来使用。也就是说，你的函数可以像变量一样被创建、修改、传递，返回或是在函数中嵌套其他函数。
 
@@ -51,30 +57,34 @@ description: 换个思路，换个心情，写一些有趣的代码。
 
 在 Clojure 这样的纯函数式语言中，变量默认是不可变的。如果想改变变量的值，可以通过 binding 进行动态绑定：
 
-	user=> (def ^:dynamic x 1)
-	#’user/x
-	
-	user=> (def ^:dynamic y 2)
-	#’user/y
-	
-	user=> (+ x y)
-	3
-	
-	user=> (binding [x 4 y 5]   ; 使用动态绑定覆盖原来绑定的值
-	         (+ x y))
-	9
-	
-	user=> (+ x y)
-	3
+```clojure
+user=> (def ^:dynamic x 1)
+#’user/x
+
+user=> (def ^:dynamic y 2)
+#’user/y
+
+user=> (+ x y)
+3
+
+user=> (binding [x 4 y 5]   ; 使用动态绑定覆盖原来绑定的值
+         (+ x y))
+9
+
+user=> (+ x y)
+3
+```
 
 #### 特性3：函数没有副作用
 
 副作用指的是函数内部与外部互动，产生了函数运算以外的其他结果。最典型的情况，就是修改全局变量的值：
-	
-	var foo = 0
-	func increment() {
-		foo++
-	}
+
+```swift
+var foo = 0
+func increment() {
+  foo++
+}
+```
 
 函数式编程强调函数运算没有副作用，意味着函数要保持独立。函数的所有功能就是返回一个新值，没有其他行为，尤其是不得修改外部变量的值。
 
@@ -84,28 +94,32 @@ description: 换个思路，换个心情，写一些有趣的代码。
 
 不确定性的函数示例：
 
-    let foo = 3
-    var i = 0
-    func increment(value: Int) -> Int {
-        return value + i
-    }
+```swift
+let foo = 3
+var i = 0
+func increment(value: Int) -> Int {
+  return value + i
+}
 
-    i = 1
-    increment(foo)    // 4
-    i = 2
-    increment(foo)    // 5
+i = 1
+increment(foo)    // 4
+i = 2
+increment(foo)    // 5
+```
 
 可以看到，不确定性函数的运行结果往往与系统状态有关，不同的状态之下，返回值是不一样的。
 
 确定性的函数示例：
 
-    var foo = 3
-    func increment(value: Int, step: Int) -> Int{
-        return value + step
-    }
+```swift
+var foo = 3
+func increment(value: Int, step: Int) -> Int{
+  return value + step
+}
 
-    increment(foo, 1)   // 4
-    increment(foo, 2)   // 5
+increment(foo, 1)   // 4
+increment(foo, 2)   // 5
+```
 
 函数的确定性有利于我们观察和理解程序的行为，因为它所依赖的东西只有参数本身。
 
@@ -117,79 +131,92 @@ description: 换个思路，换个心情，写一些有趣的代码。
 
 `map` 可以把一个数组按照一定的规则转换成另一个数组，定义如下：
 
-    func map<U>(transform: (T) -> U) -> U[]
-
+```
+func map<U>(transform: (T) -> U) -> U[]
+```
 也就是说它接受一个函数叫做 `transform` ，然后这个函数可以把 T 类型的转换成 U 类型的并返回 (也就是 `(T) -> U`)，最终 `map` 返回的是 U 类型的集合。
 
 下面的表达式更有助于理解：
 
-    [ x1, x2, ... , xn].map(f) -> [f(x1), f(x2), ... , f(xn)]
+```
+[ x1, x2, ... , xn].map(f) -> [f(x1), f(x2), ... , f(xn)]
+```
 
 如果用 `for in` 来实现，则需要这样：
 
-    var newArray : Array<T> = []
-    for item in oldArray {
-        newArray += f(item)
-    }
-
+```swift
+var newArray : Array<T> = []
+for item in oldArray {
+  newArray += f(item)
+}
+```
 
 举个例子，我们可以这样把价格数组中的数字前面都加上 ￥ 符号：
 
-    var oldArray = [10,20,45,32]
-    var newArray = oldArray.map({money in "￥\(money)"})
+```swift
+var oldArray = [10,20,45,32]
+var newArray = oldArray.map({money in "￥\(money)"})
 
-    println(newArray) // [￥10, ￥20, ￥45, ￥32]
+println(newArray) // [￥10, ￥20, ￥45, ￥32]
+```
 
 如果你觉得 `money in` 也有点多余的话可以用 `$0` ：
-    
-    newArray = oldArray.map({"\($0)€"})
 
+```swift
+newArray = oldArray.map({"\($0)€"})
+```
 
 
 #### filter
 
 方法如其名， `filter` 起到的就是筛选的功能，参数是一个用来判断是否筛除的筛选闭包，定义如下：
 
-    func filter(includeElement: (T) -> Bool) -> [T]
-
+```swift
+func filter(includeElement: (T) -> Bool) -> [T]
+```
 
 还是举个例子说明一下。首先先看下传统的 `for in` 实现的方法：
 
-    var oldArray = [10,20,45,32]
-    var filteredArray : Array<Int> = []
-    for money in oldArray {
-        if (money > 30) {
-            filteredArray += money
-        }
-    }
-    println(filteredArray)
+```swift
+var oldArray = [10,20,45,32]
+var filteredArray : Array<Int> = []
+for money in oldArray {
+  if (money > 30) {
+    filteredArray += money
+  }
+}
+println(filteredArray)
+```
 
 奇怪的是这里的代码编译不通过：
 
-    Playground execution failed: <EXPR>:15:9: error: 'Array<Int>' is not identical to 'UInt8'
-            filteredArray += money
-
+```
+Playground execution failed: <EXPR>:15:9: error: 'Array<Int>' is not identical to 'UInt8' filteredArray += money
+```
 
 发现原来是 `+=` 符号不能用于 `append` ，只能用于 `combine` ，在外面包个 `[]` 即可：
 
-
-    var oldArray = [10,20,45,32]
-    var filteredArray : Array<Int> = []
-    for money in oldArray {
-        if (money > 30) {
-            filteredArray += [money]
-        }
-    }
-    println(filteredArray) // [45, 32]
+```swift
+var oldArray = [10,20,45,32]
+var filteredArray : Array<Int> = []
+for money in oldArray {
+  if (money > 30) {
+    filteredArray += [money]
+  }
+}
+println(filteredArray) // [45, 32]
+```
 
 用 `filter` 可以这样实现：
 
-    var oldArray = [10,20,45,32]
-    var filteredArray  = oldArray.filter({
-        return $0 > 30
-    })
+```swift
+  var oldArray = [10,20,45,32]
+  var filteredArray  = oldArray.filter({
+    return $0 > 30
+  })
 
-    println(filteredArray) // [45, 32]
+  println(filteredArray) // [45, 32]
+```
 
 少了很多代码。（你真的好短啊！
 
@@ -197,28 +224,32 @@ description: 换个思路，换个心情，写一些有趣的代码。
 
 `reduce` 函数解决了把数组中的值整合到某个独立对象的问题。定义如下：
 
-    func reduce<U>(initial: U, combine: (U, T) -> U) -> U
+```
+func reduce<U>(initial: U, combine: (U, T) -> U) -> U
+```
 
 好吧看起来略抽象。我们还是从 `for in` 开始。比如我们要把数组中的值都加起来放到 `sum` 里，那么传统做法是：
 
-
-    var oldArray = [10,20,45,32]
-    var sum = 0
-    for money in oldArray {
-        sum = sum + money
-    }
-    println(sum) // 107
+```swift
+var oldArray = [10,20,45,32]
+var sum = 0
+for money in oldArray {
+  sum = sum + money
+}
+println(sum) // 107
+```
 
 `reduce` 有两个参数，一个是初始化的值，另一个是一个闭包，闭包有两个输入的参数，一个是原始值，一个是新进来的值，返回的新值也就是下一轮循环中的旧值。写几个小例子试一下：
 
-    var oldArray = [10,20,45,32]
-    var sum = 0
-    sum = oldArray.reduce(0,{$0 + $1}) // 0+10+20+45+32 = 107
-    sum = oldArray.reduce(1,{$0 + $1}) // 1+10+20+45+32 = 108
-    sum = oldArray.reduce(5,{$0 * $1}) // 5*10*20*45*32 = 1440000
-    sum = oldArray.reduce(0,+) // 0+10+20+45+32 = 107
-    println(sum)
-
+```swift
+var oldArray = [10,20,45,32]
+var sum = 0
+sum = oldArray.reduce(0,{$0 + $1}) // 0+10+20+45+32 = 107
+sum = oldArray.reduce(1,{$0 + $1}) // 1+10+20+45+32 = 108
+sum = oldArray.reduce(5,{$0 * $1}) // 5*10*20*45*32 = 1440000
+sum = oldArray.reduce(0,+) // 0+10+20+45+32 = 107
+println(sum)
+```
 
 ### 函数式和指令式的比较
 
@@ -228,22 +259,27 @@ description: 换个思路，换个心情，写一些有趣的代码。
 
 指令式编程的写法如下：
 
-    var source = [1, 3, 5, 7, 9]
-    var result = [Int]()
-    for i in source {
-        let timesTwo = i * 2
-        if timesTwo > 10 {
-            result.append(timesTwo)
-        }
+```swift
+  var source = [1, 3, 5, 7, 9]
+  var result = [Int]()
+  for i in source {
+    let timesTwo = i * 2
+    if timesTwo > 10 {
+      result.append(timesTwo)
     }
-    result  // [14, 18]
+  }
+  result  // [14, 18]
+```
 
 函数式编程的写法如下：
 
-    var source = [1, 3, 5, 7, 9]
-    let result = source.map { $0 * 2 }
-                       .filter { $0 > 10 }
-    result  // [14, 18]
+```swift
+var source = [1, 3, 5, 7, 9]
+let result = source
+                .map { $0 * 2 }
+                .filter { $0 > 10 }
+result  // [14, 18]
+```
 
 这个简单的例子并不是争论哪种范例更清晰，而是为了演示二者之间的区别。
 
@@ -280,20 +316,24 @@ description: 换个思路，换个心情，写一些有趣的代码。
 
 我们可以通过一些简单的 ASCII 字符来演示如何将事件转换成数据流：
 
+```
     --a---b-c---d---X---|-->
 
     a, b, c, d 是具体的值，代表了某个事件
     X 表示发生了一个错误
     | 是这个流已经结束了的标记
     ----------> 是时间轴
+```
 
 比如我们要统计用户点击鼠标的次数，那么可以这样：
 
+```
       clickStream: ---c----c--c----c------c-->
                    vvvvv map(c becomes 1) vvvv
                    ---1----1--1----1------1-->
                    vvvvvvvvv scan(+) vvvvvvvvv
     counterStream: ---1----2--3----4------5-->
+```
 
 反应型编程就是基于这些数据流的编程。而函数式编程则相当于提供了一个工具箱，可以方便的对数据流进行合并、创建和过滤等操作。
 
@@ -312,7 +352,7 @@ Swift 本身并不是一门函数式语言，不过它有一些函数式的方�
 
 但是和真正的函数式语言相比， Swift 还差很多：
 
-- 没有 `flatmap`
+- ~~没有 `flatmap`~~（现在有了）
 - 无法迅速取出 `head` 和 `tail`
 - 没有 `foldLeft`
 - ...

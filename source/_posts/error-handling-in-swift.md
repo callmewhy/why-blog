@@ -1,7 +1,7 @@
 title: 面向轨道编程 - Swift 中的异常处理
 date: 2015-04-20 20:06:35
 tags: Swift
-categories: [开发笔记] 
+categories: [开发笔记]
 description: A program is a spell cast over a computer, turning input into error messages.
 ---
 ## 问题
@@ -33,14 +33,16 @@ description: A program is a spell cast over a computer, turning input into error
 
 这种方案想必大家都不陌生，比如下面这段代码：
 
+```objc
     NSError *err = nil;
     CGFloat result = [MathTool divide:2.5 by:3.0 error:&err];
-    
+
     if (err) {
         NSLog(@"%@", err)
     } else {
         [MathTool doSomethingWithResult:result]
     }
+```
 
 ### 方案二
 而另一种方案，则是将错误的结果继续往后传，在最后统一处理：
@@ -88,28 +90,32 @@ description: A program is a spell cast over a computer, turning input into error
 
 照着这个想法，我们可以定义一个 Result 枚举用做输出：
 
+```swift
     enum Result<T> {
         case Success(T)
         case Failure(String)
     }
+```
 
 利用 Swift 的枚举特性，我们可以在成功的枚举值里关联一些返回值，然后在失败的情况下则带上失败的消息内容。不过 enum 目前还不支持泛型，我们可以在外面封装一个 `Box` 类来解决这个问题：
 
+```swift
     final class Box<T> {
         let value: T
         init(value: T) {
             self.value = value
         }
     }
-    
+
     enum Result<T> {
         case Success(Box<T>)
         case Failure(String)
     }
-
+```
 
 再看下一开始我们举的那个例子，用这个枚举类重新写下就是这样的：
 
+```swift
     var result = divide(2.5, by:3)
     switch result {
     case .Success(let value):
@@ -117,6 +123,7 @@ description: A program is a spell cast over a computer, turning input into error
     case .Failure(let errString):
         println(errString)
     }
+```
 
 “看起来好像也没什么嘛，你不还是用了个大括号处理两种情况嘛！”（嫌弃脸
 
@@ -132,6 +139,7 @@ description: A program is a spell cast over a computer, turning input into error
 
 先看下传统写法：
 
+```swift
     let errorStr = "输入错误，我很抱歉"
     func cal(value: Float) {
         if value == 0 {
@@ -150,25 +158,27 @@ description: A program is a spell cast over a computer, turning input into error
     cal(2)    // 输入错误，我很抱歉
     cal(1)    // 4.0
     cal(0)    // 输入错误，我很抱歉
+```
 
 那么用面向轨道的思想怎么去解决这个问题呢？
 
 大概是这个样子的：
-    
+
+```swift
     final class Box<T> {
         let value: T
         init(value: T) {
             self.value = value
         }
     }
-    
+
     enum Result<T> {
         case Success(Box<T>)
         case Failure(String)
     }
-    
+
     let errorStr = "输入错误，我很抱歉"
-    
+
     func cal(value: Float) {
         func cal1(value: Float) -> Result<Float> {
             if value == 0 {
@@ -197,7 +207,7 @@ description: A program is a spell cast over a computer, turning input into error
                 return .Failure(str)
             }
         }
-        
+
         let r = cal3(cal2(cal1(value)))
         switch r {
         case .Success(let v):
@@ -209,7 +219,7 @@ description: A program is a spell cast over a computer, turning input into error
     cal(2)    // 输入错误，我很抱歉
     cal(1)    // 4.0
     cal(0)    // 输入错误，我很抱歉
-
+```
 
 同学，放下手里的键盘，冷静下来，有话好好说。
 
@@ -219,10 +229,11 @@ description: A program is a spell cast over a computer, turning input into error
 
 仔细看下上面的代码， `switch` 的操作重复而多余，都在重复着把 Success 和 Failure 分开的逻辑，实际上每个函数只需要处理 Success 的情况。我们在 `Result` 中加入 `funnel` 提前处理掉 Failure 的情况：
 
+```swift
     enum Result<T> {
         case Success(Box<T>)
         case Failure(String)
-    
+
         func funnel<U>(f:T -> Result<U>) -> Result<U> {
             switch self {
             case Success(let value):
@@ -232,12 +243,13 @@ description: A program is a spell cast over a computer, turning input into error
             }
         }
     }
-
+```
 
 `funnel` 帮我们把上次的结果进行分流，只将 Success 的轨道对接到了下个业务上，而将 Failure 引到了下一个 Failure 轨道上。
 
 接下来再回到栗子里，此时我们已经不再需要传入 Result 值了，只需要传入 value 即可：
 
+```swift
     func cal(value: Float) {
         func cal1(v: Float) -> Result<Float> {
             if v == 0 {
@@ -246,11 +258,11 @@ description: A program is a spell cast over a computer, turning input into error
                 return .Success(Box(2 / v))
             }
         }
-        
+
         func cal2(v: Float) -> Result<Float> {
             return .Success(Box(v - 1))
         }
-        
+
         func cal3(v: Float) -> Result<Float> {
             if v == 0 {
                 return .Failure(errorStr)
@@ -258,7 +270,7 @@ description: A program is a spell cast over a computer, turning input into error
                 return .Success(Box(4 / v))
             }
         }
-        
+
         let r = cal1(value).funnel(cal2).funnel(cal3)
         switch r {
         case .Success(let v):
@@ -267,7 +279,8 @@ description: A program is a spell cast over a computer, turning input into error
             println(s)
         }
     }
-    
+```
+
 看起来简洁了一些。我们可以通过 `cal1(value).funnel(cal2).funnel(cal3)` 这样的链式调用来获取计算结果。
 
 “面向轨道”编程确实给我们提供了一个很有趣的思路。本文只是一个简单地讨论，进一步学习可以仔细阅读后面的参考文献。比如 [ValueTransformation.swift](https://gist.github.com/DivineDominion/21446ef37ac87c62567b) 这个真实的完整案例，以及 [antitypical/Result](https://github.com/antitypical/Result) 这个封装完整的 Result 库。文中的实现方案只是一个比较简单的方法，和前两种实现略有差异。

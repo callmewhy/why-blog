@@ -3,6 +3,7 @@ date: 2015-11-28 13:27:29
 tags: Reading
 categories: 记录笔记
 description: 整理每天的 Pocket 阅读记录。
+sticky: 1
 ---
 
 最近开始每天花点时间阅读 Pocket 里收藏的文章，已经1300+的未读文章啦，要抓紧时间看起来了。
@@ -10,6 +11,158 @@ description: 整理每天的 Pocket 阅读记录。
 做一些简单的记录，以后需要的时候方便翻阅。
 
 以下内容通过 [汪海的实验室 - Pocket 周记生成器](http://why-wechat.avosapps.com/pocket/) 自动生成，完整源码托管在 [why-wechat](https://github.com/callmewhy/why-wechat) 上。
+
+# 2016-01-17
+
+## Other
+
+- [穷人的持续集成与持续交付（下）](http://icodeit.org/2016/01/a-poor-mans-cd-part2/)
+- [穷人的持续集成与持续交付（上）](http://icodeit.org/2016/01/a-poor-mans-cd-part1/)
+- [对 stub 和 mock 的理解](http://ruby-china.org/topics/10977)
+- [THULAC：一个高效的中文词法分析工具包](http://thulac.thunlp.org/)
+- [从无到有](http://geek.csdn.net/news/detail/51045)
+- [我的 2015](http://icodeit.org/2016/01/my-2015/)
+- [2015 年个人总结](http://blog.devtang.com/blog/2016/01/02/2015-summary/)
+- [时间都去哪儿了？](http://www.barretlee.com/blog/2016/01/03/where-is-time-goning/)
+- [空间秀的发现之旅：Qzone6.0 动画诞生记](http://isux.tencent.com/the-making-of-qzone-6-0-animation.html)
+
+## Web
+
+- [前后端分离了，然后呢？](http://icodeit.org/2015/06/whats-next-after-separate-frontend-and-backend/)
+- [Node.js 助力淘宝大促活动](http://v.youku.com/v_show/id_XMTQ0MzAxNjI5Ng==.html?f=26523227)
+- [微服务之路](http://v.youku.com/v_show/id_XMTQ0MzA5NDA0MA==.html?f=26523227)
+- [D2 论坛淘宝 FED 展台游戏「氪金弹头」制作始末](http://taobaofed.org/blog/2016/01/11/khorium-bullet/)
+- [【ISUX】为什么我为css变量如此兴奋](http://isux.tencent.com/why-im-excited-about-native-css-variables.html)
+- [【第470期】HTTPS 是如何保证安全的？](https://mp.weixin.qq.com/s?__biz=MjM5MTA1MjAxMQ==&mid=401589654&idx=1&sn=390de6cfa21576bb166b79664aa25005)
+
+## JS
+
+- [让我们谈谈「生产环境中的 Node.js」- Node 地下铁第 1 次线下沙龙总结](http://taobaofed.org/blog/2016/01/12/node-subway-beijing/)
+- [Javascript 面向对象编程](http://coolshell.cn/articles/6441.html)
+- [探究 Node.js 中的 drain 事件](http://taobaofed.org/blog/2015/12/31/nodejs-drain/)
+- [ES2015 & babel 实战：开发 NPM 模块](http://morning.work/page/2015-11/es6-es7-develop-npm-module-using-babel.html)
+- [Node.js 源站应用稳定性保障](http://taobaofed.org/blog/2016/01/05/dragonfly-stability/)
+
+## Lua
+
+- [Lua简明教程](http://coolshell.cn/articles/10739.html)
+
+## iOS
+
+- [每周 Swift 社区问答 2015-12-30](http://swift.gg/2015/12/30/swift-qa-2015-12-30/)
+- [重构你的 ViewController](http://satanwoo.github.io/2015/12/30/Refactor-Mega-ViewController/)
+- [在团队开发中使用 CocoaPods 的小技巧](http://swift.gg/2015/12/31/cocoapods-on-a-team/)
+- [Alert Controller 中实现可编辑文本字输入框教程](http://swift.gg/2016/01/04/editable-text-field-alert-controller-tutorial/)
+- [使用 unwind segue 而不是 delegate 模式传递回调数据](http://swift.gg/2016/01/05/ios-passing-data-back-using-unwind-segue-instead-of-delegate-pattern/)
+
+## Swift
+
+- [Log 输出](http://swifter.tips/log/)
+
+
+# 2016-01-10
+
+## Other
+
+- [微博推荐计算层解决方案：lab_common_so 框架](http://www.wbrecom.com/?p=634)
+- [深入理解同步/异步与阻塞/非阻塞区别](http://mp.weixin.qq.com/s?__biz=MzAwMDU1MTE1OQ==&mid=403270751&idx=1&sn=7269cd113d7b85e407319036d61ef786)
+- [游戏开发之状态机的实现与优化](http://mtydev.net/?p=553)
+
+## Web
+- [fis3 初步学习体验](http://www.alloyteam.com/2016/01/fis3-preliminary-learning-experiences/)
+- [Let's Encrypt，免费好用的 HTTPS 证书](https://imququ.com/post/letsencrypt-certificate.html)
+- [近几年前端技术盘点以及 2016 年技术发展方向](http://www.barretlee.com/blog/2015/12/10/after-framework-we-gonna-to-hug-data/)
+
+## JS
+
+- [API 响应时间监测](http://f2e.souche.com/blog/nodexing-neng-you-hua-apixiang-ying-shi-jian-jian-ce/)
+
+## Swift
+
+- [类型编码 @encode](http://swifter.tips/type-encode/)
+- [数组 enumerate](http://swifter.tips/enumerate/)
+- [UnsafePointer](http://swifter.tips/unsafe/)
+
+# 2016-01-03
+
+## Other
+
+- [记录一下互联网日志实时收集和实时计算的简单方案](http://lxw1234.com/archives/2015/11/569.htm)
+- [不看任何数学公式来讲解傅里叶变换](http://mp.weixin.qq.com/s?__biz=MzAxOTIxNTg0Mg==&mid=400880603&idx=1&sn=edc955b8a05a2224ee07c542f1061096)
+- [推荐算法综述（二）](http://www.infoq.com/cn/articles/recommendation-algorithm-overview-part02)
+- [推荐算法综述（一）](http://www.infoq.com/cn/articles/recommendation-algorithm-overview-part01)
+
+## Web
+
+- [Websocket 探索语音、图片的能力](http://www.alloyteam.com/2015/12/websockets-ability-to-explore-it-with-voice-pictures/)
+
+## JS
+
+- [ES2015 & babel 实战：开发 NPM 模块](https://cnodejs.org/topic/565c65c4b31692e827fdd00c)
+- [异步 JavaScript 进化史](http://zhuanlan.zhihu.com/FrontendMagazine/20322843)
+- [学习 Javascript 闭包（Closure）](http://www.ruanyifeng.com/blog/2009/08/learning_javascript_closures.html)
+- [深入浅出 ES6（十四）：let 和 const](http://www.infoq.com/cn/articles/es6-in-depth-let-and-const)
+
+## iOS
+
+- [解耦神器 — 统跳协议和 Rewrite 引擎](http://pingguohe.net/2015/11/24/Navigator-and-Rewrite.html)
+- [猿题库 iOS 客户端架构设计](https://mp.weixin.qq.com/s?__biz=MjM5NTIyNTUyMQ==&mid=444322139&idx=1&sn=c7bef4d439f46ee539aa76d612023d43)
+
+
+# 2015-12-27
+
+## iOS
+
+- [Objective-C 引用计数原理](http://yulingtianxia.com/blog/2015/12/06/The-Principle-of-Refenrence-Counting/)
+- [浅入浅出LLDB（1）](http://satanwoo.github.io/2015/12/11/LLDB-1/)
+- [接口编程那些事](http://www.olinone.com/?p=429)
+- [MMTweenAnimation 实现分析](http://southpeak.github.io/blog/2015/09/23/sourcecode-mmtweenanimation/)
+
+## Web
+
+- [打造 H5 动感影集的爱恨情仇(动画性能篇)](http://isux.tencent.com/html5-animation-performance-analysis.html)
+- [JavaScript DOM——『节点层次』的注意要点](http://segmentfault.com/a/1190000004130998)
+- [browserify 原理](http://zhenhua-lee.github.io/nodejs/browserify.html)
+- [HTTP/2 十分钟速知](https://www.bokeyy.com/post/get-to-know-http-2-in-10-minutes.html)
+- [当我们谈网络时，我们谈些什么（4）-- TCP和UDP](http://segmentfault.com/a/1190000004138638)
+- [当我们谈网络时，我们谈些什么（3）-- 获取网页从网络层到链路层发生了什么？](http://segmentfault.com/a/1190000004130959)
+- [当我们谈网络时，我们谈些什么（2）-- DNS的工作原理](http://segmentfault.com/a/1190000004127680)
+- [当我们谈网络时，我们谈些什么（1）-- 我们如何接入因特网](http://segmentfault.com/a/1190000004094420)
+- [简聊初步尝试服务端渲染的一些感想](http://segmentfault.com/a/1190000004135256)
+- [Webpack 最佳实践：部署生产](http://segmentfault.com/a/1190000004104496)
+- [Webpack傻瓜式指南（二）开发和部署技巧](http://zhuanlan.zhihu.com/FrontendMagazine/20397902)
+- [Webpack傻瓜式指南（一）](http://zhuanlan.zhihu.com/FrontendMagazine/20367175)
+- [React 0.14：揭秘局部组件状态陷阱](http://zhuanlan.zhihu.com/FrontendMagazine/20416954)
+- [如何实现 SVG 线动画](http://www.w3ctrain.com/2015/08/20/svg-animation/)
+- [Vue 组件化开发实践](http://gold.xitu.io/entry/55f77eb460b28e6a6f0f4f86)
+
+## Swift
+
+- [guard & defer](http://nshipster.cn/guard-and-defer/)
+- [性能考虑](http://swifter.tips/performance/)
+- [化零为整 : Reduce 详解 : SwiftGG 翻译组 : 高质量的 Swift 译文网站](http://swift.gg/2015/12/10/reduce-all-the-things/)
+- [Swift 2 throws 全解析 - 从原理到实践](http://www.ibm.com/developerworks/cn/mobile/mo-cn-swift/index.html)
+
+## JS
+
+- [Javascript模块化编程（三）：require.js的用法](http://www.ruanyifeng.com/blog/2012/11/require_js.html)
+- [Javascript模块化编程（二）：AMD规范](http://www.ruanyifeng.com/blog/2012/10/asynchronous_module_definition.html)
+- [Javascript模块化编程（一）：模块的写法](http://www.ruanyifeng.com/blog/2012/10/javascript_module.html)
+
+## Linux
+
+- [用十条命令在一分钟内检查Linux服务器性能](http://www.infoq.com/cn/news/2015/12/linux-performance)
+
+## Other
+
+- [【加密解密】加密解密介绍](http://www.jianshu.com/p/98610bdc9bd6)
+- [性能优化模式](http://tech.meituan.com/performance_tuning_pattern.html)
+
+## ML
+
+- [机器学习的商业实战入门](http://www.almosthuman.cn/2015/12/09/jizsa/)
+
+
 
 # 2015-12-20
 

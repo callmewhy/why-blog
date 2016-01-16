@@ -26,6 +26,7 @@ description: Mongo+Express+Angular+Node的超级大乱炖。
 
 ### 文件结构
 我们让文件结构尽量简单，把大多数的代码放在NodeJS项目中的server.js文件中。在大型项目里，我们可以把代码按照功能细分，让各个部分各司其职。比如[Mean.io](http://mean.io/)就是这样一个样例项目，很好的演示了按照功能分工的文件结构。接下来我们创建一个简单的项目，文件结构如下：
+
 ```
 - public        <!-- holds all our files for our frontend angular application -->
     - core.js       <!-- all angular code for our app -->
@@ -36,15 +37,17 @@ description: Mongo+Express+Angular+Node的超级大乱炖。
 
 ### 安装模块
 在NodeJS里，`package.json`文件包含了应用相关的设置，NodeJS的包管理工具会根据这个文件安装我们需要使用的依赖模块。在我们的项目里，我们将使用[Express](http://expressjs.com/)和[Mongoose](http://mongoosejs.com/)这两个依赖项。
-```
-// package.json
+
+`package.json` 如下：
+
+```json
 {
     "name"         : "node-todo",
     "version"      : "0.0.0",
     "description"  : "Simple todo application.",
     "main"         : "server.js",
     "author"       : "Scotch",
-    "dependencies" : 
+    "dependencies" :
     {
         "express"    : "~3.4.4",
         "mongoose"   : "~3.6.2"
@@ -68,7 +71,8 @@ description: Mongo+Express+Angular+Node的超级大乱炖。
 - 设置监听的端口号
 
 现在，我们只需要初始化其中的Express和MongoDB数据库并且监听端口：
-```
+
+```js
 var express  = require('express');
 var app      = express();
 var mongoose = require('mongoose');
@@ -100,12 +104,14 @@ Modulu也提供了一个数据库的URL地址，你只需要使用`mongoose.conn
 
 ### 运行应用
 现在我们设置好了`package.json`和`server.js`文件，接下来我们可以通过如下命令运行服务器，看看效果如何：
+
 ```
 node sercer.js
 ```
 现在我们的服务器就启动了，并且监听8080端口。现在打开浏览器你什么都看不见，但是它确实成功启动了！
 
 注意，运行会提示如下警告：
+
 ```
 connect.multipart() will be removed in connect 3.0
 visit https://github.com/senchalabs/connect/wiki/Connect-3.0 for alternatives
@@ -114,22 +120,27 @@ visit https://github.com/senchalabs/connect/wiki/Connect-3.0 for alternatives
 如果在3.0中使用`connect.bodyParser()`会在程序启动时收到弃用警告,但并不影响程序的正常工作。由于Express使用了connect中间件，参照官网给的解决方案,用`json`和`urlencoded`替换`bodyParser`即可。
 
 找到如下的内容：
-```
+
+```js
 app.use(express.bodyParser());
 ```
 替换为：
-```
+
+```js
 app.use(express.urlencoded());
 app.use(express.json());
 ```
 这样再运行就没有警告了。
 
 另外，默认情况下NodeJS在服务器启动之后不会检测到文件修改，所以当你改了文件之后必须重启服务器。你可以装一个nodemon的模块：
-```
+
+```js
 nom install -g nodemon
 ```
+
 这样使用nodemon的命令就可以启动服务器了：
-```
+
+```js
 nodemon server.js
 ```
 
@@ -150,7 +161,7 @@ Angular在前端独当一面，它通过NodeJS的API获取所有它想要的数�
 ### TODO模型
 我们尽量简单的建立TODO模型，在config和listen之间，我们添加模型相关代码：
 
-```
+```js
 // ----- define model
 var Todo = mongoose.model('Todo', {
     text : String
@@ -162,8 +173,8 @@ var Todo = mongoose.model('Todo', {
 
 ### RESTful路由
 我们用Express来实现API访问：
-```
 
+```js
 // ----- define routes
 // get all todos
 app.get('/api/todos', function(req, res) {
@@ -245,7 +256,8 @@ OK，那么我们的API就搞定了！如果你开启项目，你可以在`local
 我们刚刚定义了API的URL路径：`/api/todos`，但是前端呢？如何让服务器在首页显示index.html页面？
 
 我们在`server.js`中加一条路径：
-```
+
+```js
 // get the index.html
 app.get('*', function(req, res) {
     res.sendfile('./public/index.html'); // load the single view file (angular will handle the page changes on the front-end)
@@ -258,7 +270,7 @@ app.get('*', function(req, res) {
 
 我们先来看一看AngularJS的安装，我们需要创建一个模块，一个控制器，然后定义处理TODO的函数。修改后的`core.js`如下：
 
-```
+```js
 var scotchTodo = angular.module('scotchTodo', []);
 
 function mainController($scope, $http) {
@@ -314,7 +326,8 @@ function mainController($scope, $http) {
 
 
 `index.html`中源码如下：
-```
+
+```html
 <!-- index.html -->
 <!doctype html>
 <!-- ASSIGN OUR ANGULAR MODULE -->
@@ -377,7 +390,7 @@ function mainController($scope, $http) {
 
 现在我们完整的开发了一个应用，实现了通过API创建、展示和删除TODO列表的功能。简单的回顾一下我们完成的工作：
 
-- 使用Express搭建RESTful接口 
+- 使用Express搭建RESTful接口
 - 使用mongoose连接MongoDB接口
 - Angular中的AJAX调用`$http`
 - 没有刷新的单页项目
@@ -413,9 +426,9 @@ function mainController($scope, $http) {
 
 整个系列如下：
 
-1. [Creating a Single Page To-do App with Node and Angular](http://scotch.io/tutorials/javascript/creating-a-single-page-todo-app-with-node-and-angular)
-2. [Node Application Organization and Structure](http://scotch.io/tutorials/javascript/node-and-angular-to-do-app-application-organization-and-structure)
-3. [Angular Modules: Controllers and Services](http://scotch.io/tutorials/javascript/node-and-angular-to-do-app-application-organization-and-structure)
+-  [Creating a Single Page To-do App with Node and Angular](http://scotch.io/tutorials/javascript/creating-a-single-page-todo-app-with-node-and-angular)
+- [Node Application Organization and Structure](http://scotch.io/tutorials/javascript/node-and-angular-to-do-app-application-organization-and-structure)
+- [Angular Modules: Controllers and Services](http://scotch.io/tutorials/javascript/node-and-angular-to-do-app-application-organization-and-structure)
 
 
 ***

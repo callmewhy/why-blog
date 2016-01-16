@@ -1,7 +1,7 @@
 title: 用函数式的 Swift 实现图片转字符画的功能
 date: 2015-06-07 16:54:43
 tags: Swift
-categories: 开发笔记 
+categories: 开发笔记
 description: 如何更 Functional 地写 Swift 代码，希望此文可以带来启发。
 ---
 
@@ -16,6 +16,7 @@ description: 如何更 Functional 地写 Swift 代码，希望此文可以带来
 
 可以通过 `createPixelMatrix` 这个静态方法创建一个 `width` * `height` 像素矩阵：
 
+```swift
     static func createPixelMatrix(width: Int, _ height: Int) -> [[Pixel]] {
         return map(0..<height) { row in
             map(0..<width) { col in
@@ -24,12 +25,14 @@ description: 如何更 Functional 地写 Swift 代码，希望此文可以带来
             }
         }
     }
+```
 
 和传统方法中使用 `for` 循环来创建多维数组有所不同的是，这里是通过 `map` 函数实现的。在 Swift 2.0 中， `map` 函数已经被干掉了，只能作为方法调用。
 
 
 ### intensityFromPixelPointer
 
+```swift
 `intensityFromPixelPointer` 方法计算并返回像素点的亮度值，代码如下：
 
     func intensityFromPixelPointer(pointer: PixelPointer) -> Double {
@@ -53,7 +56,7 @@ description: 如何更 Functional 地写 Swift 代码，希望此文可以带来
                       Double(b) * blueWeight
         return weightedSum / weightedMax
     }
-
+```
 
 
 `calculateIntensity` 方法基于 [Y'UV](https://en.wikipedia.org/wiki/Grayscale#Luma_coding_in_video_systems) 编码获取某个像素的亮度 (intensity) ：
@@ -62,11 +65,13 @@ description: 如何更 Functional 地写 Swift 代码，希望此文可以带来
 
 YUV 是一种颜色编码方法，Y 表示亮度， UV 用来表示色差， U 和 V 是构成彩色的两个分量。它的优点是可以利用人眼的特性来降低数字彩色图像所需要的存储容量。我们通过这个公式获取到的 Y 就是亮度的值。
 
-### Offset 
+### Offset
 
 `Pixel` 中其实只存了一个值： `offset` 。 `Pixel.createPixelMatrix` 创建出来的矩阵是这样的：
 
+```
     [[0, 4, 8, ...], ...]
+```
 
 并没有像想象中那样存储了每个像素相关数据，而更像是一个转换工具，计算 `PixelPointer` 的灰度值。
 
@@ -78,6 +83,7 @@ YUV 是一种颜色编码方法，Y 表示亮度， UV 用来表示色差， U �
 
 `createAsciiArt` 方法就是创建字符画：
 
+```swift
     func createAsciiArt() -> String {
         let
         // 加载图片数据，获取指针对象
@@ -90,6 +96,7 @@ YUV 是一种颜色编码方法，Y 表示亮度， UV 用来表示色差， U �
         symbolMatrix = symbolMatrixFromIntensityMatrix(intensities)
         return join("\n", symbolMatrix)
     }
+```
 
 其中 `CFDataGetBytePtr` 函数返回了图像的字节数组指针，数组里每个元素都是一个字节，即 0~255 的整数。每4个字节组成了一个 `Pixel` ，分别对应着 RGBA 的值。
 
@@ -97,6 +104,7 @@ YUV 是一种颜色编码方法，Y 表示亮度， UV 用来表示色差， U �
 
 `intensityMatrixFromPixelPointer` 这个方法是通过 `PixelPointer` 生成对应的亮度值矩阵：
 
+```swift
     private func intensityMatrixFromPixelPointer(pointer: PixelPointer) -> [[Double]]
     {
         let
@@ -109,6 +117,7 @@ YUV 是一种颜色编码方法，Y 表示亮度， UV 用来表示色差， U �
             }
         }
     }
+```
 
 首先通过 `Pixel.createPixelMatrix` 方法创建了一个空的二维数组，用来存放数值。然后用两个 `map` 嵌套遍历里面的所有元素，将像素 (`pixel`) 转换成亮度 (`intensity`) 的值。
 
@@ -116,6 +125,7 @@ YUV 是一种颜色编码方法，Y 表示亮度， UV 用来表示色差， U �
 
 `symbolMatrixFromIntensityMatrix` 函数将亮度值数组转换成字符画数组：
 
+```swift
     private func symbolMatrixFromIntensityMatrix(matrix: [[Double]]) -> [String]
     {
         return matrix.map { intensityRow in
@@ -124,19 +134,22 @@ YUV 是一种颜色编码方法，Y 表示亮度， UV 用来表示色差， U �
             }
         }
     }
+```
 
 `map` + `reduce` 成功实现了字符串的累加，每次 `reduce` 都是通过 `symbolFromIntensity` 方法获取到亮度值对应的字符。 `symbolFromIntensity` 方法如下：
 
+```swift
     private func symbolFromIntensity(intensity: Double) -> String
     {
         assert(0.0 <= intensity && intensity <= 1.0)
-        
+
         let
         factor = palette.symbols.count - 1,
         value  = round(intensity * Double(factor)),
         index  = Int(value)
         return palette.symbols[index]
     }
+```
 
 传入 `intensity` ，在确保了值的范围是 0 ~ 1 之后，通过 `AsciiPalette` 将它转换成对应的字符，输出 `sumbol` 。
 
@@ -148,10 +161,12 @@ YUV 是一种颜色编码方法，Y 表示亮度， UV 用来表示色差， U �
 
 `loadSymbols` 加载了所有的字符：
 
+```swift
     private func loadSymbols() -> [String]
     {
         return symbolsSortedByIntensityForAsciiCodes(32...126) // from ' ' to '~'
     }
+```
 
 可以看到，我们选用的字符范围是 32 ~ 126 的字符，接下来就是通过 `symbolsSortedByIntensityForAsciiCodes` 方法将这些字符按照亮度进行排序。比如 `&` 符号肯定代表着比 `.` 暗的区域，那么它是如何比较的呢？请看排序方法。
 
@@ -159,6 +174,7 @@ YUV 是一种颜色编码方法，Y 表示亮度， UV 用来表示色差， U �
 
 `symbolsSortedByIntensityForAsciiCodes` 方法实现了字符串的生成和排序：
 
+```swift
     private func symbolsSortedByIntensityForAsciiCodes(codes: Range<Int>) -> [String]
     {
         let
@@ -172,9 +188,11 @@ YUV 是一种颜色编码方法，Y 表示亮度， UV 用来表示色差， U �
         sortedSymbols    = sortByIntensity(symbols, whitePixelCounts)
         return sortedSymbols
     }
+```
 
 其中， `sortByIntensity` 这个排序方法如下：
 
+```swift
     private func sortByIntensity(symbols: [String], _ whitePixelCounts: [Int]) -> [String]
     {
         let
@@ -188,7 +206,7 @@ YUV 是一种颜色编码方法，Y 表示亮度， UV 用来表示色差， U �
         sortedSymbols = sortedCounts.map { mappings[$0] as! String }
         return sortedSymbols
     }
-
+```
 
 ## 小结
 

@@ -99,8 +99,8 @@ description: 一片尽情施展的广阔天地。
 
     func compositeSourceOver(overlay: CIImage) -> Filter {
         return { image in
-            let parameters : Parameters = [ 
-                kCIInputBackgroundImageKey: image, 
+            let parameters : Parameters = [
+                kCIInputBackgroundImageKey: image,
                 kCIInputImageKey: overlay
             ]
             let filter = CIFilter(name:"CISourceOverCompositing", parameters: parameters)
@@ -177,7 +177,7 @@ description: 一片尽情施展的广阔天地。
 
 你可能对于前面定义的运算符 `>|>` 持有同样的怀疑态度，毕竟如果每个人都定义自己的运算符，那代码岂不是很难理解了？值得庆幸的是在函数式编程里有很多的操作，为这些操作定义一个运算符并不是一件很罕见的事情。
 
-我们定义的滤镜组合运算符是一个[函数组合](http://en.wikipedia.org/wiki/Function_composition_%28computer_science%29)的例子，这是一个在函数式编程中广泛使用的概念。在数学里，两个函数 `f` 和 `g` 的组合有时候写做 `f ∘ g`，这样定义了一种全新的函数，将输入的 `x` 映射到 `f(g(x))` 上。这恰好就是我们的 `>|>` 所做的工作 (除了函数的逆向调用)。 
+我们定义的滤镜组合运算符是一个[函数组合](http://en.wikipedia.org/wiki/Function_composition_%28computer_science%29)的例子，这是一个在函数式编程中广泛使用的概念。在数学里，两个函数 `f` 和 `g` 的组合有时候写做 `f ∘ g`，这样定义了一种全新的函数，将输入的 `x` 映射到 `f(g(x))` 上。这恰好就是我们的 `>|>` 所做的工作 (除了函数的逆向调用)。
 
 ## 泛型
 
@@ -215,5 +215,5 @@ description: 一片尽情施展的广阔天地。
 ---
 
 
-原文地址 
+原文地址
 - [Functional APIs with Swift](http://www.objc.io/issue-16/functional-swift-apis.html)

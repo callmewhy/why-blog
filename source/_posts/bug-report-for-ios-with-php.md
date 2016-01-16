@@ -23,7 +23,7 @@ description: 重返阔别已久的 PHP 大法，代码写的不好大家不要�
 
 具体的 BugHunt 的使用方法可以看 README 说明，看完之后我们知道，需要一个实现了 `EBHNetworkCommunicator` 协议的网络连接类来进行网络管理。示例代码中给了我们一个简单的例子：
 
-
+```objc
     #import "MyNetworkCommunicator.h"
 
     // Models
@@ -36,7 +36,7 @@ description: 重返阔别已久的 PHP 大法，代码写的不好大家不要�
     - (BOOL)createBugHuntIssue:(EBHBugReport *)bugReport
                       completion:(EBHCreateNewIssueCompletionBlock)completionBlock
     {
-        ... 
+        ...
     }
 
     - (BOOL)fetchBugHuntTasks:(EBHFetchTasksCompletionBlock)completionBlock
@@ -50,12 +50,14 @@ description: 重返阔别已久的 PHP 大法，代码写的不好大家不要�
     }
 
     @end
-
+```
 
 在使用的时候我们只需要给 BugHunt 指定对应的 `NetworkCommunicator` 即可：
 
+```objc
     MyNetworkCommunicator *networkCommunicator = [[MyNetworkCommunicator alloc] init];
     [BugHunt setNetworkCommunicator:networkCommunicator];
+```
 
 在 `- (BOOL)createBugHuntIssue: completion:` 这个方法里，我们可以进行 Bug 的具体上传设置。
 
@@ -71,6 +73,7 @@ description: 重返阔别已久的 PHP 大法，代码写的不好大家不要�
 
 先看下 iOS 端的上传代码：
 
+```objc
     - (BOOL)createBugHuntIssue:(EBHBugReport *)bugReport
                     completion:(EBHCreateNewIssueCompletionBlock)completionBlock
     {
@@ -79,14 +82,14 @@ description: 重返阔别已久的 PHP 大法，代码写的不好大家不要�
         if (!username) {
             username = [NSString stringWithFormat:@"nouser%d",arc4random() % 1000];
         }
-        
+
         // 生成一个临时的文件名
         NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
         [dateFormatter setDateFormat:@"yyyy-MM-dd-HH-mm-ss"];
         NSString *strDate = [dateFormatter stringFromDate:[NSDate date]];
         NSString *fileName = [NSString stringWithFormat:@"%@-%@-", username, strDate];
-        
-        
+
+
         NSArray *screenshots = bugReport.screenshots;
 
         [_manager POST:@"http://192.168.31.97:8888/index.php/bug/do_upload" parameters:@{@"count":@(screenshots.count),@"filename":fileName} constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
@@ -106,6 +109,7 @@ description: 重返阔别已久的 PHP 大法，代码写的不好大家不要�
                }];
         return YES;
     }
+```
 
 确实挺简单的，主要就是把截屏的 `UIImage` 转换成 `NSData` 然后上传就 OK 了。接下来看下服务器端的实现。
 
@@ -118,6 +122,7 @@ description: 重返阔别已久的 PHP 大法，代码写的不好大家不要�
 
 关键的代码就这么几行：
 
+```php
     function do_upload()
     {
         // 获取上传的文件数目
@@ -140,9 +145,8 @@ description: 重返阔别已久的 PHP 大法，代码写的不好大家不要�
         $this->output->set_content_type('application/json')->set_output(json_encode($arr));
 
         return;
-
-
     }
+```
 
 不到十行的代码就完成了上传文件的处理，由于有 CodeIgniter 的工具类，所以上传只需要 `$this->upload->do_upload($filename);` 这么一行代码就可以了。
 
@@ -164,7 +168,7 @@ description: 重返阔别已久的 PHP 大法，代码写的不好大家不要�
 
 既然一起打包，那我们可以把问题描述写到一个文件里然后一起上传。修改之后的部分代码如下：
 
-
+```objc
     - (BOOL)createBugHuntIssue:(EBHBugReport *)bugReport
                     completion:(EBHCreateNewIssueCompletionBlock)completionBlock
     {
@@ -173,24 +177,24 @@ description: 重返阔别已久的 PHP 大法，代码写的不好大家不要�
         if (!username) {
             username = [NSString stringWithFormat:@"nouser%d",arc4random() % 1000];
         }
-        
+
         // 生成一个临时的文件名
         NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
         [dateFormatter setDateFormat:@"yyyy-MM-dd-HH-mm-ss"];
         NSString *strDate = [dateFormatter stringFromDate:[NSDate date]];
         NSString *fileName = [NSString stringWithFormat:@"%@_%@", username, strDate];
         NSArray *screenshots = bugReport.screenshots;
-        
+
         // 设置超时
         [_manager.requestSerializer setTimeoutInterval:10];
 
         [_manager POST:@"http://xxx.xxx/xxx" parameters:nil constructingBodyWithBlock:^(id<AFMultipartFormData> formData) {
-            
+
             NSString *documentsDir= [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
             NSString *filePath= [documentsDir stringByAppendingPathComponent:fileName];
 
             ZipFile *zipFile= [[ZipFile alloc] initWithFileName:filePath mode:ZipFileModeCreate];
-           
+
             // 把问题描述写到文件里一起压缩
             ZipWriteStream *stream= [zipFile writeFileInZipWithName:@"debug_description.log" compressionLevel:ZipCompressionLevelBest];
             [stream writeData:[bugReport.bugDescription dataUsingEncoding:NSUTF8StringEncoding]];
@@ -206,7 +210,7 @@ description: 重返阔别已久的 PHP 大法，代码写的不好大家不要�
                 [stream finishedWriting];
             }
             [zipFile close];
-            
+
             // 取出压缩文件加到表单中
             NSData *reader = [NSData dataWithContentsOfFile:filePath];
             NSString *upFileName = [NSString stringWithFormat:@"iOS_%@.zip", fileName];
@@ -221,7 +225,7 @@ description: 重返阔别已久的 PHP 大法，代码写的不好大家不要�
                }];
         return YES;
     }
-
+```
 
 压缩之后，上传的文件大小只有平时的十分之一，效率提升十分可观。解压的时候需要使用 [`Unarchiver`](https://itunes.apple.com/cn/app/the-unarchiver/id425424353?mt=12) 进行解压，系统自带的解压会有问题。
 

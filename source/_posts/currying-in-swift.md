@@ -37,6 +37,7 @@ description: 我们只是把函数拆的散一点。
 
 偏函数有点像是给函数的参数设置默认值一样，不过偏函数更加灵活。比如下面这段 c 语言的代码中，`foo23` 函数就是 `foo` 函数的偏函数，参数 `b` 的值被绑定为 `23` ：
 
+```swift
     int foo(int a, int b, int c) {
       return a + b + c;
     }
@@ -44,7 +45,7 @@ description: 我们只是把函数拆的散一点。
     int foo23(int a, int c) {
       return foo(a, 23, c);
     }
-
+```
 
 
 ### 柯里化
@@ -59,17 +60,21 @@ description: 我们只是把函数拆的散一点。
 
 我们用几段 js 代码演示一下柯里化的过程。首先先看一个普通的函数 `foo` ，返回参数的平方：
 
+```swift
     var foo = function(a) {
         return a * a;
     }
+```
 
 假设我们的函数都只能有一个参数，那么可以用下面的方式模拟出一个多参数函数：
 
+```swift
     var foo = function(a) {
         return function(b) {
             return a * a + b * b;
         }
     }
+```
 
 我们可以这样调用 `foo(3)(4)` 。
 
@@ -82,6 +87,7 @@ description: 我们只是把函数拆的散一点。
 
 可以看到，柯里化将函数进行了~~肢解~~拆分，这样我们可以很容易的实现偏函数。比如：
 
+```swift
     var foo = function(a) {
         return function(b) {
             return a * a + b * b;
@@ -89,6 +95,7 @@ description: 我们只是把函数拆的散一点。
     }
     var foo3 = foo(3);
     foo3(4);
+```
 
 这就出来了。函数 `foo3` 就是 `foo` 函数的偏函数。
 
@@ -110,6 +117,7 @@ description: 我们只是把函数拆的散一点。
 
 我们先来写个最简单的东西好了：计数器，每次运算后+1即可：
 
+```swift
     func add(a:Int) -> Int{
         return a + 1;
     }
@@ -118,9 +126,11 @@ description: 我们只是把函数拆的散一点。
 
     a = add(a)   // 1
     a = add(a)   // 2
+```
 
 但是每次都+1，步子有点小了。有时我们可能也需要+2，+3，+4，那么简单，我们把需要加的步长放在参数里就行：
 
+```swift
     func add(a:Int, b:Int) -> Int{
         return a + b ;
     }
@@ -129,6 +139,7 @@ description: 我们只是把函数拆的散一点。
 
     a = add(a, 1)   // 1
     a = add(a, 2)   // 3
+```
 
 似乎没什么问题。那么问题来了：我大部分时间都只要+1啊，我可能只是100次调用有90次要+1，为了剩下的那10次，每行代码都要多个参数，是不是麻烦了点？OK嫌麻烦我们可以通过设置默认值的方式解决。
 
@@ -136,6 +147,7 @@ description: 我们只是把函数拆的散一点。
 
 在函数定义的时候我们就给它定好默认值是1，那不就得了：
 
+```swift
     func add(a:Int, b:Int=1) -> Int{
         return a + b ;
     }
@@ -144,7 +156,7 @@ description: 我们只是把函数拆的散一点。
 
     a = add(a)   // 1
     a = add(a, b:2)   // 3
-
+```
 
 如果你要+1，行，你别写参数我给你调好了自动+1；如果你要+2+3，行，爱加几加几，自己写到参数里去。
 
@@ -160,6 +172,7 @@ description: 我们只是把函数拆的散一点。
 
 比如前面的那个例子，我们新定义一个 `add` 函数，它有一个参数，是步长 `b` 。然后它返回一个新的函数 `newAdd` ，新的函数需要一个参数，也就是 `a`，完整的代码如下：
 
+```swift
     func add(b:Int) -> (Int->Int){
         func newAdd(a:Int) -> Int {
             return a + b ;
@@ -175,9 +188,11 @@ description: 我们只是把函数拆的散一点。
     a = addOne(a)    // 1
     a = addTwo(a)    // 3
     a = add(2)(3)    // 5
+```
 
 如果你觉得各种 `(Int)->(Int->Int)` 看的晕乎，你也可以参照[官方文档](https://developer.apple.com/library/ios/documentation/swift/conceptual/Swift_Programming_Language/Declarations.html)，用下面这种简化的声明：
 
+```swift
     func add(b:Int)(a:Int) -> Int{
         return a + b ;
     }
@@ -189,6 +204,7 @@ description: 我们只是把函数拆的散一点。
 
     a = addOne(a: a)    // 1
     a = addTwo(a: a)    // 3
+```
 
 在这个例子里，我们生成两个新的函数：`addOne` 和 `addTwo` 分别进行+1和+2操作。可以看到，通过柯里化实现偏函数是十分方便的，一切都顺其自然，水到渠成。
 
@@ -200,25 +216,29 @@ description: 我们只是把函数拆的散一点。
 
 我们还就和计数器杠上了，再次以计数器为例：
 
+```swift
     class Counter {
         var b: Int = 1
         func add(a:Int) -> Int{
             return a + b ;
         }
     }
-
+```
 
 我们可以初始化实例对象然后来调用：
 
+```swift
     let counter = Counter()
     var a = counter.add(1)  // 2
-
+```
 
 我们也可以这样做：
 
+```swift
     let add = Counter.add   // Function
     let counter = Counter()
     var a = add(counter)(1) // 2
+```
 
 这两个是完全等价的。
 
@@ -231,7 +251,7 @@ description: 我们只是把函数拆的散一点。
 这个问题我还没办法回答，因为我也是刚刚接触这部分内容。我只能做一名知识的搬运工了。
 
 在 [Instance Methods are Curried Functions in Swift](http://oleb.net/blog/2014/07/swift-instance-methods-curried-functions/) 这篇文章里，作者举了一个例子：用 [Target-Action](https://developer.apple.com/library/ios/documentation/general/conceptual/Devpedia-CocoaApp/TargetAction.html) 模式实现一个 `Control` ：
-
+```swift
     protocol TargetAction {
         func performAction()
     }
@@ -239,7 +259,7 @@ description: 我们只是把函数拆的散一点。
     struct TargetActionWrapper<T: AnyObject> : TargetAction {
         weak var target: T?
         let action: (T) -> () -> ()
-        
+
         func performAction() -> () {
             if let t = target {
                 action(t)()
@@ -255,34 +275,35 @@ description: 我们只是把函数拆的散一点。
 
     class Control {
         var actions = [ControlEvent: TargetAction]()
-        
+
         func setTarget<T: AnyObject>(target: T, action: (T) -> () -> (), controlEvent: ControlEvent) {
             actions[controlEvent] = TargetActionWrapper(target: target, action: action)
         }
-        
+
         func removeTargetForControlEvent(controlEvent: ControlEvent) {
             actions[controlEvent] = nil
         }
-        
+
         func performActionForControlEvent(controlEvent: ControlEvent) {
             actions[controlEvent]?.performAction()
         }
     }
+```
 
 用法和平时没什么两样：
 
+```swift
     class MyViewController {
         let button = Control()
-        
+
         func viewDidLoad() {
             button.setTarget(self, action: MyViewController.onButtonTap, controlEvent: .TouchUpInside)
         }
-        
+
         func onButtonTap() {
             println("Button was tapped")
         }
-
-
+```
 
 ## 下集的下集：其他
 
@@ -297,7 +318,7 @@ description: 我们只是把函数拆的散一点。
 当然也有[反柯里化](http://en.wikipedia.org/wiki/Currying)，感兴趣的同学可以继续了解一下：）
 
 
-*** 
+***
 
 ## References
 

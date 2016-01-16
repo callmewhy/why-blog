@@ -24,7 +24,9 @@ description: 每一个酷炫的视图背后都有一群默默无闻的图层。
 
 “嗨哥们儿等下，”你可能要说，“那不是 `UIView` 干的事情吗！”啊哈是的没错，但是真相是：每个 `UIView` 都包含了一个 `Root Layer` 。你可以用下面这段代码获取到这个根图层：
 
+```objc
     CALayer *myLayer = myView.layer;
+```
 
 `CALayer` 有很多很多的属性，想必是极好的，你可以通过设置它的属性实现各种视觉效果，比如：
 
@@ -50,12 +52,13 @@ description: 每一个酷炫的视图背后都有一群默默无闻的图层。
 
 现在你可以自己动手改一改这个 UIView 中 layer 的属性了：
 
+```swift
     override func viewWillAppear() {
         self.view.layer.backgroundColor = UIColor.orangeColor().CGColor
         self.view.layer.cornerRadius = 20.0
         self.view.layer.frame = CGRectInset(self.view.layer.frame, 20, 20)
     }
-
+```
 
 
 让我们一点一点分析一下上面的代码：
@@ -73,17 +76,21 @@ description: 每一个酷炫的视图背后都有一群默默无闻的图层。
 
 就像 UIView 有很多 subview 一样， CALayer 也有 sublayer 。你可以很容易的创建一个新的 CALayer ：
 
+```swift
     var sublayer = CALayer()
-
+```
 
 创建了一个新的 CALayer 之后，你可以设置它的任何属性，不过有一个是必须设置的，那就是它的 frame (或者 bounds/position) 。毕竟，所有的图层都要知道自己该有多大 (或者自己该在哪里) 。当你设置了这些基本的属性之后，你可以通过下面的代码把它加到另一个 layer 里：
 
+```swift
     self.view.layer.addSublayer(sublayer)
+```
 
 你可以给我们的视图的图层添加一个图层，添加如下代码：
-    
+
+```swift
     override func viewWillAppear(animated: Bool) {
-        
+
         self.view.layer.backgroundColor = UIColor.orangeColor().CGColor
         self.view.layer.cornerRadius = 20.0
         self.view.layer.frame = CGRectInset(self.view.layer.frame, 20, 20)
@@ -96,8 +103,8 @@ description: 每一个酷炫的视图背后都有一群默默无闻的图层。
         sublayer.shadowOpacity = 0.8;
         sublayer.frame = CGRectMake(30, 30, 128, 192);
         self.view.layer.addSublayer(sublayer)
-        
     }
+```
 
 上面的代码创建了一个新的图层，并且设置了一些属性 - 包括一些设置阴影的代码，你以前可能没见过。可以看到这几行代码就添加了阴影效果，十分简单。
 
@@ -115,11 +122,11 @@ description: 每一个酷炫的视图背后都有一群默默无闻的图层。
 
 把图片加到项目中，然后在把 sublayer 加到图层之前加上如下代码：
 
-
+```swift
     sublayer.contents = UIImage(named: "BattleMapSplashScreen")?.CGImage
     sublayer.borderColor = UIColor.blackColor().CGColor
     sublayer.borderWidth = 2.0
-
+```
 
 上面的代码将图层的 `contents` 设置成了一张图片 (代码写的十分清晰) ，然后又设置了 `borderColor` 和 `borderWidth` ，添加了一个黑色的边框。
 
@@ -134,7 +141,7 @@ description: 每一个酷炫的视图背后都有一群默默无闻的图层。
 
 我发现了一种折中的解决方案：创建两个图层。外围的图层是一个纯色的 `CALayer` 用来展示投影，里面的图层则是有圆角的图片图层：
 
-
+```swift
     var sublayer = CALayer()
     sublayer.backgroundColor = UIColor.blueColor().CGColor
     sublayer.shadowOffset = CGSizeMake(0, 3)
@@ -146,13 +153,14 @@ description: 每一个酷炫的视图背后都有一群默默无闻的图层。
     sublayer.borderWidth = 2.0
     sublayer.cornerRadius = 10.0
     self.view.layer.addSublayer(sublayer)
-    
+
     var imageLayer = CALayer()
     imageLayer.frame = sublayer.bounds
     imageLayer.cornerRadius = 10.0
     imageLayer.contents = UIImage(named:"BattleMapSplashScreen.jpg")?.CGImage
     imageLayer.masksToBounds = true
     sublayer.addSublayer(imageLayer)
+```
 
 运行的效果是这样的，既有投影，又有图片：
 
@@ -170,6 +178,7 @@ description: 每一个酷炫的视图背后都有一群默默无闻的图层。
 
 在方法的最后加上下面这段代码：
 
+```swift
     var customDrawn = CALayer()
     customDrawn.delegate = self
     customDrawn.backgroundColor = UIColor.greenColor().CGColor
@@ -184,7 +193,7 @@ description: 每一个酷炫的视图背后都有一群默默无闻的图层。
     customDrawn.masksToBounds = true
     self.view.layer.addSublayer(customDrawn)
     customDrawn.setNeedsDisplay()
-
+```
 
 
 上面的大部分代码你都是见过的 (比如：创建一个图层，设置一些属性等等) 。有两个地方可能还不太熟悉：
