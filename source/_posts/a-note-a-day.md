@@ -12,6 +12,44 @@ sticky: 1
 
 以下内容通过 [汪海的实验室 - Pocket 周记生成器](http://why-wechat.avosapps.com/pocket/) 自动生成，完整源码托管在 [why-wechat](https://github.com/callmewhy/why-wechat) 上。
 
+# 2016-01-24
+
+## Web
+
+- [关于『真阿当』对目前流行前端技术的批判，大家有什么看法？](http://www.zhihu.com/question/38924821/answer/79207681)
+- [热炒的前端什么时候能冷静下来？](https://www.zhihu.com/question/39659771/answer/82457812)
+- [我就是要用CSS实现](http://www.alloyteam.com/2016/01/let-see-css-world/)
+- [如何开发一个 Webpack Loader ( 一 )](http://www.alloyteam.com/2016/01/webpack-loader-1/)
+- [近几年前端技术盘点以及 2016 年技术发展方向](http://taobaofed.org/blog/2016/01/04/font-end-tech-inventory/)
+- [实例CSS3开场动画的制作与优化](http://www.alloyteam.com/2016/01/css3995527/)
+- [karma测试框架的前世今生](http://taobaofed.org/blog/2016/01/08/karma-origin/)
+- [研究首屏时间？你先要知道这几点细节](http://www.alloyteam.com/2016/01/points-about-resource-loading/)
+- [Service Worker初体验](http://www.alloyteam.com/2016/01/9274/)
+
+## NodeJS
+
+- [找回 Node.js 里面那些遗失的 ES6 特性](http://taobaofed.org/blog/2016/01/07/find-back-the-lost-es6-features-in-nodejs/)
+
+## Other
+
+- [微博推荐数据服务代理: hyper_proxy的设计和实现](http://www.wbrecom.com/?p=649)
+- [K Nearest Neighbor 算法](http://coolshell.cn/articles/8052.html)
+- [K-Means 算法](http://coolshell.cn/articles/7779.html)
+- [机器学习](http://mp.weixin.qq.com/s?__biz=MzI5MzA3MTE3Ng==&mid=401323044&idx=1&sn=3acb5e8b5728498508409bb099313383&scene=2&srcid=0116EU75K9X44JwWeyosmFOK&from=timeline&isappinstalled=0#wechat_redirect)
+
+## JS
+
+- [前端开发者进阶之函数柯反里化unCurrying](http://www.cnblogs.com/pigtail/p/3450852.html)
+- [浅析 JavaScript 中的 函数 uncurrying 反柯里化](http://www.cnblogs.com/zztt/p/4152147.html)
+- [Javascript中有趣的反柯里化技术](http://www.alloyteam.com/2013/08/javascript-zhong-you-qu-di-fan-ke-li-hua-ji-shu/)
+- [javascrpt的柯里化和反柯里化](http://midoks.duapp.com/p/javascript_curry_uncurry.html)
+- [JS中bind方法与函数柯里化](https://segmentfault.com/a/1190000003963461)
+
+## Python
+
+- [wxPython using virtualenvwrapper on OSX](https://blurringexistence.net/wxpython-using-virtualenvwrapper-on-osx.html)
+
+
 # 2016-01-17
 
 ## Other

@@ -251,17 +251,17 @@ function buildSender(name, url) {
 
 ```js
 const curry = require('curry')
-const curreidSend = curry(sendPubuMessage)
+const curriedSend = curry(sendPubuMessage)
 
 function buildSender(name, url) {
   const sender = {
     name: name,
     url: url,
   }
-  sender.info = curreidSend(info)(sender)
-  sender.warn = curreidSend(warning)(sender)
-  sender.error = curreidSend(error)(sender)
-  sender.success = curreidSend(success)(sender)
+  sender.info = curriedSend(info)(sender)
+  sender.warn = curriedSend(warning)(sender)
+  sender.error = curriedSend(error)(sender)
+  sender.success = curriedSend(success)(sender)
   return sender
 }
 const wechat = buildSender('微信爬虫', 'https://hooks.pubu.im/services/111111111111111')
@@ -300,7 +300,7 @@ console.log(wechat.info('info test').length) // 2
 那我可以在柯里化的结果外面包一层啊，根据传入参数的数量来决定生成的柯里化的结果是该有几个入参，比如这样：
 
 ```js
-const buildCurreidSend = (type) => {
+const buildcurriedSend = (type) => {
   return () => {
     const args = [].slice.call(arguments)
     const curriedSend = curry.to(2 + args.length, sendPubuMessage)
