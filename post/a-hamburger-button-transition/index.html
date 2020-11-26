@@ -1,0 +1,309 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>如何用 Swift 做一个不错的按钮变换动画 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              如何用 Swift 做一个不错的按钮变换动画
+            </h2>
+            <div class="post-info">
+              <span>
+                2014-10-12
+              </span>
+              <span>
+                6 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/fthQHH2l27/" class="post-tag">
+                  # Swift
+                </a>
+              
+                <a href="https://blog.callmewhy.com/tag/datMGg0r-6V/" class="post-tag">
+                  # iOS
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>汉堡按钮在 UI 设计中早已不是什么新鲜玩意儿了，但是某天我突然在 dribbble 上看到了这个<a href="https://dribbble.com/shots/1623679-Open-Close">酷炫的动画效果</a>，效果真是棒棒哒！于是我决定把它在代码里实现一下。</p>
+<p>先来看下 <a href="https://dribbble.com/Creativedash">CreativeDash</a>  团队做出来的原始动画效果：</p>
+<figure data-type="image" tabindex="1"><img src="https://d13yacurqjgara.cloudfront.net/users/107759/screenshots/1623679/menu.gif" alt="" loading="lazy"></figure>
+<p>我们可以看到 (看得我眼睛都花了)，汉堡按钮 (也就是三条横线的那个)的上下两条线分别绕着自身最优的端点旋转了45°，变成了按钮里的 X ，中间的那个线则摇身一变，成了外面的圈圈。这个效果可以用 <code>CAShapeLayer</code> 实现，但是首先，我需要为这三条直线分别创建一个 <code>CGPath</code> 。</p>
+<p>我们可以这样手动创建一个短短的直线：</p>
+<pre><code class="language-swift">    let shortStroke: CGPath = {
+        let path = CGPathCreateMutable()
+        CGPathMoveToPoint(path, nil, 2, 2)
+        CGPathAddLineToPoint(path, nil, 28, 2)
+
+        return path
+    }()
+</code></pre>
+<p>不过对于中间那个线，因为它有比较复杂的运动轨迹，所以我用 <a href="http://www.bohemiancoding.com/sketch/">Sketch</a> 创建了一条路径，把动画融入了线条中：</p>
+<figure data-type="image" tabindex="2"><img src="http://robb.is/img/outline.png" alt="" loading="lazy"></figure>
+<p>接下来我把图片导出成了 SVG 格式，然后通过 <a href="http://www.paintcodeapp.com/">PaintCode</a> 1 把图片转换成代码片段，导入项目中。接下来我重写了导入的代码片段，并且创建了想要的 CGPath 对象：</p>
+<pre><code class="language-swift">    let outline: CGPath = {
+        let path = CGPathCreateMutable()
+        CGPathMoveToPoint(path, nil, 10, 27)
+        CGPathAddCurveToPoint(path, nil, 12.00, 27.00, 28.02, 27.00, 40, 27)
+        CGPathAddCurveToPoint(path, nil, 55.92, 27.00, 50.47,  2.00, 27,  2)
+        CGPathAddCurveToPoint(path, nil, 13.16,  2.00,  2.00, 13.16,  2, 27)
+        CGPathAddCurveToPoint(path, nil,  2.00, 40.84, 13.16, 52.00, 27, 52)
+        CGPathAddCurveToPoint(path, nil, 40.84, 52.00, 52.00, 40.84, 52, 27)
+        CGPathAddCurveToPoint(path, nil, 52.00, 13.16, 42.39,  2.00, 27,  2)
+        CGPathAddCurveToPoint(path, nil, 13.16,  2.00,  2.00, 13.16,  2, 27)
+
+        return path
+    }()
+</code></pre>
+<p>可能有第三方的类库可以让你直接把 SVG 转换成 CGPath，但是对于这种简单的图像，没必要杀鸡用牛刀。</p>
+<p>在我自定义的 <code>UIButton</code> 的子类里，我添加了三个 <code>CAShapeLayer</code> 属性并且把他们和前面定义的路径关联了起来：</p>
+<pre><code>self.top.path = shortStroke
+self.middle.path = outline
+self.bottom.path = shortStroke
+</code></pre>
+<p>然后设置一下相关的属性：</p>
+<pre><code class="language-swift">    layer.fillColor = nil
+    layer.strokeColor = UIColor.whiteColor().CGColor
+    layer.lineWidth = 4
+    layer.miterLimit = 4
+    layer.lineCap = kCALineCapRound
+    layer.masksToBounds = true
+</code></pre>
+<p>为了正确的计算出边框 (<code>bounds</code>) ，我需要对这些线条的大小进行计算。谢天谢地，用 <code>CGPathCreateCopyByStrokingPath</code> 这个函数可以创建一条和原来线条一样的路径，所以它的 <code>bounds</code> 和参数里那个 <code>CAShapeLayer</code> 类型的内容完全一致：</p>
+<pre><code class="language-swift">    let boundingPath = CGPathCreateCopyByStrokingPath(layer.path, nil, 4, kCGLineCapRound, kCGLineJoinMiter, 4)
+
+    layer.bounds = CGPathGetPathBoundingBox(boundingPath)
+</code></pre>
+<p>因为汉堡按钮的上下两个线条接下来会绕着最右点旋转，所以在布局图层的时候，我们需要相应的设置它的锚点 (<code>anchorPoint</code>)：</p>
+<pre><code class="language-swift">    self.top.anchorPoint = CGPointMake(28.0 / 30.0, 0.5)
+    self.top.position = CGPointMake(40, 18)
+
+    self.middle.position = CGPointMake(27, 27)
+    self.middle.strokeStart = hamburgerStrokeStart
+    self.middle.strokeEnd = hamburgerStrokeEnd
+
+    self.bottom.anchorPoint = CGPointMake(28.0 / 30.0, 0.5)
+    self.bottom.position = CGPointMake(40, 36)
+</code></pre>
+<p>接下来就是动画的部分了。当按钮的状态改变的时候，三条直线应该会动态的移动到新的位置。对于那两个外围的直线而言，实现起来很容易。比如最上面的那条线，我先把它往里移动 4 points 让它位于中心位置，然后再逆时针旋转45度，形成了半个 X ：</p>
+<pre><code class="language-swift">    var transform = CATransform3DIdentity
+    transform = CATransform3DTranslate(transform, -4, 0, 0)
+    transform = CATransform3DRotate(transform, -M_PI_4, 0, 0, 1)
+
+    let animation = CABasicAnimation(keyPath: &quot;transform&quot;)
+    animation.fromValue = NSValue(CATransform3D: CATransform3DIdentity)
+    animation.toValue = NSValue(CATransform3D: transform)
+    animation.timingFunction = CAMediaTimingFunction(controlPoints: 0.25, -0.8, 0.75, 1.85)
+    animation.beginTime = CACurrentMediaTime() + 0.25
+
+    self.top.addAnimation(animation, forKey: &quot;transform&quot;)
+    self.top.transform = transform
+</code></pre>
+<p>最下面的那条线的部分交给读者朋友们作为练习。</p>
+<p>接下来，中间的那条直线似乎有点棘手。为了实现理想的效果，我们需要给 <code>CAShapeLayer</code> 的起点和终点分别设置动画效果。</p>
+<p>首先我需要知道这两个属性在两种状态下的值分别是多少。注意，就算是在汉堡状态下，直线也没有从 O 开始。路径稍微的从左边延伸，我们可以稍候应用 <code>timing</code> 函数实现一个酷炫的效果：</p>
+<pre><code class="language-swift">    let menuStrokeStart: CGFloat = 0.325
+    let menuStrokeEnd: CGFloat = 0.9
+
+    let hamburgerStrokeStart: CGFloat = 0.028
+    let hamburgerStrokeEnd: CGFloat = 0.111
+</code></pre>
+<p>接下来我们只需要创建动画并加到图层里即可：</p>
+<pre><code class="language-swift">    let strokeStart = CABasicAnimation(keyPath: &quot;strokeStart&quot;)
+    strokeStart.fromValue = hamburgerStrokeStart
+    strokeStart.toValue = menuStrokeStart
+    strokeStart.duration = 0.5
+    strokeStart.timingFunction = CAMediaTimingFunction(controlPoints: 0.25, -0.4, 0.5, 1)
+
+    self.middle.addAnimation(strokeStart, forKey: &quot;strokeStart&quot;)
+    self.middle.strokeStart = menuStrokeStart
+
+    let strokeEnd = CABasicAnimation(keyPath: &quot;strokeEnd&quot;)
+    strokeEnd.fromValue = hamburgerStrokeEnd
+    strokeEnd.toValue = menuStrokeEnd
+    strokeEnd.duration = 0.6
+    strokeEnd.timingFunction = CAMediaTimingFunction(controlPoints: 0.25, -0.4, 0.5, 1)
+
+    self.middle.addAnimation(strokeEnd, forKey: &quot;strokeEnd&quot;)
+    self.middle.strokeEnd = menuStrokeEnd
+</code></pre>
+<p>把前面的工作整合一下，你可以看到如下的结果：</p>
+<figure data-type="image" tabindex="3"><img src="http://robb.is/img/hamburger-button.gif" alt="" loading="lazy"></figure>
+<p>哈哈哈哈成功实现了，洒家真是太高兴了。你可以在<a href="https://github.com/robb/hamburger-button">这里</a>下载源码。当然你也可以加我的<a href="https://twitter.com/ceterum_censeo">小鸟</a>。玩的开心~</p>
+<hr>
+<p>原文地址</p>
+<ul>
+<li><a href="http://robb.is/working-on/a-hamburger-button-transition/">How to build a nice Hamburger Button transition in Swift</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/uialertcontroller-swift-closures-enum/">
+              <h3 class="post-title">
+                UIAlertController 以及 Swift 中的闭包和枚举
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

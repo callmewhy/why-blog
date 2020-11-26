@@ -1,0 +1,688 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>学习笔记：使用 OpenCV 识别 QRCode | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              学习笔记：使用 OpenCV 识别 QRCode
+            </h2>
+            <div class="post-info">
+              <span>
+                2016-04-23
+              </span>
+              <span>
+                24 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/hyfUb9rp9W/" class="post-tag">
+                  # OpenCV
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="背景">背景</h2>
+<p>识别二维码的项目数不胜数，每次都是开箱即用，方便得很。</p>
+<p>这次想用 OpenCV 从零识别二维码，主要是温习一下图像处理方面的基础概念，熟悉 OpenCV 的常见操作，以及了解二维码识别和编码的基本原理。</p>
+<p>作者本人在图像处理方面还是一名新手，采用的方法大多原始粗暴，如果有更好的解决方案欢迎指教。</p>
+<h2 id="qrcode">QRCode</h2>
+<p>二维码有很多种，这里我选择的是比较常见的 QRCode 作为探索对象。QRCode 全名是 Quick Response Code，是一种可以快速识别的二维码。</p>
+<h3 id="尺寸">尺寸</h3>
+<p>QRCode 有不同的 Version ，不同的 Version 对应着不同的尺寸。将最小单位的黑白块称为 module ，则 QRCode 尺寸的公式如下：</p>
+<blockquote>
+<p>Version V = ((V-1)*4 + 21) ^ 2 modules</p>
+</blockquote>
+<p>常见的 QRCode 一共有40种尺寸：</p>
+<ul>
+<li>Version 1 : 21 * 21 modules</li>
+<li>Version 2 : 25 * 25 modules</li>
+<li>...</li>
+<li>Version 40: 177 * 177 modules</li>
+</ul>
+<h3 id="分类">分类</h3>
+<p>QRCode 分为 Model 1、Model 2、Micro QR 三类：</p>
+<ul>
+<li>Model 1 ：是 Model 2 和 Micro QR 的原型，有 Version 1 到 Version 14 共14种尺寸。</li>
+<li>Model 2 ：是 Model 1 的改良版本，添加了对齐标记，有 Version 1 到 Version 40 共40种尺寸。</li>
+<li>Micro QR ：只有一个定位标记，最小尺寸是 11*11 modules 。</li>
+</ul>
+<h3 id="组成">组成</h3>
+<figure data-type="image" tabindex="1"><img src="http://ww1.sinaimg.cn/large/61d238c7jw1f33jbzaxkxj21e00xcq5b.jpg" alt="" loading="lazy"></figure>
+<p>QRCode 主要由以下部分组成：</p>
+<ul>
+<li>1 - Position Detection Pattern：位于三个角落，可以快速检测二维码位置。</li>
+<li>2 - Separators：一个单位宽的分割线，提高二维码位置检测的效率。</li>
+<li>3 - Timing Pattern：黑白相间，用于修正坐标系。</li>
+<li>4 - Alignment Patterns：提高二维码在失真情况下的识别率。</li>
+<li>5 - Format Information：格式信息，包含了错误修正级别和掩码图案。</li>
+<li>6 - Data：真正的数据部分。</li>
+<li>7 - Error Correction：用于错误修正，和 Data 部分格式相同。</li>
+</ul>
+<p>具体的生成原理和识别细节可以阅读文末的参考文献，比如耗子叔的这篇《<a href="http://coolshell.cn/articles/10590.html">二维码的生成细节和原理</a>》。</p>
+<p>由于二维码的解码步骤比较复杂，而本次学习重点是数字图像处理相关的内容，所以本文主要是解决二维码的识别定位问题，数据解码的工作交给第三方库（比如 <a href="https://github.com/ZBar/ZBar">ZBAR</a>）完成。</p>
+<h2 id="opencv">OpenCV</h2>
+<p>在开始识别二维码之前，还需要补补课，了解一些图像处理相关的基本概念。</p>
+<h3 id="contours">contours</h3>
+<p>轮廓（contour）可以简单理解为一段连续的像素点。比如一个长方形的边，比如一条线，比如一个点，都属于轮廓。而轮廓之间有一定的层级关系，以下图为例：</p>
+<figure data-type="image" tabindex="2"><img src="http://ww1.sinaimg.cn/large/61d238c7jw1f341rc2qogj21e00xcgms.jpg" alt="" loading="lazy"></figure>
+<p>主要说明以下概念：</p>
+<ul>
+<li>external &amp; internal：对于最大的包围盒而言，2 是外部轮廓（external），2a 是内部轮廓（internal）。</li>
+<li>parent &amp; child：2 是 2a 的父轮廓（parent），2a 是 2 的子轮廓（child），3 是 2a 的子轮廓，同理，3a 是 3 的子轮廓，4 和 5 都是 3a 的子轮廓。</li>
+<li>external | outermost：0、1、2 都属于最外围轮廓（outermost）。</li>
+<li>hierarchy level：0、1、2 是同一层级（same hierarchy），都属于 hierarchy-0 ，它们的第一层子轮廓属于 hierarchy-1 。</li>
+<li>first child：4 是 3a 的第一个子轮廓（first child）。实际上 5 也可以，这个看个人喜好了。</li>
+</ul>
+<p>在 OpenCV 中，通过一个数组表达轮廓的层级关系：</p>
+<blockquote>
+<p>[Next, Previous, First_Child, Parent]</p>
+</blockquote>
+<ul>
+<li>Next：同一层级的下一个轮廓。在上图中， 0 的 Next 就是 1 ，1 的 Next 就是 2 ，2 的 Next 是 -1 ，表示没有下一个同级轮廓。</li>
+<li>Previous：同一层级的上一个轮廓。比如 5 的 Previous 是 4， 1 的 Previous 就是 0 ，0 的 Previous 是 -1 。</li>
+<li>First_Child：第一个子轮廓，比如 2 的 First_Child 就是 2a ，像 3a 这种有两个 Child ，只取第一个，比如选择 4 作为 First_Child 。</li>
+<li>Parent：父轮廓，比如 4 和 5 的 Parent 都是 3a ，3a 的 Parent 是 3 。</li>
+</ul>
+<p>关于轮廓层级的问题，参考阅读：《<a href="http://docs.opencv.org/3.1.0/d9/d8b/tutorial_py_contours_hierarchy.html">Tutorial: Contours Hierarchy</a>》</p>
+<h4 id="findcontours">findContours</h4>
+<p>了解了 contour 相关的基础概念之后，接下来就是在 OpenCV 里的具体代码了。</p>
+<p><code>findContours</code> 是寻找轮廓的函数，函数定义如下：</p>
+<blockquote>
+<p>cv2.findContours(image, mode, method) → image, contours, hierarchy</p>
+</blockquote>
+<p>其中：</p>
+<ul>
+<li>image：资源图片，8 bit 单通道，一般需要将普通的 BGR 图片通过 cvtColor 函数转换。</li>
+<li>mode：边缘检测的模式，包括：
+<ul>
+<li>CV_RETR_EXTERNAL：只检索最大的外部轮廓（extreme outer），没有层级关系，只取根节点的轮廓。</li>
+<li>CV_RETR_LIST：检索所有轮廓，但是没有 Parent 和 Child 的层级关系，所有轮廓都是同级的。</li>
+<li>CV_RETR_CCOMP：检索所有轮廓，并且按照二级结构组织：外轮廓和内轮廓。以前面的大图为例，0、1、2、3、4、5 都属于第0层，2a 和 3a 都属于第1层。</li>
+<li>CV_RETR_TREE：检索所有轮廓，并且按照嵌套关系组织层级。以前面的大图为例，0、1、2 属于第0层，2a 属于第1层，3 属于第2层，3a 属于第3层，4、5 属于第4层。</li>
+</ul>
+</li>
+<li>method：边缘近似的方法，包括：
+<ul>
+<li>CV_CHAIN_APPROX_NONE：严格存储所有边缘点，即：序列中任意两个点的距离均为1。</li>
+<li>CV_CHAIN_APPROX_SIMPLE：压缩边缘，通过顶点绘制轮廓。</li>
+</ul>
+</li>
+</ul>
+<h4 id="drawcontours">drawContours</h4>
+<p><code>drawContours</code> 是绘制边缘的函数，可以传入 <code>findContours</code> 函数返回的轮廓结果，在目标图像上绘制轮廓。函数定义如下：</p>
+<blockquote>
+<p>Python: cv2.drawContours(image, contours, contourIdx, color) → image</p>
+</blockquote>
+<p>其中：</p>
+<ul>
+<li>image：目标图像，直接修改目标的像素点，实现绘制。</li>
+<li>contours：需要绘制的边缘数组。</li>
+<li>contourIdx：需要绘制的边缘索引，如果全部绘制则为 -1。</li>
+<li>color：绘制的颜色，为 BGR 格式的 Scalar 。</li>
+<li>thickness：可选，绘制的密度，即描绘轮廓时所用的画笔粗细。</li>
+<li>lineType: 可选，连线类型，分为以下几种：
+<ul>
+<li>LINE_4：4-connected line，只有相邻的点可以连接成线，一个点有四个相邻的坑位。</li>
+<li>LINE_8：8-connected line，相邻的点或者斜对角相邻的点可以连接成线，一个点有四个相邻的坑位和四个斜对角相邻的坑位，所以一共有8个坑位。</li>
+<li>LINE_AA：antialiased line，抗锯齿连线。</li>
+</ul>
+</li>
+<li>hierarchy：可选，如果需要绘制某些层级的轮廓时作为层级关系传入。</li>
+<li>maxLevel：可选，需要绘制的层级中的最大级别。如果为1，则只绘制最外层轮廓，如果为2，绘制最外层和第二层轮廓，以此类推。</li>
+</ul>
+<h3 id="moments">moments</h3>
+<p>矩（moment）起源于物理学的力矩，最早由阿基米德提出，后来发展到统计学，再后来到数学进行归纳。本质上来讲，物理学和统计学的矩都是数学上矩的特例。</p>
+<p>物理学中的矩表示作用力促使物体绕着支点旋转的趋向，通俗理解就像是拧螺丝时用的扭转的力，由矢量和作用力组成。</p>
+<p>数学中的矩用来描述数据分布特征的一类数字特征，例如：算术平均数、方差、标准差、平均差，这些值都是矩。在实数域上的实函数 f(x) 相对于值 c 的 n 阶矩为：</p>
+<figure data-type="image" tabindex="3"><img src="https://upload.wikimedia.org/math/9/0/f/90ffd165ffed509a09057c505a660c66.png" alt="" loading="lazy"></figure>
+<p>常用的矩有两类：</p>
+<ul>
+<li>原点矩（raw moment）：相对原点的矩，即当 c 为 0 的时候。1阶原点矩为期望，也成为中心。</li>
+<li>中心矩（central moment）：相对于中心点的矩，即当 c 为 E(x) 的时候。1阶中心矩为0，2阶中心矩为方差。</li>
+</ul>
+<p>到了图像处理领域，对于灰度图（单通道，每个像素点由一个数值来表示）而言，把坐标看成二维变量 (X, Y)，那么图像可以用二维灰度密度函数 I(x, y) 来表示。</p>
+<p>简单来讲，图像的矩就是图像的像素相对于某个点的分布情况统计，是图像的一种特征描述。</p>
+<h4 id="raw-moment">raw moment</h4>
+<p>图像的原点矩（raw moment）是相对于原点的矩，公式为：</p>
+<figure data-type="image" tabindex="4"><img src="https://upload.wikimedia.org/math/2/2/e/22ebb2a58ea6d43753b1f5885530c114.png" alt="" loading="lazy"></figure>
+<p>对于图像的原点矩而言：</p>
+<ul>
+<li>M<sub>00</sub> 相当于权重系数为 1 。将所有 I(x, y) 相加，对于二值图像而言，相当于将每个点记为 1 然后求和，也就是图像的面积；对于灰度图像而言，则是图像的灰度值的和。</li>
+<li>M<sub>10</sub> 相当于权重为 x 。对二值图像而言，相当于将所有的 x 坐标相加。</li>
+<li>M<sub>01</sub> 相当于权重为 y 。对二值图像而言，相当于将所有的 y 坐标相加。</li>
+<li>图像的几何中心（centroid）等于 (M<sub>10</sub> / M<sub>00</sub> , M<sub>01</sub> / M<sub>00</sub>)。</li>
+</ul>
+<h4 id="central-moment">central moment</h4>
+<p>图像的中心矩（central moment）是相对于几何中心的矩，公式为：</p>
+<figure data-type="image" tabindex="5"><img src="https://upload.wikimedia.org/math/0/7/e/07ee9a5a28d49bda17ea47ff4499b2fb.png" alt="" loading="lazy"></figure>
+<p>可以看到，中心矩表现的是图像相对于几何中心的分布情况。一个通用的描述中心矩和原点矩关系的公式是：</p>
+<figure data-type="image" tabindex="6"><img src="https://upload.wikimedia.org/math/1/0/0/100a93ef0d9f869abe36164a0369f9fa.png" alt="" loading="lazy"></figure>
+<p>中心矩在图像处理中的一个应用便是寻找不变矩（invariant moments），这是一个高度浓缩的图像特征。</p>
+<p>所谓的不变性有三种，分别对应图像处理中的三种仿射变换：</p>
+<ul>
+<li>平移不变性（translation invariants）：中心矩本身就具有平移不变性，因为它是相对于自身的中心的分布统计，相当于是采用了相对坐标系，而平移改变的是整体坐标。</li>
+<li>缩放不变性（scale invariants）：为了实现缩放不变性，可以构造一个规格化的中心矩，即将中心矩除以 (1+(i+j)/2) 阶的0阶中心矩，具体公式见 《<a href="https://en.wikipedia.org/wiki/Image_moment#Scale_invariants">Wiki: scale invariants</a>》。</li>
+<li>旋转不变性（rotation invariants）：通过2阶和3阶的规格化中心矩可以构建7个不变矩组，构成的特征量具有旋转不变性。具体可以看 《<a href="https://en.wikipedia.org/wiki/Image_moment#Rotation_invariants">Wiki: rotation invariants</a>》。</li>
+</ul>
+<p>Hu moment 和 Zernike moment 之类的内容就不继续展开了，感兴趣的可以翻阅相关文章。</p>
+<h2 id="opencv-qrcode">OpenCV + QRCode</h2>
+<p>接下来就是将 QRCode 和 OpenCV 结合起来的具体使用了。</p>
+<p>初步构想的识别步骤如下：</p>
+<ul>
+<li>加载图像，并且进行一些预处理，比如通过高斯模糊去噪。</li>
+<li>通过 Canny 边缘检测算法，找出图像中的边缘</li>
+<li>寻找边缘中的轮廓，将嵌套层数大于 4 的边缘找出，得到 Position Detection Pattern 。</li>
+<li>如果上一步得到的结果不为 3 ，则通过 Timing Pattern 去除错误答案。</li>
+<li>计算定位标记的最小矩形包围盒，获得三个最外围顶点，算出第四个顶点，从而确定二维码的区域。</li>
+<li>计算定位标记的几何中心，连线组成三角形，从而修正坐标，得到仿射变换前的 QRCode 。</li>
+</ul>
+<p>在接下来的内容里，将会尝试用 OpenCV 识别下图中的二维码：</p>
+<figure data-type="image" tabindex="7"><img src="http://ww1.sinaimg.cn/large/61d238c7jw1f35ewx12r0j20zk0qo41q.jpg" alt="" loading="lazy"></figure>
+<h3 id="加载图像">加载图像</h3>
+<p>首先加载图像，并通过 <code>matplotlib</code> 显示图像查看效果：</p>
+<pre><code class="language-python">%matplotlib inline
+import cv2
+from matplotlib import pyplot as plt
+import numpy as np
+
+def show(img, code=cv2.COLOR_BGR2RGB):
+    cv_rgb = cv2.cvtColor(img, code)
+    fig, ax = plt.subplots(figsize=(16, 10))
+    ax.imshow(cv_rgb)
+    fig.show()
+
+img = cv2.imread('1.jpg')
+show(img)
+</code></pre>
+<p>OpenCV 中默认是 BGR 通道，通过 <code>cvtColor</code> 函数将原图转换成灰度图：</p>
+<pre><code class="language-python">img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+</code></pre>
+<h3 id="边缘检测">边缘检测</h3>
+<p>有了灰度图之后，接下来用 Canny 边缘检测算法检测边缘。</p>
+<p>Canny 边缘检测算法主要是以下几个步骤：</p>
+<ul>
+<li>用高斯滤波器平滑图像去除噪声干扰（低通滤波器消除高频噪声）。</li>
+<li>生成每个点的亮度梯度图（intensity gradients），以及亮度梯度的方向。</li>
+<li>通过非极大值抑制（non-maximum suppression）缩小边缘宽度。非极大值抑制的意思是，只保留梯度方向上的极大值，删除其他非极大值，从而实现锐化的效果。</li>
+<li>通过双阈值法（double threshold）寻找潜在边缘。大于高阈值为强边缘（strong edge），保留；小于低阈值则删除；不大不小的为弱边缘（weak edge），待定。</li>
+<li>通过迟滞现象（Hysteresis）处理待定边缘。弱边缘有可能是边缘，也可能是噪音，判断标准是：如果一个弱边缘点附近的八个相邻点中，存在一个强边缘，则此弱边缘为强边缘，否则排除。</li>
+</ul>
+<p>在 OpenCV 中可以直接使用 <code>Canny</code> 函数，不过在那之前要先用 <code>GaussianBlur</code> 函数进行高斯模糊：</p>
+<pre><code class="language-python">img_gb = cv2.GaussianBlur(img_gray, (5, 5), 0)
+</code></pre>
+<p>接下来使用 <code>Canny</code> 函数检测边缘，选择 100 和 200 作为高低阈值：</p>
+<pre><code class="language-python">edges = cv2.Canny(img_gray, 100 , 200)
+</code></pre>
+<p>执行结果如下：</p>
+<figure data-type="image" tabindex="8"><img src="http://ww1.sinaimg.cn/large/61d238c7jw1f35lyz7rmtj20lp0gfwgz.jpg" alt="" loading="lazy"></figure>
+<p>可以看到图像中的很多噪音都被处理掉了，只剩下了边缘部分。</p>
+<h3 id="寻找定位标记">寻找定位标记</h3>
+<p>有了边缘之后，接下来就是通过轮廓定位图像中的二维码。二维码的 Position Detection Pattern 在寻找轮廓之后，应该是有6层（因为一条边缘会被识别出两个轮廓，外轮廓和内轮廓）：</p>
+<figure data-type="image" tabindex="9"><img src="http://ww1.sinaimg.cn/large/61d238c7jw1f35n5f1l1qj218g0xcaei.jpg" alt="" loading="lazy"></figure>
+<p>所以，如果简单处理的话，只要遍历图像的层级关系，然后嵌套层数大于等于5的取出来就可以了：</p>
+<pre><code class="language-python">img_fc, contours, hierarchy = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+hierarchy = hierarchy[0]
+found = []
+for i in range(len(contours)):
+    k = i
+    c = 0
+    while hierarchy[k][2] != -1:
+        k = hierarchy[k][2]
+        c = c + 1
+    if c &gt;= 5:
+        found.append(i)
+
+for i in found:
+    img_dc = img.copy()
+    cv2.drawContours(img_dc, contours, i, (0, 255, 0), 3)
+    show(img_dc)
+</code></pre>
+<p>绘制结果如下：</p>
+<p><img src="http://ww2.sinaimg.cn/large/61d238c7jw1f35new9doej20lp0gfgpp.jpg" alt="" loading="lazy"><br>
+<img src="http://ww4.sinaimg.cn/large/61d238c7jw1f35nf2m0d4j20lp0gfae5.jpg" alt="" loading="lazy"><br>
+<img src="http://ww2.sinaimg.cn/large/61d238c7jw1f35nf83semj20lp0gfn19.jpg" alt="" loading="lazy"><br>
+<img src="http://ww1.sinaimg.cn/large/61d238c7jw1f35nfczlvmj20lp0gf78d.jpg" alt="" loading="lazy"></p>
+<h3 id="定位筛选">定位筛选</h3>
+<p>接下来就是把所有找到的定位标记进行筛选。如果刚好找到三个那就可以直接跳过这一步了。然而，因为这张图比较特殊，找出了四个定位标记，所以需要排除一个错误答案。</p>
+<p>讲真，如果只靠三个 Position Detection Pattern 组成的直角三角形，是没办法从这四个当中排除错误答案的。因为，一方面会有形变的影响，比如斜躺着的二维码，本身三个顶点连线就不是直角三角形；另一方面，极端情况下，多余的那个标记如果位置比较凑巧的话，完全和正确结果一模一样，比如下面这种情况：</p>
+<figure data-type="image" tabindex="10"><img src="http://ww4.sinaimg.cn/large/61d238c7gw1f36r76ershj214l0l3abg.jpg" alt="" loading="lazy"></figure>
+<p>所以我们需要 Timing Pattern 的帮助，也就是定位标记之间的黑白相间的那两条黑白相间的线。解决思路大致如下：</p>
+<ul>
+<li>将4个定位标记两两配对</li>
+<li>将他们的4个顶点两两连线，选出最短的那两根</li>
+<li>如果两根线都不符合 Timing Pattern 的特征，则出局</li>
+</ul>
+<h4 id="寻找定位标记的顶点">寻找定位标记的顶点</h4>
+<p>找的的定位标记是一个轮廓结果，由许多像素点组成。如果想找到定位标记的顶点，则需要找到定位标记的矩形包围盒。先通过 <code>minAreaRect</code> 函数将检查到的轮廓转换成最小矩形包围盒，并且绘制出来：</p>
+<pre><code class="language-python">draw_img = img.copy()
+for i in found:
+    rect = cv2.minAreaRect(contours[i])
+    box = cv2.boxPoints(rect)
+    box = np.int0(box)
+    cv2.drawContours(draw_img,[box], 0, (0,0,255), 2)
+show(draw_img)
+</code></pre>
+<p>绘制如下：</p>
+<figure data-type="image" tabindex="11"><img src="http://ww2.sinaimg.cn/large/61d238c7gw1f35tm4ybi3j20lp0gfdk1.jpg" alt="" loading="lazy"></figure>
+<p>这个矩形包围盒的四个坐标点就是顶点，将它存储在 boxes 中：</p>
+<pre><code class="language-python">boxes = []
+for i in found:
+    rect = cv2.minAreaRect(contours[i])
+    box = cv2.boxPoints(rect)
+    box = np.int0(box)
+    box = map(tuple, box)
+    boxes.append(box)
+</code></pre>
+<h4 id="定位标记的顶点连线">定位标记的顶点连线</h4>
+<p>接下来先遍历所有顶点连线，然后从中选择最短的两根，并将它们绘制出来：</p>
+<pre><code class="language-python">def cv_distance(P, Q):
+    return int(math.sqrt(pow((P[0] - Q[0]), 2) + pow((P[1] - Q[1]),2)))
+
+def check(a, b):
+    # 存储 ab 数组里最短的两点的组合
+    s1_ab = ()
+    s2_ab = ()
+    # 存储 ab 数组里最短的两点的距离，用于比较
+    s1 = np.iinfo('i').max
+    s2 = s1
+    for ai in a:
+        for bi in b:
+            d = cv_distance(ai, bi)
+            if d &lt; s2:
+                if d &lt; s1:
+                    s1_ab, s2_ab = (ai, bi), s1_ab
+                    s1, s2 = d, s1
+                else:
+                    s2_ab = (ai, bi)
+                    s2 = d              
+    a1, a2 = s1_ab[0], s2_ab[0]
+    b1, b2 = s1_ab[1], s2_ab[1]
+    # 将最短的两个线画出来
+    cv2.line(draw_img, a1, b1, (0,0,255), 3)
+    cv2.line(draw_img, a2, b2, (0,0,255), 3)
+
+for i in range(len(boxes)):
+    for j in range(i+1, len(boxes)):
+        check(boxes[i], boxes[j])
+show(draw_img)
+</code></pre>
+<p>绘制结果如下：</p>
+<figure data-type="image" tabindex="12"><img src="http://ww1.sinaimg.cn/large/61d238c7gw1f36hijarwkj20lp0gf439.jpg" alt="" loading="lazy"></figure>
+<h4 id="获取连线上的像素值">获取连线上的像素值</h4>
+<p>有了端点连线，接下来需要获取连线上的像素值，以便后面判断是否是 Timing Pattern 。</p>
+<p>在这之前，为了更方便的判断黑白相间的情况，先对图像进行二值化：</p>
+<pre><code class="language-python">th, bi_img = cv2.threshold(img_gray, 100, 255, cv2.THRESH_BINARY)
+</code></pre>
+<p>接下来是获取连线像素值。由于 OpenCV3 的 Python 库中没有 <code>LineIterator</code> ，只好自己写一个。在《<a href="http://stackoverflow.com/a/32857432/3812779">OpenCV 3.0 Python LineIterator</a>》这个问答里找到了可用的直线遍历函数，可以直接使用。</p>
+<p>以一条 Timing Pattern 为例：</p>
+<figure data-type="image" tabindex="13"><img src="http://ww1.sinaimg.cn/large/61d238c7gw1f36laln556j20lp0gfdjw.jpg" alt="" loading="lazy"></figure>
+<p>打印其像素点看下结果：</p>
+<pre><code class="language-python">[ 255.  255.  255.  255.  255.  255.  255.  255.  255.  255.  255.    0.
+    0.    0.    0.    0.    0.    0.    0.    0.    0.    0.    0.    0.
+    0.    0.    0.    0.    0.    0.    0.    0.    0.    0.    0.    0.
+    0.    0.    0.    0.    0.    0.    0.    0.    0.    0.    0.    0.
+    0.  255.  255.  255.    0.    0.    0.    0.    0.    0.    0.    0.
+    0.    0.    0.    0.    0.    0.    0.    0.    0.  255.  255.  255.
+  255.  255.  255.  255.  255.  255.  255.  255.  255.  255.  255.  255.
+  255.  255.  255.  255.  255.  255.  255.  255.  255.  255.  255.  255.
+    0.    0.    0.  255.  255.  255.  255.  255.  255.  255.  255.  255.
+  255.    0.  255.  255.  255.  255.  255.  255.  255.  255.  255.  255.
+  255.  255.  255.  255.  255.  255.  255.  255.  255.]
+</code></pre>
+<h4 id="修正端点位置">修正端点位置</h4>
+<p>照理说， Timing Pattern 的连线，像素值应该是黑白均匀相间才对，为什么是上面的这种一连一大片的结果呢？</p>
+<p>仔细看下截图可以发现，由于取的是定位标记的外部包围盒的顶点，所以因为误差会超出定位标记的范围，导致没能正确定位到 Timing Pattern ，而是相邻的 Data 部分的像素点。</p>
+<p>为了修正这部分误差，我们可以对端点坐标进行调整。因为 Position Detection Pattern 的大小是固定的，是一个 1-1-3-1-1 的黑白黑白黑相间的正方形，识别 Timing Pattern 的最佳端点应该是最靠里的黑色区域的中心位置，也就是图中的绿色虚线部分：</p>
+<figure data-type="image" tabindex="14"><img src="http://ww2.sinaimg.cn/large/61d238c7gw1f36lht551bj214l0l3jto.jpg" alt="" loading="lazy"></figure>
+<p>所以我们需要对端点坐标进行调整。调整方式是，将一个端点的 x 和 y 值向另一个端点的 x 和 y 值靠近 1/14 个单位距离，代码如下：</p>
+<pre><code class="language-python">a1 = (a1[0] + (a2[0]-a1[0])*1/14, a1[1] + (a2[1]-a1[1])*1/14)
+b1 = (b1[0] + (b2[0]-b1[0])*1/14, b1[1] + (b2[1]-b1[1])*1/14)
+a2 = (a2[0] + (a1[0]-a2[0])*1/14, a2[1] + (a1[1]-a2[1])*1/14)
+b2 = (b2[0] + (b1[0]-b2[0])*1/14, b2[1] + (b1[1]-b2[1])*1/14)
+</code></pre>
+<p>调整之后的像素值就是正确的 Timing Pattern 了：</p>
+<pre><code class="language-python">[ 255.  255.  255.  255.  255.  255.  255.  255.  255.  255.  255.    0.
+    0.    0.    0.    0.    0.    0.    0.    0.    0.    0.  255.  255.
+  255.  255.  255.  255.  255.  255.  255.  255.  255.  255.  255.    0.
+    0.    0.    0.    0.    0.    0.    0.    0.    0.    0.  255.  255.
+  255.  255.  255.  255.  255.  255.  255.  255.  255.  255.  255.    0.
+    0.    0.    0.    0.    0.    0.    0.    0.    0.    0.  255.  255.
+  255.  255.  255.  255.  255.  255.  255.  255.  255.  255.    0.    0.
+    0.    0.    0.    0.    0.    0.    0.    0.    0.    0.  255.  255.
+  255.  255.  255.  255.  255.  255.  255.  255.  255.  255.    0.    0.
+    0.    0.    0.    0.    0.    0.    0.    0.    0.    0.  255.  255.
+  255.  255.  255.  255.  255.  255.  255.  255.  255.]
+</code></pre>
+<h4 id="验证是否是-timing-pattern">验证是否是 Timing Pattern</h4>
+<p>像素序列拿到了，接下来就是判断它是否是 Timing Pattern 了。 Timing Pattern 的特征是黑白均匀相间，所以每段同色区域的计数结果应该相同，而且旋转拉伸平移都不会影响这个特征。</p>
+<p>于是，验证方案是：</p>
+<ul>
+<li>先除去数组中开头和结尾处连续的白色像素点。</li>
+<li>对数组中的元素进行计数，相邻的元素如果值相同则合并到计数结果中。比如 [0,1,1,1,0,0] 的计数结果就是 [1,3,2] 。</li>
+<li>计数数组的长度如果小于 5 ，则不是 Timing Pattern 。</li>
+<li>计算计数数组的方差，看看分布是否离散，如果方差大于阈值，则不是 Timing Pattern 。</li>
+</ul>
+<p>代码如下：</p>
+<pre><code class="language-python">
+def isTimingPattern(line):
+    # 除去开头结尾的白色像素点
+    while line[0] != 0:
+        line = line[1:]
+    while line[-1] != 0:
+        line = line[:-1]
+    # 计数连续的黑白像素点
+    c = []
+    count = 1
+    l = line[0]
+    for p in line[1:]:
+        if p == l:
+            count = count + 1
+        else:
+            c.append(count)
+            count = 1
+        l = p
+    c.append(count)
+    # 如果黑白间隔太少，直接排除
+    if len(c) &lt; 5:
+        return False
+    # 计算方差，根据离散程度判断是否是 Timing Pattern
+    threshold = 5
+    return np.var(c) &lt; threshold
+</code></pre>
+<p>对前面的那条连线检测一下，计数数组为：</p>
+<pre><code class="language-python">[11, 12, 11, 12, 11, 12, 11, 13, 11]
+</code></pre>
+<p>方差为 0.47 。其他非 Timing Pattern 的连线方差均大于 10 。</p>
+<h4 id="找出错误的定位标记">找出错误的定位标记</h4>
+<p>接下来就是利用前面的结果除去错误的定位标记了，只要两个定位标记的端点连线中能找到 Timing Pattern ，则这两个定位标记有效，把它们存进 set 里：</p>
+<pre><code class="language-python">valid = set()
+for i in range(len(boxes)):
+    for j in range(i+1, len(boxes)):
+        if check(boxes[i], boxes[j]):
+            valid.add(i)
+            valid.add(j)
+print valid
+</code></pre>
+<p>结果是：</p>
+<pre><code class="language-python">set([1, 2, 3])
+</code></pre>
+<p>好了，它们中出了一个叛徒，0、1、2、3 四个定位标记，0是无效的，1、2、3 才是需要识别的 QRCode 的定位标记。</p>
+<h3 id="找出二维码">找出二维码</h3>
+<p>有了定位标记之后，找出二维码就轻而易举了。只要找出三个定位标记轮廓的最小矩形包围盒，那就是二维码的位置了：</p>
+<pre><code class="language-python">contour_all = np.array([])
+while len(valid) &gt; 0:
+    c = found[valid.pop()]
+    for sublist in c:
+        for p in sublist:
+            contour_all.append(p)
+
+rect = cv2.minAreaRect(contour_ALL)
+box = cv2.boxPoints(rect)
+box = np.array(box)
+
+draw_img = img.copy()
+cv2.polylines(draw_img, np.int32([box]), True, (0, 0, 255), 10)
+show(draw_img)
+</code></pre>
+<p>绘制结果如下：</p>
+<figure data-type="image" tabindex="15"><img src="http://ww4.sinaimg.cn/large/61d238c7gw1f36q0l76joj20lp0gf0wz.jpg" alt="" loading="lazy"></figure>
+<h2 id="小结">小结</h2>
+<p>后面仿射变换后坐标修正的问题实在是写不动了，这篇就先到这里吧。</p>
+<p>回头看看，是不是感觉绕了个大圈子？</p>
+<p>『费了半天劲，只是为了告诉我第0个定位标记是无效的，我看图也看出来了啊！』</p>
+<p>是的，不过代码里能看到的只是像素值和它们的坐标，为了排除这个错误答案确实花了不少功夫。</p>
+<p>不过这也是我喜欢做数字图像处理的原因之一：可用函数数不胜数，专业概念层出不穷，同样的一个问题，不同的人去解决，就有着不同的答案，交流的过程便是学习的过程。</p>
+<p>啊对了，如果有更好的解决方案，欢迎在评论里指出！</p>
+<p>以及，文章里有一个红包彩蛋，你找到了吗 =。=</p>
+<blockquote>
+<p>财富！名誉！地位！穷得叮当响的海贼汪，哥尔·D·汪海，他在临睡前的一句话让人们趋之若鹜奔向博客：『想要我的红包吗？想要的话可以全部给你，去找吧！我把所有红包都放在那里！』</p>
+</blockquote>
+<hr>
+<p>参考文献：</p>
+<ul>
+<li><a href="http://coolshell.cn/articles/10590.html">二维码的生成细节和原理</a></li>
+<li><a href="http://www.keyence.com/ss/products/auto_id/barcode_lecture/basic_2d/qr/">What is a QR code?</a></li>
+<li><a href="http://www.swisseduc.ch/informatik/theoretische_informatik/qr_codes/docs/qr_standard.pdf">ISO/IEC 18004: QRCode Standard</a></li>
+<li><a href="http://qrcode.meetheed.com/question14.php">What Are The Different Sections In A QR Code?</a></li>
+<li><a href="http://blog.qartis.com/decoding-small-qr-codes-by-hand/">Decoding small QR codes by hand</a></li>
+<li><a href="http://www.explainthatstuff.com/how-data-matrix-codes-work.html">How data matrix codes work</a></li>
+<li><a href="http://www.thonky.com/qr-code-tutorial/">QR Code Tutorial</a></li>
+<li><a href="http://www.ams.org/samplings/feature-column/fc-2013-02">How to Read QR Symbols Without Your Mobile Telephone</a></li>
+<li><a href="http://dsynflo.blogspot.sg/2014/10/opencv-qr-code-detection-and-extraction.html">OpenCV: QRCode detection and extraction</a></li>
+<li><a href="http://docs.opencv.org/3.1.0/d9/d8b/tutorial_py_contours_hierarchy.html">Tutorial Python: Contours Hierarchy</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Pixel_connectivity">Wiki: Pixel Connectivity</a></li>
+<li><a href="https://www.cs.auckland.ac.nz/courses/compsci773s1c/lectures/ImageProcessing-html/topic3.htm#connect">Image Processing: Connect</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Image_moment">Wiki: Image Moment</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Moment_(mathematics)">Wiki: Moment (Mathematics)</a></li>
+<li><a href="http://www.cnblogs.com/ronny/p/3985810.html">图像的矩特征</a></li>
+<li><a href="http://netclass.csu.edu.cn/NCourse/hep120/kj/3-3-1.htm">统计数据的形态特征</a></li>
+<li><a href="http://www.luohanjie.com/tech/%E5%9B%BE%E5%83%8F%E7%9A%84%E7%9F%A9-image-moments/">图像的矩（Image Moments）</a></li>
+<li><a href="http://docs.opencv.org/2.4/modules/imgproc/doc/structural_analysis_and_shape_descriptors.html">OpenCV Doc: Structural analysis and shape descriptors</a></li>
+<li><a href="http://www.sci.utah.edu/~gerig/CS7960-S2010/handouts/CS7960-AdvImProc-MomentInvariants.pdf">CS7960 AdvImProc MomentInvariants</a></li>
+<li><a href="http://docs.opencv.org/3.1.0/da/d22/tutorial_py_canny.html">OpenCV Doc: Canny</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Canny_edge_detector">Wiki: Canny Edge Detector</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Hysteresis">Wiki: Hysteresis</a></li>
+<li><a href="http://stackoverflow.com/a/32857432/3812779">OpenCV 3.0 Python LineIterator</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E8%83%8C%E6%99%AF">背景</a></li>
+<li><a href="#qrcode">QRCode</a>
+<ul>
+<li><a href="#%E5%B0%BA%E5%AF%B8">尺寸</a></li>
+<li><a href="#%E5%88%86%E7%B1%BB">分类</a></li>
+<li><a href="#%E7%BB%84%E6%88%90">组成</a></li>
+</ul>
+</li>
+<li><a href="#opencv">OpenCV</a>
+<ul>
+<li><a href="#contours">contours</a>
+<ul>
+<li><a href="#findcontours">findContours</a></li>
+<li><a href="#drawcontours">drawContours</a></li>
+</ul>
+</li>
+<li><a href="#moments">moments</a>
+<ul>
+<li><a href="#raw-moment">raw moment</a></li>
+<li><a href="#central-moment">central moment</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#opencv-qrcode">OpenCV + QRCode</a>
+<ul>
+<li><a href="#%E5%8A%A0%E8%BD%BD%E5%9B%BE%E5%83%8F">加载图像</a></li>
+<li><a href="#%E8%BE%B9%E7%BC%98%E6%A3%80%E6%B5%8B">边缘检测</a></li>
+<li><a href="#%E5%AF%BB%E6%89%BE%E5%AE%9A%E4%BD%8D%E6%A0%87%E8%AE%B0">寻找定位标记</a></li>
+<li><a href="#%E5%AE%9A%E4%BD%8D%E7%AD%9B%E9%80%89">定位筛选</a>
+<ul>
+<li><a href="#%E5%AF%BB%E6%89%BE%E5%AE%9A%E4%BD%8D%E6%A0%87%E8%AE%B0%E7%9A%84%E9%A1%B6%E7%82%B9">寻找定位标记的顶点</a></li>
+<li><a href="#%E5%AE%9A%E4%BD%8D%E6%A0%87%E8%AE%B0%E7%9A%84%E9%A1%B6%E7%82%B9%E8%BF%9E%E7%BA%BF">定位标记的顶点连线</a></li>
+<li><a href="#%E8%8E%B7%E5%8F%96%E8%BF%9E%E7%BA%BF%E4%B8%8A%E7%9A%84%E5%83%8F%E7%B4%A0%E5%80%BC">获取连线上的像素值</a></li>
+<li><a href="#%E4%BF%AE%E6%AD%A3%E7%AB%AF%E7%82%B9%E4%BD%8D%E7%BD%AE">修正端点位置</a></li>
+<li><a href="#%E9%AA%8C%E8%AF%81%E6%98%AF%E5%90%A6%E6%98%AF-timing-pattern">验证是否是 Timing Pattern</a></li>
+<li><a href="#%E6%89%BE%E5%87%BA%E9%94%99%E8%AF%AF%E7%9A%84%E5%AE%9A%E4%BD%8D%E6%A0%87%E8%AE%B0">找出错误的定位标记</a></li>
+</ul>
+</li>
+<li><a href="#%E6%89%BE%E5%87%BA%E4%BA%8C%E7%BB%B4%E7%A0%81">找出二维码</a></li>
+</ul>
+</li>
+<li><a href="#%E5%B0%8F%E7%BB%93">小结</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/stock-analyse-3/">
+              <h3 class="post-title">
+                股票分析（三）：谁与我生死与共
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

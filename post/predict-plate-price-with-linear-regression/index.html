@@ -1,0 +1,395 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>线性回归：预测上海车牌成交价格 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              线性回归：预测上海车牌成交价格
+            </h2>
+            <div class="post-info">
+              <span>
+                2016-03-13
+              </span>
+              <span>
+                7 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/DxkPQRHFQl/" class="post-tag">
+                  # ML
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="背景分析">背景分析</h2>
+<p>上海是全国最早实行私人轿车牌照拍卖方式来控制交通流量的城市，需要通过投标拍卖的形式购买车牌。</p>
+<p>而车牌的拍卖并不是简单的价高者得，服务器只接受最低可成交价上下300元区间内的出价，意思就是说，如果现在最低成交价是60000，你出价范围必须在57000～63000之间，并且这个最低成交价是在不断变化的，到了最后几分价格上涨太快根本来不及操作。</p>
+<p>如果能提前根据历年数据预测本次拍卖成交价格，那么成功率必定比盲拍要高很多。</p>
+<p>下面就尝试使用 <a href="http://scikit-learn.org/stable/">scikit-learn</a> 这个机器学习工具库来进行价格预测。</p>
+<h2 id="收集数据">收集数据</h2>
+<p>在<a href="http://www.alltobid.com/guopai/">上海国拍竞标网</a>等其他公告网站收集到了最近几年的完整拍卖记录：</p>
+<figure data-type="image" tabindex="1"><img src="http://ww3.sinaimg.cn/large/61d238c7gw1f1v2o3etvrj21kw12m1kx.jpg" alt="" loading="lazy"></figure>
+<p>另外，一些重要的政策搜集也很重要，如果出现异常值可以剔除：</p>
+<ul>
+<li>2013年4月，开始有最低警示价的约束。</li>
+<li>2013年10月，取消警示价。</li>
+<li>2013年11月，重启警示价。</li>
+<li>2014年1月，试行车牌拍卖年度统一警示价72600元。同时，将实行个人、单位分场拍卖。</li>
+<li>2014年4月，投标卡参拍增至6次。</li>
+<li>2014年7月，拍牌者必须提交驾驶证件。</li>
+<li>2014年11月，二手车牌照不能私下交易，买卖纳入统一拍卖平台。</li>
+<li>2015年1月，警示价设定标准为剔除价格波动异常月份后，取最近三个月拍卖成交均价的加权平均值。</li>
+</ul>
+<h2 id="加载数据">加载数据</h2>
+<p>数据和政策都收集好了，接下来就是数据预处理部分。预处理主要是读取数据并除掉无用的列，重命名中文列名等等：</p>
+<pre><code class="language-python">df = pd.read_csv('data.csv')
+df.rename(columns={'拍卖时间':'date','投放数量':'number',\
+                   '警示价':'start','最低成交价':'low',
+                   '平均成交价':'mean','投标人数':'enrollment'},
+          inplace=True)
+df = df[['date','number','start','low','mean','enrollment']]
+df = df[:-1]
+</code></pre>
+<p>这是浏览一下数据大概是这样的：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center"></th>
+<th style="text-align:center">date</th>
+<th style="text-align:center">number</th>
+<th style="text-align:center">start</th>
+<th style="text-align:center">low</th>
+<th style="text-align:center">mean</th>
+<th style="text-align:center">enrollment</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">0</td>
+<td style="text-align:center">2013-4</td>
+<td style="text-align:center">11000</td>
+<td style="text-align:center">83600</td>
+<td style="text-align:center">83900</td>
+<td style="text-align:center">84101</td>
+<td style="text-align:center">26174</td>
+</tr>
+<tr>
+<td style="text-align:center">1</td>
+<td style="text-align:center">2013-5</td>
+<td style="text-align:center">9000</td>
+<td style="text-align:center">79900</td>
+<td style="text-align:center">80700</td>
+<td style="text-align:center">80803</td>
+<td style="text-align:center">222243</td>
+</tr>
+<tr>
+<td style="text-align:center">...</td>
+<td style="text-align:center">...</td>
+<td style="text-align:center">...</td>
+<td style="text-align:center">...</td>
+<td style="text-align:center">...</td>
+<td style="text-align:center">...</td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td style="text-align:center">33</td>
+<td style="text-align:center">2016-2</td>
+<td style="text-align:center">8363</td>
+<td style="text-align:center">80600</td>
+<td style="text-align:center">83200</td>
+<td style="text-align:center">83244</td>
+<td style="text-align:center">196470</td>
+</tr>
+</tbody>
+</table>
+<h2 id="初步观察">初步观察</h2>
+<p>我们可以初步浏览一下数据的关联度。将发放的车牌数、警示价、最低成交价、参与人数四个数据作为 x 变量，将平均成交价作为 y 变量，绘制他们的散点图观察分布情况：</p>
+<pre><code class="language-python">import seaborn as sns
+%matplotlib inline
+sns.pairplot(df,x_vars=['number','start','low','enrollment'],y_vars='mean',size=7,kind='reg')
+</code></pre>
+<p>结果如下：</p>
+<figure data-type="image" tabindex="2"><img src="http://ww4.sinaimg.cn/large/61d238c7gw1f1v4kn0wa6j21kh0dttbo.jpg" alt="" loading="lazy"></figure>
+<p>我看见了什么！一条直线！这简直就是完美吻合啊！</p>
+<figure data-type="image" tabindex="3"><img src="http://ww4.sinaimg.cn/large/61d238c7jw1f01gr1yyapj202s02sglg.jpg" alt="" loading="lazy"></figure>
+<p>定睛一看，是最低成交价。</p>
+<figure data-type="image" tabindex="4"><img src="http://ww3.sinaimg.cn/large/61d238c7jw1f01gosvgvhj202s02s0sj.jpg" alt="" loading="lazy"></figure>
+<p>这本就该完美吻合，最低成交价不会比平均成交价低超过300元。</p>
+<p>然后再想一下，在预测价格的时候，我们可以获取到的数据是：</p>
+<ul>
+<li>日期：2016-3</li>
+<li>投放数量：8310</li>
+<li>警示价：80600</li>
+<li>投标人数：目前未知，当天可知，假设为 200000</li>
+</ul>
+<p>所以我们需要关注的是：投放数量、警示价、投标人数，之间的关系。</p>
+<p>单独绘制警示价和成交均价的柱状图：</p>
+<pre><code>df.plot(y=['start','mean'],kind='Bar',figsize=[16,6])
+</code></pre>
+<p>观察一下警示价与成交均价之间的关系：</p>
+<figure data-type="image" tabindex="5"><img src="http://ww1.sinaimg.cn/large/61d238c7jw1f1v6k8dneaj20q60abjuz.jpg" alt="" loading="lazy"></figure>
+<p>似乎差值十分接近啊，将每个月的差值单独绘制看看：</p>
+<pre><code class="language-python">df['mean-start'] = df['mean']-df['start']
+ax = df.plot(y=['mean-start'],figsize=(16,6))
+ax.set_xticks(df.index)
+ax.set_xticklabels(df.date,rotation=90)
+</code></pre>
+<p>绘制结果如下：</p>
+<figure data-type="image" tabindex="6"><img src="http://ww1.sinaimg.cn/large/61d238c7jw1f1v75y6ms7j20q50b1407.jpg" alt="" loading="lazy"></figure>
+<p>本来差值稳定在1000左右，结果到了2015年突然失去了控制。可能和人数陡增有关，也有可能和某些政策出台有关，暂且就先这样。</p>
+<h2 id="线性回归">线性回归</h2>
+<p>我们先用最基础的线性回归模型来测试一下。</p>
+<p>首先先把 X 和 y 单独取出来，选择投放数量、警示价、投标人数作为 X 变量，将成交均价作为 y 变量：</p>
+<pre><code class="language-python">feature_cols = ['number', 'start', 'enrollment']
+X = df[feature_cols]
+y = df['mean']
+</code></pre>
+<p>然后区分训练集和测试集：</p>
+<pre><code class="language-python">from sklearn.cross_validation import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
+print X_train.shape # (25,3)
+print y_train.shape # (25,)
+print X_test.shape  # (9,3)
+print y_test.shape  # (9,)
+</code></pre>
+<p>然后进行线性回归分析：</p>
+<pre><code class="language-python">from sklearn.linear_model import LinearRegression
+linreg = LinearRegression()
+linreg.fit(X_train, y_train)
+</code></pre>
+<p>看一下各个特征的系数：</p>
+<pre><code class="language-python">print linreg.intercept_
+# 991.359968817
+
+zip(feature_cols, linreg.coef_)
+
+# [('number', 0.31616020072308526),
+# ('start', 0.9541013878172625),
+# ('enrollment', 0.015502778511636449)]
+</code></pre>
+<p>也就是说，最后的公式是：</p>
+<blockquote>
+<p>y = 991.36 + 0.316 * 投放数量 + 0.954 * 警示价 + 0.0155 * 投标人数</p>
+</blockquote>
+<p>这个结果合情合理，和我们一开始观察数据的结果接近。</p>
+<p>接下来评测一下这个模型的准确性，用模型预测测试数据集，计算预测结果和真实结果的 RMSE 值：</p>
+<pre><code class="language-python">from sklearn import metrics
+y_pred = linreg.predict(X_test)
+zip(y_test,y_pred)
+print np.sqrt(metrics.mean_squared_error(y_test, y_pred))
+</code></pre>
+<p>计算结果是：RMSE = 1174.38，并不是很理想。RMSE 可以用于模型评价，后面优化参数的时候可以进行模型之间的对比。</p>
+<p>直观对比一下原始数据和预测数据：</p>
+<pre><code class="language-python">fig, ax = plt.subplots()
+x = np.arange(len(y_test))
+ax.bar(x,y_test-y_pred,width=w)
+fig.show()
+</code></pre>
+<p>显示结果如下：</p>
+<figure data-type="image" tabindex="7"><img src="http://ww2.sinaimg.cn/large/61d238c7jw1f1v8w2vtsij20ar076q37.jpg" alt="" loading="lazy"></figure>
+<p>而理论上，误差值不能超过300才能抢到牌照。可见预测的结果并没太多作用。</p>
+<p>观察到模型中投标人数的影响似乎不是很大，不妨把投标人数从模型中去除，看看结果如何：</p>
+<pre><code class="language-python">feature_cols = ['number', 'start']
+X = df[feature_cols]
+y = df['mean']
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
+linreg.fit(X_train, y_train)
+y_pred = linreg.predict(X_test)
+print np.sqrt(metrics.mean_squared_error(y_test, y_pred))
+</code></pre>
+<p>计算结果是：RMSE = 1318.04，似乎误差更大了。</p>
+<p>模型虽然不准，不过预测一下2016年3月的成交均价还是可以的。从公告来看，发放牌照8310张，警示价80600，假设参与人数为20000，那么预计成交价：</p>
+<pre><code class="language-python">linreg.predict([[8310,80600,200000]])
+</code></pre>
+<p>结果是：83619.78 元。</p>
+<h2 id="小结">小结</h2>
+<p>在 Coursera 上跟着学 Machine Learning 也有段时间了，一直是跟着教程使用 GraphLab Create 来做。今天第一次用 scikit-learn 进行数据分析，即使是最最最简单的线性回归也是一路磕磕绊绊，学艺不精呐。</p>
+<p>如果有更好的想法欢迎和我交流：）</p>
+<p>从结果来看，这个模型预测的结果误差会在 2000 元以内，并不能达到最后需要的 300 元的要求，只能使用其他方法来解决了。</p>
+<p>预知后事如何。</p>
+<figure data-type="image" tabindex="8"><img src="http://ww4.sinaimg.cn/large/61d238c7jw1f01gr1yyapj202s02sglg.jpg" alt="" loading="lazy"></figure>
+<p>我解决了也不会告诉你。</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E8%83%8C%E6%99%AF%E5%88%86%E6%9E%90">背景分析</a></li>
+<li><a href="#%E6%94%B6%E9%9B%86%E6%95%B0%E6%8D%AE">收集数据</a></li>
+<li><a href="#%E5%8A%A0%E8%BD%BD%E6%95%B0%E6%8D%AE">加载数据</a></li>
+<li><a href="#%E5%88%9D%E6%AD%A5%E8%A7%82%E5%AF%9F">初步观察</a></li>
+<li><a href="#%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92">线性回归</a></li>
+<li><a href="#%E5%B0%8F%E7%BB%93">小结</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/stock-analyse-2/">
+              <h3 class="post-title">
+                股票分析（二）：金叉到底灵不灵
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

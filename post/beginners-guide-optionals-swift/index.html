@@ -1,0 +1,416 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Swift 初学手册：可选类型 (Optionals) | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Swift 初学手册：可选类型 (Optionals)
+            </h2>
+            <div class="post-info">
+              <span>
+                2014-09-23
+              </span>
+              <span>
+                10 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/fthQHH2l27/" class="post-tag">
+                  # Swift
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>几周前 (译者注：原文发表于6月24日)，苹果发布了一个全新的编程语言： Swift 。从那时起，我一直在阅读<a href="https://itunes.apple.com/us/book/swift-programming-language/id881256329?mt=11"> Swift 官方手册</a>，并且在 Xcode6 beta 上<s>把玩</s>学习。我开始喜欢上了 Swift 的简洁和语法。我和我的团队一起学习这门全新的语言，并且将它和 Objective-C 这个有着30年历史的老伙计进行对比。同时，我们也在努力探索如何能让初学者们轻松的掌握 Swift 。</p>
+<p>两周前，我们发布了 <a href="http://www.appcoda.com/swift-programming-language-intro/">Swift 基础教程</a>，在接下来的几周里，我们将会写一系列的教程来介绍 Swift 的新特性。这一周，让我们来看看可选类型 (Optionals)。</p>
+<figure data-type="image" tabindex="1"><img src="http://www.appcoda.com/wp-content/uploads/2014/06/swift-optionals-featured.jpg" alt="" loading="lazy"></figure>
+<h2 id="概述">概述</h2>
+<p>在前面的教程里我有提及可选类型的概念，但是没有深入讲解。</p>
+<p>那么，什么是可选类型？</p>
+<p>在 Swift 中，当我们声明一个变量的时候，默认情况下是 非可选类型 (non-optional) ，也就是说，你必须指定一个不为 nil 的值。如果你硬是要把一个非可选类型的变量设为 nil ，那么编译器就会告诉你：“嘿你不能把它设置成 nil 好嘛”。没错就是这样：</p>
+<pre><code class="language-swift">    var message: String = &quot;Swift is awesome!&quot; // OK
+    message = nil // compile-time error
+</code></pre>
+<p>当然编译器给出的错误消息可就没这么友善了，一般会显示 <code>Could not find an overload for ‘__conversion’ that accepts the supplied arguments</code> 这种错误。同样，在类中声明的变量也是这样，默认情况下是非可选类型的：</p>
+<pre><code class="language-swift">    class Messenger {
+        var message1: String = &quot;Swift is awesome!&quot; // OK
+        var message2: String // compile-time error
+    }
+</code></pre>
+<p>在 <code>message2</code> 处你会得到一个编译错误，因为它没有初始值。对于那些从 Objective-C 一路走来的小伙伴们可能会感觉很意外，在 Objective-C 里这种情况根本就不会有问题好嘛：</p>
+<pre><code class="language-swift">    NSString *message = @&quot;Objective-C will never die!&quot;;
+    message = nil;
+
+    class Messenger {
+        NSString *message1 = @&quot;Objective will never die!&quot;;
+        NSString *message2;
+    }
+</code></pre>
+<p>不过，你也可以在 Swift 中声明一个没有初始化的变量， Swift 提供了可选类型来表示没有值的情况。只需要在声明的类型后面加上问号 <code>?</code> 即可：</p>
+<pre><code class="language-swift">    class Messenger {
+        var message1: String = &quot;Swift is awesome!&quot; // OK
+        var message2: String? // OK
+    }
+</code></pre>
+<p>你也可以给可选类型的变量们赋值，如果不赋值那么它的值自动就设为 nil 。</p>
+<h2 id="缘由">缘由</h2>
+<p>为什么要这么设计呢？苹果官方给出的解释是，因为 Swift 是一门类型安全的语言。从前面的例子中可以看出， Swift的可选类型会进行编译检查，防止一些常见的运行时错误。让我们看一看下面的例子，这样可以更好地理解。</p>
+<p>比如说，在 Objective-C 中有如下代码：</p>
+<pre><code class="language-objc">    - (NSString *)findStockCode:(NSString *)company {
+        if ([company isEqualToString:@&quot;Apple&quot;]) {
+            return @&quot;AAPL&quot;;
+        } else if ([company isEqualToString:@&quot;Google&quot;]) {
+            return @&quot;GOOG&quot;;
+        }
+
+        return nil;
+    }
+</code></pre>
+<p>在上面的方法里，你可以用 <code>findStockCode</code> 方法来获取到股票的代码，显然只有 Apple 和 Google 的查询会返回值，其他情况都会返回 nil 。</p>
+<p>假设我们在下面的代码中会调用这个方法：</p>
+<pre><code class="language-objc">    NSString *stockCode = [self findStockCode:@&quot;Facebook&quot;]; // nil is returned
+    NSString *text = @&quot;Stock Code - &quot;;
+    NSString *message = [text stringByAppendingString:stockCode]; // runtime error
+    NSLog(@&quot;%@&quot;, message);
+</code></pre>
+<p>这段代码在编译时不会有任何问题，但是如果输入的是 Facbook 则会返回 nil ，导致运行时错误。</p>
+<p>而在 Swift 里，和运行时错误不同， Swift 会在编译时就提示错误信息，我们可以把上面的代码在 Swift 中重写：</p>
+<pre><code class="language-swift">    func findStockCode(company: String) -&gt; String? {
+       if (company == &quot;Apple&quot;) {
+          return &quot;AAPL&quot;
+       } else if (company == &quot;Google&quot;) {
+          return &quot;GOOG&quot;
+       }
+
+       return nil
+    }
+
+    var stockCode:String? = findStockCode(&quot;Facebook&quot;)
+    let text = &quot;Stock Code - &quot;
+    let message = text + stockCode  // compile-time error
+    println(message)
+</code></pre>
+<p>在上面的代码里， <code>stockCode</code> 被定义成了可选类型，这意味着它可以有一个 string 的值，也可以为 nil 。代码无法通过编译，会提示一个错误：<code>value of optional type String? is not unwrapped</code>。</p>
+<p>正如你在例子中看到的，Swift 的可选类型加强了 nil 检测，为开发者提供了编译时的检查，合理的使用可选类型可以有效地提高代码质量。</p>
+<h2 id="强制解析">强制解析</h2>
+<p>慢着慢着，前面说了那么多好处，但是代码还是没通过编译啊！别急，我们需要检测一下 <code>stockCode</code> 是否为 nil ，把代码做如下修改：</p>
+<pre><code class="language-swift">    var stockCode:String? = findStockCode(&quot;Facebook&quot;)
+    let text = &quot;Stock Code - &quot;
+    if stockCode {
+        let message = text + stockCode!
+        println(message)
+    }
+</code></pre>
+<p>和 Objective-C 中类似，我们先对它进行检测，看看它是不是有值。如果不为 nil ，我们可以在后面加上一个感叹号 <code>!</code> 进行解析，这样 Xcode 就知道：“嗯我可以使用这个值了”。在 Swift 里我们称之为 强制解析 (forced unwrapping) ，通过感叹号强制获取可选类型的真实值。</p>
+<p>再回到上面的代码中。我们只是在强制解析之前，检测了一下看看变量是否为 nil 而已。这和 Objective-C 中常见的 nil 检测也没啥区别啊。如果我忘了检测呢？看下下面的代码：</p>
+<pre><code class="language-swift">    var stockCode:String? = findStockCode(&quot;Facebook&quot;)
+    let text = &quot;Stock Code - &quot;
+    let message = text + stockCode!  // runtime error
+</code></pre>
+<p>这样我们不会得到编译错误，因为我们用了强制解析，编译器已经假定这个可选类型肯定有值。显然这样是错误的，运行的时候会得到如下错误：</p>
+<pre><code>    fatal error: Can’t unwrap Optional.None
+</code></pre>
+<h2 id="可选绑定">可选绑定</h2>
+<p>除了强制解析，可选绑定 (optional binding) 是一个更值得推荐的解析方案。 你可以用可选绑定来检测一个可选类型的值有没有值，如果有值则解析出来并存储到一个临时的变量里。</p>
+<p>废话少说，放码过来！让我们来看看下面这个使用了可选绑定的示例代码：</p>
+<pre><code class="language-swift">    var stockCode:String? = findStockCode(&quot;Facebook&quot;)
+    let text = &quot;Stock Code - &quot;
+    if let tempStockCode = stockCode {
+        let message = text + tempStockCode
+        println(message)
+    }
+</code></pre>
+<p>代码中的 <code>if let</code> (或者 <code>if var</code> ) 是可选绑定的两个关键词。翻译成人类语言，大概是这个样子：“如果 <code>stackCode</code> 它有值，把它的值存到 <code>tempStackCode</code> 里，然后继续执行接下来的代码块。如果它没值，跳过后面的代码块。” 因为 <code>tempStockCode</code> 是一个新的常量，所以你不再需要添加 <code>!</code> 后缀。</p>
+<p>你可以把方法调用放在 <code>if</code> 里，这样代码看起来更简洁：</p>
+<pre><code class="language-swift">    let text = &quot;Stock Code - &quot;
+    if var stockCode = findStockCode(&quot;Apple&quot;) {
+        let message = text + stockCode
+        println(message)
+    }
+</code></pre>
+<p>这里， <code>stockCode</code> 不再是可选类型，我们可以直接使用。如果 <code>findStockCode</code> 方法返回了 nil 则会跳过后面的代码块。</p>
+<h2 id="可选链">可选链</h2>
+<p>在解释可选链之前，我们先对原始代码做一些小小的修改。我们创建一个新的类叫做 <code>Stock</code> ，它有 <code>code</code> 和 <code>price</code> 两个可选类型的属性。<code>findStockCode</code> 函数用来返回一个 <code>Stock</code> 对象，而不是一个 <code>String</code> 对象：</p>
+<pre><code class="language-swift">    class Stock {
+        var code: String?
+        var price: Double?
+    }
+
+    func findStockCode(company: String) -&gt; Stock? {
+        if (company == &quot;Apple&quot;) {
+            let aapl: Stock = Stock()
+            aapl.code = &quot;AAPL&quot;
+            aapl.price = 90.32
+
+            return aapl
+
+        } else if (company == &quot;Google&quot;) {
+            let goog: Stock = Stock()
+            goog.code = &quot;GOOG&quot;
+            goog.price = 556.36
+
+            return goog
+        }
+
+        return nil
+    }
+</code></pre>
+<p>接下来，我们先用 <code>findStockCode</code> 函数查找股票的代码，然后计算购买100股所需要的总价：</p>
+<pre><code class="language-swift">    if let stock = findStockCode(&quot;Apple&quot;) {
+        if let sharePrice = stock.price {
+            let totalCost = sharePrice * 100
+            println(totalCost)
+        }
+    }
+</code></pre>
+<p>函数的返回值是可选类型，我们通过可选绑定来检测是否有值，显然股票的价格也是一个可选类型，于是我们继续使用 <code>if let</code> 来检测它是否有值。</p>
+<p>上面的代码没有任何问题，不过这一层一层的 <code>if</code> 嵌套实在是太麻烦了，如果可选类型层次多点，很可能形成下面的情况：</p>
+<pre><code class="language-swift">    if let x = xxx() {
+        if let x = xxx() {
+            if let x = xxx() {
+                if let x = xxx() {
+                    if let x = xxx() {
+                        if let x = xxx() {
+                            if let x = xxx() {
+                                if let x = xxx() {
+                                    if let x = xxx() {
+                                        if let x = xxx() {
+                                            if let x = xxx() {
+                                                if let x = xxx() {
+
+                                                }        
+                                            }
+                                        }
+                                    }
+                                }   
+                            }
+                        }        
+                    }
+                }
+            }
+        }   
+    }
+</code></pre>
+<p><s>呃上面这段代码是我自己瞎写的，原文中并没有嗯。</s></p>
+<p>除了使用 <code>if let</code> ，我们可以通过可选链来简化代码。我们可以用问号将多个可选类型串联起来：</p>
+<pre><code class="language-swift">    if let sharePrice = findStockCode(&quot;Apple&quot;)?.price {
+        let totalCost = sharePrice * 100
+        println(totalCost)
+    }
+</code></pre>
+<p>可选链提供了访问变量的另一种方式，代码现在看上去也更加的干净整洁。上面只是一个基础的使用，更加深入的学习可以参考<a href="https://developer.apple.com/library/ios/documentation/swift/conceptual/swift_programming_language/OptionalChaining.html">官方文档</a>。</p>
+<h2 id="swift-和-objective-c-的交互">Swift 和 Objective-C 的交互</h2>
+<p>Swift 中的可选类型十分强大，尽管可能一开始的时候需要花点时间慢慢熟悉。可选类型让你的代码更清晰，而且可以避免一些 nil 引起的问题。</p>
+<p>Swift 有设计与 Objective-C 交互的 API，当我们需要和 UIKit 或者其他框架的 API 交互的时候，你肯定会遇到可选类型。下面列举一些 UITableView 中可能会遇到的可选类型：</p>
+<pre><code class="language-swift">    func numberOfSectionsInTableView(tableView: UITableView?) -&gt; Int {
+        // Return the number of sections.
+        return 1
+    }
+
+    func tableView(tableView: UITableView?, numberOfRowsInSection section: Int) -&gt; Int {
+        // Return the number of rows in the section.
+        return recipes.count
+    }
+
+
+    func tableView(tableView: UITableView!, cellForRowAtIndexPath indexPath: NSIndexPath!) -&gt; UITableViewCell! {
+        let cell = tableView.dequeueReusableCellWithIdentifier(&quot;Cell&quot;, forIndexPath: indexPath) as UITableViewCell
+
+        cell.textLabel.text = recipes[indexPath.row]
+
+        return cell
+    }
+</code></pre>
+<h2 id="总结">总结</h2>
+<p>对于一名开发者来说，理解可选类型的工作原理是十分必要的。这也就是为什么我们专门写一篇文章来介绍可选类型。它可以帮助开发者在编译阶段就发现隐藏的问题，从而避免运行时错误。当你习惯了这种语法，你将会愈发欣赏可选类型的魅力所在。</p>
+<p>享受这个美好的世界吧。真棒。(<s>没错这句也是我乱加的</s>)</p>
+<hr>
+<p>原文地址</p>
+<ul>
+<li><a href="http://www.appcoda.com/beginners-guide-optionals-swift/">A Beginner’s Guide to Optionals in Swift</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E6%A6%82%E8%BF%B0">概述</a></li>
+<li><a href="#%E7%BC%98%E7%94%B1">缘由</a></li>
+<li><a href="#%E5%BC%BA%E5%88%B6%E8%A7%A3%E6%9E%90">强制解析</a></li>
+<li><a href="#%E5%8F%AF%E9%80%89%E7%BB%91%E5%AE%9A">可选绑定</a></li>
+<li><a href="#%E5%8F%AF%E9%80%89%E9%93%BE">可选链</a></li>
+<li><a href="#swift-%E5%92%8C-objective-c-%E7%9A%84%E4%BA%A4%E4%BA%92">Swift 和 Objective-C 的交互</a></li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/todo-list-in-swift/">
+              <h3 class="post-title">
+                用 Swift 开发一个 TODO 应用
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

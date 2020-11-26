@@ -1,0 +1,327 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AR 开发小记 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              AR 开发小记
+            </h2>
+            <div class="post-info">
+              <span>
+                2016-05-06
+              </span>
+              <span>
+                7 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/NwDfBe_HRR/" class="post-tag">
+                  # AR
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="背景">背景</h2>
+<p>前段时间合伙人想做一个早教类的 AR 项目，并且扔给了我一个小册子：</p>
+<figure data-type="image" tabindex="1"><img src="http://ww2.sinaimg.cn/large/61d238c7gw1f3lud6s2hkj20zk0qo40h.jpg" alt="" loading="lazy"></figure>
+<p>大概的功能是：</p>
+<ul>
+<li>iPad 扫瞄识别右侧的积木</li>
+<li>屏幕上出现主角按照顺序执行操作</li>
+<li>最后显示运行结果，闯关是否成功</li>
+</ul>
+<p>折腾了一段时间，基本做完了上述功能，可以在<a href="http://weibo.com/p/230444ad8565599fd6d8e3e14b195d71d27341">这里</a>看到演示的效果。</p>
+<p>整个项目从第一次提交代码，到最后出演示效果，花了两天的时间，看了下 git commit 累计花了 25 小时（主要是炒股浪费了不少时间，也浪费了不少钱，此处略过不谈）。</p>
+<p>看上去最终的开发时间不多，不过前面还是做了不少功课，在此简单的记录一下。</p>
+<p>文章中不会涉及任何工具的具体使用过程，所有的基础操作在官方文档里都有详细的讲解。</p>
+<h2 id="了解">了解</h2>
+<p>正式开发之前，先做了一些准备工作，主要是搜索 AR 相关的功能，看看有哪些工具可供使用。一番调研对比和测试之后整理了以下待选方案：</p>
+<ul>
+<li><a href="http://opencv.org/">OpenCV</a>：计算机视觉库，主要进行右侧积木的识别。</li>
+<li><a href="https://vuforia.com/">Vuforia</a>：可以方便的在软件中实现 AR 功能，主要用于关卡识别和主角模型展示。</li>
+<li><a href="https://www.python.org/">Python</a>：主要是围绕 OpenCV 的一系列科学运算工具，用于快速开发图像识别功能的原型。</li>
+<li><a href="https://unity3d.com/">Unity3D</a>：一款 3D 游戏引擎，可以很方便的进行 3D 场景搭建。</li>
+<li><a href="https://developer.apple.com/library/ios/documentation/3DDrawing/Conceptual/OpenGLES_ProgrammingGuide/Introduction/Introduction.html">OpenGL</a>：如果不用 Unity3D 就需要在 iOS 项目里基于 Vuforia 手写 OpenGL 实现 AR 功能。</li>
+</ul>
+<h2 id="积木识别测试">积木识别测试</h2>
+<p>在正式开发之前，先使用 OpenCV for Python 开发图像识别原型，看看这个项目好不好搞。</p>
+<p>在 Jupyter Notebook 里开发图像识别项目真是一种非常流畅的体验：</p>
+<figure data-type="image" tabindex="2"><img src="http://ww4.sinaimg.cn/large/61d238c7gw1f3lv1jfuyrj21kw198ti0.jpg" alt="" loading="lazy"></figure>
+<p>加载图像之后，只需要在新的 Cell 里写图像识别相关的算法就可以了，图像数据已经被加载到了内存里，不需要每次运行都执行全部脚本。然后 OpenCV 进行图像处理， numpy 进行像素运算， matplotlib 展示图像，一条龙服务，十分方便。</p>
+<p>具体的图像识别算法不再赘述，上一篇《<a href="http://blog.callmewhy.com/2016/04/23/opencv-find-qrcode-position/">使用 OpenCV 识别 QRCode</a>》里基本都已包含。</p>
+<h2 id="ios-app">iOS App</h2>
+<p>搞定了积木识别之后，接下来就是做 AR 功能，主要有两个方案可供选择： iOS App 或者 Unity3D 。</p>
+<p>先用 iOS App 试一下效果。</p>
+<p>Vuforia 官方的 <a href="https://developer.vuforia.com/downloads/samples">Sample Code</a> 里已经包含了一个可以完整运行的项目，可以下载体验一下。然后用 <code>pod 'OpenCV'</code> 就能装好 OpenCV for C++ ，基本的开发环境就齐全了。折腾了一段时间之后我决定放弃使用 iOS App 的方案，因为实在是太繁琐了。</p>
+<p>首先需要一个 <code>ARSession</code> 对象来管理 AR 的相关事务，里面包括了视频的渲染（需要等比拉伸并裁切之后渲染在屏幕上）、资源的回收和处理（比如手机退到后台）、线程切换（绘图需要在主线程）等等；然后需要一个 <code>ARViewController</code> 对象来负责具体页面的显示，里面包括基础资源的加载、识别模型的激活与切换、设备相关的事件监听等等；然后需要一个 <code>ARImageTargetGLView</code> 来渲染 AR 场景，包括 buffer 的维护、model 的加载、shader 的渲染等等。</p>
+<p>而最让我崩溃的，是 Swift、Objective-C、C++ 的混写，项目中大量这样的代码：</p>
+<pre><code class="language-c++">[self setFramebuffer];
+glVertexAttribPointer(vertexHandle, 3, GL_FLOAT, GL_FALSE, 0, (const GLvoid*)buildingModel.vertices);
+glEnableVertexAttribArray(textureCoordHandle);
+if (offTargetTrackingEnabled) {
+    glBindTexture(GL_TEXTURE_2D, augmentationTexture[3].textureID);
+} else {
+    glBindTexture(GL_TEXTURE_2D, augmentationTexture[targetIndex].textureID);
+}
+glUniformMatrix4fv(mvpMatrixHandle, 1, GL_FALSE, (const GLfloat*)&amp;modelViewProjection.data[0]);
+glUniform1i(texSampler2DHandle, 0);
+glDisableVertexAttribArray(textureCoordHandle);
+</code></pre>
+<p>最后发现写了上千行代码，几十个文件，才只是搭建好了一个基础的 AR 开发环境，还不包括自定义的 3D 效果和自己的业务代码，细思恐极，赶紧放弃。</p>
+<h2 id="unity3d">Unity3D</h2>
+<p>接下来就是转投 Unity3D 的怀抱。</p>
+<p>遇到的第一个问题是如何集成 OpenCV ，通过买买买这个 <a href="https://www.assetstore.unity3d.com/en/#!/content/21088">OpenCV for Unity</a> 插件解决了，它是基于 OpenCV for Java 的，所以接口和 Python C++ 相比略有些变化，不过基本是相同的。在整合 OpenCV 和 Vuforia 的时候看到了 OpenCV for Unity 开发团队的 <a href="https://github.com/EnoxSoftware/VoforiaWithOpenCVForUnitySample">Voforia with OpenCV for Unity Sample</a> 这个示例项目，再结合自带的 <a href="https://github.com/EnoxSoftware/OpenCVForUnity">Samples</a> 文件基本就没问题了。</p>
+<p>遇到的第二个问题是 Unity3D 中如何处理项目文件的问题，在 iOS 项目里我的项目目录是这样的：</p>
+<ul>
+<li>General
+<ul>
+<li>Macro</li>
+<li>View</li>
+<li>Extension</li>
+</ul>
+</li>
+<li>Section</li>
+<li>Vendor</li>
+</ul>
+<p>在 Unity3D 里，由于项目里不止是代码文件，还包括 fbx 之类的模型文件、 mat 等材质文件、prefab 等预设文件、unity 等场景文件，如果都放在一起十分混乱，很难检索。</p>
+<p>参照 iOS 的项目目录，现在 Unity3D 里的项目里是这样安排的：</p>
+<ul>
+<li>General：全局通用的文件
+<ul>
+<li>Scripts：通用的代码文件
+<ul>
+<li>Class：自定义的通用类</li>
+<li>Extension：基础模块的扩展，比如 List 的方差运算等等</li>
+<li>Static：静态工具类</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Section：业务相关的文件，一个场景一个文件夹
+<ul>
+<li>Scene1：具体场景的文件夹，包括所有该场景下的资源
+<ul>
+<li>Scripts：该场景所需的代码</li>
+<li>Prefabs：该场景内的预设对象</li>
+<li>Resources：该场景下的其他资源
+<ul>
+<li>Materials：该场景下的材质</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>基本上单个场景的目录结构和 General 的目录结构是一致的， General 像是所有场景的『基类』。</p>
+<p>遇到的第三个问题是 OpenCV 绘图如何处置的问题。我希望能够将 OpenCV 的一些 Debug 信息绘制在屏幕上，比如找到的 contours 、比如计算出的方差/均值、比如画面里的积木总数等等，可以很方便的了解图像识别的情况，找到出现问题的原因。本来是通过注释掉绘图代码的方式进行状态切换，后来发现实在是太麻烦了，于是在所有的 OpenCV 绘图方法外面套了一层，放在 <code>CVUtil</code> 里：</p>
+<pre><code class="language-c#">public class CVUtil {
+    public class Draw {
+        public static void Text(Mat mat, string str, double x, double y, 
+            double fontScale = 1, Scalar color = null,
+            LogLevel level = LogLevel.Debug) {
+            if (level &gt;= Global.CurrentLogLevel) {
+                Imgproc.putText (mat, str, new Point (x,y), Core.FONT_HERSHEY_PLAIN, fontScale, color); 
+            }
+        }
+
+        public static void Rectangle(Mat mat, OpenCVForUnity.Rect rect, 
+            Scalar color = null, int thickness = 1,
+            LogLevel level = LogLevel.Debug) {
+            if (level &gt;= Global.CurrentLogLevel) {
+                Imgproc.rectangle (mat, rect.tl (), rect.br (), color, thickness);
+            }
+        }
+    }
+}
+</code></pre>
+<p>然后这样只要切换全局变量 <code>Global.CurrentLogLevel</code> 就能控制 Debug 内容的显示和隐藏了。</p>
+<p>整个 Unity3D 项目里，AR 相关的渲染完全不用操心，只需要把 Vuforia 里的 ImageTarget 这个 Prefab 脱拽到场景中就能实现基础的 AR 功能。</p>
+<h2 id="小结">小结</h2>
+<p>就简单的写这么多啦，没什么干货，只是简单回顾一下自己的开发过程。</p>
+<p>AR 开发的技术门槛并不是很高，目前现成的 SDK 很多，可以自行选择。而如何通过 AR 做出有趣的产品，这才是核心所在。</p>
+<p>玩得开心。</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E8%83%8C%E6%99%AF">背景</a></li>
+<li><a href="#%E4%BA%86%E8%A7%A3">了解</a></li>
+<li><a href="#%E7%A7%AF%E6%9C%A8%E8%AF%86%E5%88%AB%E6%B5%8B%E8%AF%95">积木识别测试</a></li>
+<li><a href="#ios-app">iOS App</a></li>
+<li><a href="#unity3d">Unity3D</a></li>
+<li><a href="#%E5%B0%8F%E7%BB%93">小结</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/opencv-find-qrcode-position/">
+              <h3 class="post-title">
+                学习笔记：使用 OpenCV 识别 QRCode
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,1144 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RxSwift 入坑手册 Part0 - 基础概念 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              RxSwift 入坑手册 Part0 - 基础概念
+            </h2>
+            <div class="post-info">
+              <span>
+                2015-09-21
+              </span>
+              <span>
+                21 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/fthQHH2l27/" class="post-tag">
+                  # Swift
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>（前面的坑还没填完，我又来开坑了。。。Part 0 走起！）</p>
+<p><a href="https://github.com/ReactiveX/RxSwift">RxSwift</a> 是我在 Github 上关注已久的一个项目，今天花点时间过了一下它的示例代码，感觉很有意思。</p>
+<p>我主要是通过项目里的 <a href="https://github.com/ReactiveX/RxSwift/tree/master/Rx.playground">Rx.playground</a> 进行学习和了解的，这种方式确实便捷高效。只需要把文档用 <code>/*: */</code> 注释即可，直接用 Markdown 编写，简单方便。不过 Xcode7 中这种方式现在还不是很稳定，会有大量的空行，而且有个最大的问题就是阅读到中间然后切到其他文件再切回来的时候，阅读的进度条是从头开始的，并不能记录上次阅读的位置。心累。</p>
+<p>下面是我的简单笔记，只是把学习过程中的收获记录下来，大部分内容来自于项目内的 playground 。注意！是<strong>很大部分</strong>！而且操场里图文并茂，很容易理解。所以，各位如果感兴趣，建议 clone 官方项目，跑个操场玩玩。</p>
+<p>参考文献中罗列了我在学习过程中查阅的相关资料，可以作为补充阅读。</p>
+<h2 id="supportcode">SupportCode</h2>
+<p>在进入正题之前，先看下项目里的 <code>SupportCode.swift</code> ，主要为 playground 提供了两个便利函数。</p>
+<p>一个是 <code>example</code> 函数，专门用来写示例代码的，统一输出 log 便于标记浏览，同时还能保持变量不污染全局：</p>
+<pre><code class="language-swift">public func example(description: String, action: () -&gt; ()) {
+    print(&quot;\n--- \(description) example ---&quot;)
+    action()
+}
+</code></pre>
+<p>另一个是 <code>delay</code> 函数，通过 <code>dispatch_after</code> 用来演示延时的：</p>
+<pre><code class="language-swift">public func delay(delay:Double, closure:()-&gt;()) {
+    dispatch_after(
+        dispatch_time(
+            DISPATCH_TIME_NOW,
+            Int64(delay * Double(NSEC_PER_SEC))
+        ),
+        dispatch_get_main_queue(), closure)
+}
+</code></pre>
+<h2 id="introduction">Introduction</h2>
+<p>主要介绍了 Rx 的基础： <code>Observable</code> 。 <code>Observable&lt;Element&gt;</code> 是观察者模式中被观察的对象，相当于一个事件序列 (<code>GeneratorType</code>) ，会向订阅者发送新产生的事件信息。事件信息分为三种：</p>
+<ul>
+<li><code>.Next(value)</code> 表示新的事件数据。</li>
+<li><code>.Completed</code> 表示事件序列的完结。</li>
+<li><code>.Error</code> 同样表示完结，但是代表异常导致的完结。</li>
+</ul>
+<p>（打个岔：协议命名，想起来上午汤哥在<a href="http://weibo.com/1747002695/CBH3I4a1X?from=page_1005051747002695_profile&amp;wvr=6&amp;mod=weibotime&amp;type=comment">微博</a>说的一段话：</p>
+<blockquote>
+<p>另外，我觉得 protocol 名字用形容词会更加语义分明，比如 Swift : Flyable, Killable, Visible。全用名词的话显得比较生硬，比如 Swift : Head, Wings, Ass。</p>
+</blockquote>
+<h3 id="empty">empty</h3>
+<p><code>empty</code> 是一个空的序列，它只发送 <code>.Completed</code> 消息。</p>
+<pre><code class="language-swift">example(&quot;empty&quot;) {
+    let emptySequence: Observable&lt;Int&gt; = empty()
+
+    let subscription = emptySequence
+        .subscribe { event in
+            print(event)
+        }
+}
+
+--- empty example ---
+Completed
+</code></pre>
+<h3 id="never">never</h3>
+<p><code>never</code> 是没有任何元素、也不会发送任何事件的空序列。</p>
+<pre><code class="language-swift">example(&quot;never&quot;) {
+    let neverSequence: Observable&lt;String&gt; = never()
+
+    let subscription = neverSequence
+        .subscribe { _ in
+            print(&quot;This block is never called.&quot;)
+        }
+}
+
+--- never example ---
+</code></pre>
+<h3 id="just">just</h3>
+<p><code>just</code> 是只包含一个元素的序列，它会先发送 <code>.Next(value)</code> ，然后发送 <code>.Completed</code> 。</p>
+<pre><code class="language-swift">example(&quot;just&quot;) {
+    let singleElementSequence = just(32)
+
+    let subscription = singleElementSequence
+        .subscribe { event in
+            print(event)
+        }
+}
+
+--- just example ---
+Next(32)
+Completed
+</code></pre>
+<h3 id="sequenceof">sequenceOf</h3>
+<p><code>sequenceOf</code> 可以把一系列元素转换成事件序列。</p>
+<pre><code class="language-swift">example(&quot;sequenceOf&quot;) {
+    let sequenceOfElements/* : Observable&lt;Int&gt; */ = sequenceOf(0, 1, 2, 3)
+
+    let subscription = sequenceOfElements
+        .subscribe { event in
+            print(event)
+        }
+}
+
+--- sequenceOf example ---
+Next(0)
+Next(1)
+Next(2)
+Next(3)
+Completed
+</code></pre>
+<h3 id="from">from</h3>
+<p><code>from</code> 是通过 <code>asObservable()</code> 方法把 Swift 中的序列 (<code>SequenceType</code>) 转换成事件序列。</p>
+<pre><code class="language-swift">example(&quot;from&quot;) {
+    let sequenceFromArray = [1, 2, 3, 4, 5].asObservable()
+
+    let subscription = sequenceFromArray
+        .subscribe { event in
+            print(event)
+        }
+}
+
+--- from example ---
+Next(1)
+Next(2)
+Next(3)
+Next(4)
+Next(5)
+Completed
+</code></pre>
+<h3 id="create">create</h3>
+<p><code>create</code> 可以通过闭包创建序列，通过 <code>.on(e: Event)</code> 添加事件。</p>
+<pre><code class="language-swift">example(&quot;create&quot;) {
+    let myJust = { (singleElement: Int) -&gt; Observable&lt;Int&gt; in
+        return create { observer in
+            observer.on(.Next(singleElement))
+            observer.on(.Completed)
+
+            return NopDisposable.instance
+        }
+    }
+
+    let subscription = myJust(5)
+        .subscribe { event in
+            print(event)
+        }
+}
+
+--- create example ---
+Next(5)
+Completed
+</code></pre>
+<h3 id="failwith">failWith</h3>
+<p><code>failWith</code> 创建一个没有元素的序列，只会发送失败 (<code>.Error</code>) 事件。</p>
+<pre><code class="language-swift">example(&quot;failWith&quot;) {
+    let error = NSError(domain: &quot;Test&quot;, code: -1, userInfo: nil)
+
+    let erroredSequence: Observable&lt;Int&gt; = failWith(error)
+
+    let subscription = erroredSequence
+        .subscribe { event in
+            print(event)
+        }
+}
+
+--- failWith example ---
+Error(Error Domain=Test Code=-1 &quot;The operation couldn’t be completed. (Test error -1.)&quot;)
+</code></pre>
+<h3 id="deferred">deferred</h3>
+<p><code>deferred</code> 会等到有订阅者的时候再通过工厂方法创建 <code>Observable</code> 对象，每个订阅者订阅的对象都是内容相同而完全独立的序列。</p>
+<pre><code class="language-swift">example(&quot;deferred&quot;) {
+    let deferredSequence: Observable&lt;Int&gt; = deferred {
+        print(&quot;creating&quot;)
+        return create { observer in
+            print(&quot;emmiting&quot;)
+            observer.on(.Next(0))
+            observer.on(.Next(1))
+            observer.on(.Next(2))
+
+            return NopDisposable.instance
+        }
+    }
+
+    print(&quot;go&quot;)
+
+    deferredSequence
+        .subscribe { event in
+            print(event)
+    }
+
+    deferredSequence
+        .subscribe { event in
+            print(event)
+        }
+}
+
+--- deferred example ---
+go
+creating
+emmiting
+Next(0)
+Next(1)
+Next(2)
+creating
+emmiting
+Next(0)
+Next(1)
+Next(2)
+</code></pre>
+<p>为什么需要 <code>defferd</code> 这样一个奇怪的家伙呢？其实这相当于是一种延时加载，因为在添加监听的时候数据未必加载完毕，例如下面这个例子：</p>
+<pre><code class="language-swift">example(&quot;TestDeferred&quot;) {
+    var value: String? = nil
+    var subscription: Observable&lt;String?&gt; = just(value)
+
+    // got value
+    value = &quot;Hello!&quot;
+
+    subscription.subscribe { event in
+        print(event)
+    }
+}
+
+--- TestDeferred example ---
+Next(nil)
+Completed
+</code></pre>
+<p>如果使用 <code>deffered</code> 则可以正常显示想要的数据：</p>
+<pre><code class="language-swift">example(&quot;TestDeferred&quot;) {
+    var value: String? = nil
+    var subscription: Observable&lt;String?&gt; = deferred {
+        return just(value)
+    }
+
+    // got value
+    value = &quot;Hello!&quot;
+
+    subscription.subscribe { event in
+        print(event)
+    }
+
+}
+
+--- TestDeferred example ---
+Next(Optional(&quot;Hello!&quot;))
+Completed
+</code></pre>
+<h2 id="subjects">Subjects</h2>
+<p>接下来是关于 <code>Subject</code> 的内容。 <code>Subject</code> 可以看做是一种代理和桥梁。它既是订阅者又是订阅源，这意味着它既可以订阅其他 <code>Observable</code> 对象，同时又可以对它的订阅者们发送事件。</p>
+<p>如果把 <code>Observable</code> 理解成不断输出事件的水管，那 <code>Subject</code> 就是套在上面的水龙头。它既怼着一根不断出水的水管，同时也向外面输送着新鲜水源。如果你直接用水杯接着水管的水，那可能导出来什么王水胶水完全把持不住；如果你在水龙头下面接着水，那你可以随心所欲的调成你想要的水速和水温。</p>
+<p>（好吧上面一段文档里没有，是我瞎掰的，如果理解错了还望打脸(￣ε(#￣)☆╰╮(￣▽￣///))</p>
+<p>在开始下面的代码之前，先定义一个辅助函数用于输出数据：</p>
+<pre><code class="language-swift">func writeSequenceToConsole&lt;O: ObservableType&gt;(name: String, sequence: O) {
+    sequence
+        .subscribe { e in
+            print(&quot;Subscription: \(name), event: \(e)&quot;)
+        }
+}
+</code></pre>
+<h3 id="publishsubject">PublishSubject</h3>
+<p><code>PublishSubject</code> 会发送订阅者从订阅之后的事件序列。</p>
+<pre><code class="language-swift">example(&quot;PublishSubject&quot;) {
+    let subject = PublishSubject&lt;String&gt;()
+    writeSequenceToConsole(&quot;1&quot;, sequence: subject)
+    subject.on(.Next(&quot;a&quot;))
+    subject.on(.Next(&quot;b&quot;))
+    writeSequenceToConsole(&quot;2&quot;, sequence: subject)
+    subject.on(.Next(&quot;c&quot;))
+    subject.on(.Next(&quot;d&quot;))
+}
+
+
+--- PublishSubject example ---
+Subscription: 1, event: Next(a)
+Subscription: 1, event: Next(b)
+Subscription: 1, event: Next(c)
+Subscription: 2, event: Next(c)
+Subscription: 1, event: Next(d)
+Subscription: 2, event: Next(d)
+</code></pre>
+<h3 id="replaysubject">ReplaySubject</h3>
+<p><code>ReplaySubject</code> 在新的订阅对象订阅的时候会补发所有已经发送过的数据队列， <code>bufferSize</code> 是缓冲区的大小，决定了补发队列的最大值。如果 <code>bufferSize</code> 是1，那么新的订阅者出现的时候就会补发上一个事件，如果是2，则补两个，以此类推。</p>
+<pre><code class="language-swift">example(&quot;ReplaySubject&quot;) {
+    let subject = ReplaySubject&lt;String&gt;.create(bufferSize: 1)
+
+    writeSequenceToConsole(&quot;1&quot;, sequence: subject)
+    subject.on(.Next(&quot;a&quot;))
+    subject.on(.Next(&quot;b&quot;))
+    writeSequenceToConsole(&quot;2&quot;, sequence: subject)
+    subject.on(.Next(&quot;c&quot;))
+    subject.on(.Next(&quot;d&quot;))
+}
+
+--- ReplaySubject example ---
+Subscription: 1, event: Next(a)
+Subscription: 1, event: Next(b)
+Subscription: 2, event: Next(b) // 补了一个 b
+Subscription: 1, event: Next(c)
+Subscription: 2, event: Next(c)
+Subscription: 1, event: Next(d)
+Subscription: 2, event: Next(d)
+</code></pre>
+<h3 id="behaviorsubject">BehaviorSubject</h3>
+<p><code>BehaviorSubject</code> 在新的订阅对象订阅的时候会发送最近发送的事件，如果没有则发送一个默认值。</p>
+<pre><code class="language-swift">example(&quot;BehaviorSubject&quot;) {
+    let subject = BehaviorSubject(value: &quot;z&quot;)
+    writeSequenceToConsole(&quot;1&quot;, sequence: subject)
+    subject.on(.Next(&quot;a&quot;))
+    subject.on(.Next(&quot;b&quot;))
+    writeSequenceToConsole(&quot;2&quot;, sequence: subject)
+    subject.on(.Next(&quot;c&quot;))
+    subject.on(.Completed)
+}
+
+--- BehaviorSubject example ---
+Subscription: 1, event: Next(z)
+Subscription: 1, event: Next(a)
+Subscription: 1, event: Next(b)
+Subscription: 2, event: Next(b)
+Subscription: 1, event: Next(c)
+Subscription: 2, event: Next(c)
+Subscription: 1, event: Completed
+Subscription: 2, event: Completed
+</code></pre>
+<h3 id="variable">Variable</h3>
+<p><code>Variable</code> 是基于 <code>BehaviorSubject</code> 的一层封装，它的优势是：不会被显式终结。即：不会收到 <code>.Completed</code> 和 <code>.Error</code> 这类的终结事件，它会主动在析构的时候发送 <code>.Complete</code> 。</p>
+<pre><code class="language-swift">example(&quot;Variable&quot;) {
+    let variable = Variable(&quot;z&quot;)
+    writeSequenceToConsole(&quot;1&quot;, sequence: variable)
+    variable.value = &quot;a&quot;
+    variable.value = &quot;b&quot;
+    writeSequenceToConsole(&quot;2&quot;, sequence: variable)
+    variable.value = &quot;c&quot;
+}
+
+--- Variable example ---
+Subscription: 1, event: Next(z)
+Subscription: 1, event: Next(a)
+Subscription: 1, event: Next(b)
+Subscription: 2, event: Next(b)
+Subscription: 1, event: Next(c)
+Subscription: 2, event: Next(c)
+Subscription: 1, event: Completed
+Subscription: 2, event: Completed
+</code></pre>
+<h2 id="transform">Transform</h2>
+<p>我们可以对序列做一些转换，类似于 Swift 中 <code>CollectionType</code> 的各种转换。在以前的坑中曾经提到过，可以参考：<a href="http://blog.callmewhy.com/2015/05/11/functional-reactive-programming-1/#%E5%87%BD%E6%95%B0%E5%BC%8F%E7%9A%84%E5%87%BD%E6%95%B0/">函数式的函数</a>。</p>
+<h3 id="map">map</h3>
+<p><code>map</code> 就是对每个元素都用函数做一次转换，挨个映射一遍。</p>
+<pre><code class="language-swift">example(&quot;map&quot;) {
+    let originalSequence = sequenceOf(1,2,3)
+
+    originalSequence
+        .map { $0 * 2 }
+        .subscribe { print($0) }
+}
+
+--- map example ---
+Next(2)
+Next(4)
+Next(6)
+Completed
+</code></pre>
+<h3 id="flatmap">flatMap</h3>
+<p><code>map</code> 在做转换的时候很容易出现『升维』的情况，即：转变之后，从一个序列变成了一个序列的序列。</p>
+<p>什么是『升维』？在集合中我们可以举这样一个例子，我有一个好友列表 <code>[p1, p2, p3]</code>，那么如果要获取我好友的好友的列表，可以这样做：</p>
+<pre><code class="language-swift">myFriends.map { $0.getFriends() }
+</code></pre>
+<p>结果就成了 <code>[[p1-1, p1-2, p1-3], [p2-1], [p3-1, p3-2]]</code> ，这就成了好友的好友列表的列表了。这就是一个『升维』的例子。</p>
+<p>（以上内容文档中依旧没有，依旧是我瞎掰的，依旧欢迎有错误当面打脸(￣ε(#￣)☆╰╮(￣▽￣///))</p>
+<p>在 Swift 中，我们可以用 <code>flatMap</code> 过滤掉 <code>map</code> 之后的 <code>nil</code> 结果。在 Rx 中， <code>flatMap</code> 可以把一个序列转换成一组序列，然后再把这一组序列『拍扁』成一个序列。</p>
+<pre><code class="language-swift">example(&quot;flatMap&quot;) {
+    let sequenceInt = sequenceOf(1, 2, 3)
+    let sequenceString = sequenceOf(&quot;A&quot;, &quot;B&quot;, &quot;--&quot;)
+
+    sequenceInt
+        .flatMap { int in
+            sequenceString
+        }
+        .subscribe {
+            print($0)
+        }
+}
+
+--- flatMap example ---
+Next(A)
+Next(B)
+Next(--)
+Next(A)
+Next(B)
+Next(--)
+Next(A)
+Next(B)
+Next(--)
+Completed
+</code></pre>
+<h3 id="scan">scan</h3>
+<p><code>scan</code> 有点像 <code>reduce</code> ，它会把每次的运算结果累积起来，作为下一次运算的输入值。</p>
+<pre><code class="language-swift">example(&quot;scan&quot;) {
+    let sequenceToSum = sequenceOf(0, 1, 2, 3, 4, 5)
+
+    sequenceToSum
+        .scan(0) { acum, elem in
+            acum + elem
+        }
+        .subscribe {
+            print($0)
+        }
+}
+
+--- scan example ---
+Next(0)
+Next(1)
+Next(3)
+Next(6)
+Next(10)
+Next(15)
+Completed
+</code></pre>
+<h2 id="filtering">Filtering</h2>
+<p>除了上面的各种转换，我们还可以对序列进行过滤。</p>
+<h3 id="filter">filter</h3>
+<p><code>filter</code> 只会让符合条件的元素通过。</p>
+<pre><code class="language-swift">example(&quot;filter&quot;) {
+    let subscription = sequenceOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+        .filter {
+            $0 % 2 == 0
+        }
+        .subscribe {
+            print($0)
+        }
+}
+
+--- filter example ---
+Next(0)
+Next(2)
+Next(4)
+Next(6)
+Next(8)
+Completed
+</code></pre>
+<h3 id="distinctuntilchanged">distinctUntilChanged</h3>
+<p><code>distinctUntilChanged</code> 会废弃掉重复的事件。</p>
+<pre><code class="language-swift">example(&quot;distinctUntilChanged&quot;) {
+    let subscription = sequenceOf(1, 2, 3, 1, 1, 4)
+        .distinctUntilChanged()
+        .subscribe {
+            print($0)
+        }
+}
+
+--- distinctUntilChanged example ---
+Next(1)
+Next(2)
+Next(3)
+Next(1)
+Next(4)
+Completed
+</code></pre>
+<h3 id="take">take</h3>
+<p><code>take</code> 只获取序列中的前 n 个事件，在满足数量之后会自动 <code>.Completed</code> 。</p>
+<pre><code class="language-swift">example(&quot;take&quot;) {
+    let subscription = sequenceOf(1, 2, 3, 4, 5, 6)
+        .take(3)
+        .subscribe {
+            print($0)
+        }
+}
+
+--- take example ---
+Next(1)
+Next(2)
+Next(3)
+Completed
+</code></pre>
+<h2 id="combining">Combining</h2>
+<p>这部分是关于序列的运算，可以将多个序列源进行组合拼装成一个新的事件序列。</p>
+<h3 id="startwith">startWith</h3>
+<p><code>startWith</code> 会在队列开始之前插入一个事件元素。</p>
+<pre><code class="language-swift">example(&quot;startWith&quot;) {
+    let subscription = sequenceOf(4, 5, 6)
+        .startWith(3)
+        .subscribe {
+            print($0)
+        }
+}
+
+--- startWith example ---
+Next(3)
+Next(4)
+Next(5)
+Next(6)
+Completed
+</code></pre>
+<h3 id="combinelatest">combineLatest</h3>
+<p>如果存在两条事件队列，需要同时监听，那么每当有新的事件发生的时候，<code>combineLatest</code> 会将每个队列的最新的一个元素进行合并。</p>
+<pre><code class="language-swift">example(&quot;combineLatest 1&quot;) {
+    let intOb1 = PublishSubject&lt;String&gt;()
+    let intOb2 = PublishSubject&lt;Int&gt;()
+
+    combineLatest(intOb1, intOb2) {
+        &quot;\($0) \($1)&quot;
+        }
+        .subscribe {
+            print($0)
+        }
+
+    intOb1.on(.Next(&quot;A&quot;))
+    intOb2.on(.Next(1))
+    intOb1.on(.Next(&quot;B&quot;))
+    intOb2.on(.Next(2))
+}
+
+--- combineLatest 1 example ---
+Next(A 1)
+Next(B 1)
+Next(B 2)
+</code></pre>
+<h3 id="zip">zip</h3>
+<p><code>zip</code> 人如其名，就是合并两条队列用的，不过它会等到两个队列的元素一一对应地凑齐了之后再合并，正如<a href="http://weibo.com/mrgreenhand">百折不撓的米斯特菜</a>所提醒的， <code>zip</code> 就像是拉链一样，两根拉链拉着拉着合并到了一根上：</p>
+<pre><code class="language-swift">example(&quot;zip 1&quot;) {
+    let intOb1 = PublishSubject&lt;String&gt;()
+    let intOb2 = PublishSubject&lt;Int&gt;()
+    zip(intOb1, intOb2) {
+        &quot;\($0) \($1)&quot;
+        }
+        .subscribe {
+            print($0)
+        }
+    intOb1.on(.Next(&quot;A&quot;))
+    intOb2.on(.Next(1))
+    intOb1.on(.Next(&quot;B&quot;))
+    intOb1.on(.Next(&quot;C&quot;))
+    intOb2.on(.Next(2))
+}
+
+--- zip 1 example ---
+Next(A 1)
+Next(B 2)
+</code></pre>
+<h3 id="merge">merge</h3>
+<p><code>merge</code> 就是 merge 啦，把两个队列按照顺序组合在一起。</p>
+<pre><code class="language-swift">example(&quot;merge 1&quot;) {
+    let subject1 = PublishSubject&lt;Int&gt;()
+    let subject2 = PublishSubject&lt;Int&gt;()
+
+    sequenceOf(subject1, subject2)
+        .merge()
+        .subscribeNext { int in
+            print(int)
+        }
+
+    subject1.on(.Next(1))
+    subject1.on(.Next(2))
+    subject2.on(.Next(3))
+    subject1.on(.Next(4))
+    subject2.on(.Next(5))
+}
+
+--- merge 1 example ---
+1
+2
+3
+4
+5
+</code></pre>
+<h3 id="switch">switch</h3>
+<p>当你的事件序列是一个事件序列的序列 (<code>Observable&lt;Observable&lt;T&gt;&gt;</code>) 的时候，（可以理解成二维序列？），可以使用 <code>switch</code> 将序列的序列平铺成一维，并且在出现新的序列的时候，自动切换到最新的那个序列上。和 <code>merge</code> 相似的是，它也是起到了将多个序列『拍平』成一条序列的作用。</p>
+<pre><code class="language-swift">example(&quot;switchLatest&quot;) {
+    let var1 = Variable(0)
+
+    let var2 = Variable(200)
+
+    // var3 is like an Observable&lt;Observable&lt;Int&gt;&gt;
+    let var3 = Variable(var1)
+
+    let d = var3
+        .switchLatest()
+        .subscribe {
+            print($0)
+        }
+
+    var1.value = 1
+    var1.value = 2
+    var1.value = 3
+    var1.value = 4
+
+    var3.value = var2
+    var2.value = 201
+    var1.value = 5
+
+    var3.value = var1
+    var2.value = 202
+    var1.value = 6
+}
+
+--- switchLatest example ---
+Next(0)
+Next(1)
+Next(2)
+Next(3)
+Next(4)
+Next(200)
+Next(201)
+Next(5)
+Next(6)
+</code></pre>
+<p>注意，虽然都是『拍平』，但是和 <code>flatmap</code> 是不同的， <code>flatmap</code> 是将一条序列变成另一条序列，而这变换过程会让维度变高，所以需要『拍平』，而 <code>switch</code> 是将本来二维的序列（序列的序列）拍平成了一维的序列。</p>
+<h2 id="error-handling">Error Handling</h2>
+<p>在事件序列中，遇到异常也是很正常的事情，有以下几种处理异常的手段。</p>
+<h3 id="catcherror">catchError</h3>
+<p><code>catchError</code> 可以捕获异常事件，并且在后面无缝接上另一段事件序列，丝毫没有异常的痕迹。</p>
+<pre><code class="language-swift">example(&quot;catchError 1&quot;) {
+    let sequenceThatFails = PublishSubject&lt;Int&gt;()
+    let recoverySequence = sequenceOf(100, 200)
+
+    sequenceThatFails
+        .catchError { error in
+            return recoverySequence
+        }
+        .subscribe {
+            print($0)
+        }
+
+    sequenceThatFails.on(.Next(1))
+    sequenceThatFails.on(.Next(2))
+    sequenceThatFails.on(.Error(NSError(domain: &quot;Test&quot;, code: 0, userInfo: nil)))
+}
+
+--- catchError 1 example ---
+Next(1)
+Next(2)
+Next(100)
+Next(200)
+Completed
+</code></pre>
+<h3 id="retry">retry</h3>
+<p><code>retry</code> 顾名思义，就是在出现异常的时候会再去从头订阅事件序列，妄图通过『从头再来』解决异常。</p>
+<pre><code class="language-swift">example(&quot;retry&quot;) {
+    var count = 1 // bad practice, only for example purposes
+    let funnyLookingSequence: Observable&lt;Int&gt; = create { observer in
+        let error = NSError(domain: &quot;Test&quot;, code: 0, userInfo: nil)
+        observer.on(.Next(0))
+        observer.on(.Next(1))
+        if count &lt; 2 {
+            observer.on(.Error(error))
+            count++
+        }
+        observer.on(.Next(2))
+        observer.on(.Completed)
+
+        return NopDisposable.instance
+    }
+
+    funnyLookingSequence
+        .retry()
+        .subscribe {
+            print($0)
+        }
+}
+
+--- retry example ---
+Next(0)
+Next(1)
+Next(0)
+Next(1)
+Next(2)
+Completed
+</code></pre>
+<h2 id="utility">Utility</h2>
+<p>这里列举了针对事件序列的一些方法。</p>
+<h3 id="subscribe">subscribe</h3>
+<p><code>subscribe</code> 在前面已经接触过了，有新的事件就会触发。</p>
+<pre><code class="language-swift">example(&quot;subscribe&quot;) {
+    let sequenceOfInts = PublishSubject&lt;Int&gt;()
+
+    sequenceOfInts
+        .subscribe {
+            print($0)
+        }
+
+    sequenceOfInts.on(.Next(1))
+    sequenceOfInts.on(.Completed)
+}
+
+--- subscribe example ---
+Next(1)
+Completed
+</code></pre>
+<h3 id="subscribenext">subscribeNext</h3>
+<p><code>subscribeNext</code> 也是订阅，但是只订阅 <code>.Next</code> 事件。</p>
+<pre><code class="language-swift">example(&quot;subscribeNext&quot;) {
+    let sequenceOfInts = PublishSubject&lt;Int&gt;()
+
+    sequenceOfInts
+        .subscribeNext {
+            print($0)
+        }
+
+    sequenceOfInts.on(.Next(1))
+    sequenceOfInts.on(.Completed)
+}
+
+--- subscribeNext example ---
+1
+</code></pre>
+<h3 id="subscribecompleted">subscribeCompleted</h3>
+<p><code>subscribeCompleted</code> 是只订阅 <code>.Completed</code> 完成事件。</p>
+<pre><code class="language-swift">example(&quot;subscribeCompleted&quot;) {
+    let sequenceOfInts = PublishSubject&lt;Int&gt;()
+
+    sequenceOfInts
+        .subscribeCompleted {
+            print(&quot;It's completed&quot;)
+        }
+
+    sequenceOfInts.on(.Next(1))
+    sequenceOfInts.on(.Completed)
+}
+
+--- subscribeCompleted example ---
+It's completed
+</code></pre>
+<h3 id="subscribeerror">subscribeError</h3>
+<p><code>subscribeError</code> 只订阅 <code>.Error</code> 失败事件。</p>
+<pre><code class="language-swift">example(&quot;subscribeError&quot;) {
+    let sequenceOfInts = PublishSubject&lt;Int&gt;()
+
+    sequenceOfInts
+        .subscribeError { error in
+            print(error)
+        }
+
+    sequenceOfInts.on(.Next(1))
+    sequenceOfInts.on(.Error(NSError(domain: &quot;Examples&quot;, code: -1, userInfo: nil)))
+}
+
+--- subscribeError example ---
+Error Domain=Examples Code=-1 &quot;The operation couldn’t be completed. (Examples error -1.)&quot;
+</code></pre>
+<h3 id="doon">doOn</h3>
+<p><code>doOn</code> 可以监听事件，并且在事件发生之前调用。</p>
+<pre><code class="language-swift">example(&quot;doOn&quot;) {
+    let sequenceOfInts = PublishSubject&lt;Int&gt;()
+
+    sequenceOfInts
+        .doOn {
+            print(&quot;Intercepted event \($0)&quot;)
+        }
+        .subscribe {
+            print($0)
+        }
+
+    sequenceOfInts.on(.Next(1))
+    sequenceOfInts.on(.Completed)
+}
+
+--- doOn example ---
+Intercepted event Next(1)
+Next(1)
+Intercepted event Completed
+Completed
+</code></pre>
+<h2 id="conditional">Conditional</h2>
+<p>我们可以对多个事件序列做一些复杂的逻辑判断。</p>
+<h3 id="takeuntil">takeUntil</h3>
+<p><code>takeUntil</code> 其实就是 <code>take</code> ，它会在终于等到那个事件之后触发 <code>.Completed</code> 事件。</p>
+<pre><code class="language-swift">example(&quot;takeUntil&quot;) {
+    let originalSequence = PublishSubject&lt;Int&gt;()
+    let whenThisSendsNextWorldStops = PublishSubject&lt;Int&gt;()
+
+    originalSequence
+        .takeUntil(whenThisSendsNextWorldStops)
+        .subscribe {
+            print($0)
+        }
+
+    originalSequence.on(.Next(1))
+    originalSequence.on(.Next(2))
+
+    whenThisSendsNextWorldStops.on(.Next(1))
+
+    originalSequence.on(.Next(3))
+}
+
+--- takeUntil example ---
+Next(1)
+Next(2)
+Completed
+</code></pre>
+<h3 id="takewhile">takeWhile</h3>
+<p><code>takeWhile</code> 则是可以通过状态语句判断是否继续 <code>take</code> 。</p>
+<pre><code class="language-swift">example(&quot;takeWhile&quot;) {
+    let sequence = PublishSubject&lt;Int&gt;()
+    sequence
+        .takeWhile { int in
+            int &lt; 2
+        }
+        .subscribe {
+            print($0)
+        }
+    sequence.on(.Next(1))
+    sequence.on(.Next(2))
+    sequence.on(.Next(3))
+}
+
+--- takeWhile example ---
+Next(1)
+Completed
+</code></pre>
+<h2 id="aggregate">Aggregate</h2>
+<p>我们可以对事件序列做一些集合运算。</p>
+<h3 id="concat">concat</h3>
+<p><code>concat</code> 可以把多个事件序列合并起来。</p>
+<pre><code class="language-swift">example(&quot;concat&quot;) {
+    let var1 = BehaviorSubject(value: 0)
+    let var2 = BehaviorSubject(value: 200)
+
+    // var3 is like an Observable&lt;Observable&lt;Int&gt;&gt;
+    let var3 = BehaviorSubject(value: var1)
+
+    let d = var3
+        .concat()
+        .subscribe {
+            print($0)
+        }
+
+    var1.on(.Next(1))
+    var1.on(.Next(2))
+
+    var3.on(.Next(var2))
+
+    var2.on(.Next(201))
+
+    var1.on(.Next(3))
+    var1.on(.Completed)
+
+    var2.on(.Next(202))
+}
+
+--- concat example ---
+Next(0)
+Next(1)
+Next(2)
+Next(3)
+Next(201)
+Next(202)
+</code></pre>
+<h3 id="reduce">reduce</h3>
+<p>这里的 <code>reduce</code> 和 <code>CollectionType</code> 中的 <code>reduce</code> 是一个意思，都是指通过对一系列数据的运算最后生成一个结果。</p>
+<pre><code class="language-swift">example(&quot;reduce&quot;) {
+    sequenceOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+        .reduce(0, +)
+        .subscribe {
+            print($0)
+        }
+}
+
+--- reduce example ---
+Next(45)
+Completed
+</code></pre>
+<h2 id="connectable">Connectable</h2>
+<p>坑待填，Xcode 里这个操场跑不起来了。</p>
+<p>更新：评论区有同学提醒，跑不起来的原因参考：<a href="http://stackoverflow.com/questions/29232334/using-nstimer-in-swift-playground">Using NSTimer in swift playground</a>。</p>
+<h2 id="next">Next</h2>
+<p>基础入门大概就是这些了，有了前面 《<a href="http://blog.callmewhy.com/2015/05/11/functional-reactive-programming-1/">Functional Reactive Programming in Swift - Part 1</a>》 的铺垫，似乎理解起来十分愉快，不过还是不够深入，在下一章会在具体项目中操练起来。</p>
+<p>操练起来！跑个操场吧少年！</p>
+<p>Run the playground in your Xcode!</p>
+<hr>
+<p>参考文献：</p>
+<ul>
+<li><a href="http://reactivex.io/intro.html">ReactiveX</a></li>
+<li><a href="http://neilpa.me/rac-marbles/">RAC Marbles</a></li>
+<li><a href="http://reactivex.io/documentation/operators/defer.html">defer</a></li>
+<li><a href="http://www.ruanyifeng.com/blog/2011/08/a_detailed_explanation_of_jquery_deferred_object.html">jQuery 的 deferred 对象详解</a></li>
+<li><a href="http://blog.allenm.me/2012/01/jquery_deferred_promise_method/">jQuery deferred 对象的 promise 方法</a></li>
+<li><a href="http://blog.danlew.net/2015/07/23/deferring-observable-code-until-subscription-in-rxjava/">Deferring Observable code until subscription in RxJava</a></li>
+<li><a href="http://davesexton.com/blog/post/To-Use-Subject-Or-Not-To-Use-Subject.aspx">To Use Subject Or Not To Use Subject?</a></li>
+<li><a href="http://reactivex.io/documentation/operators/flatmap.html">flatmap</a></li>
+<li><a href="http://blog.danlew.net/2014/09/22/grokking-rxjava-part-2/">Grokking RxJava, Part 2: Operator, Operator</a></li>
+<li><a href="http://www.introtorx.com/Content/v1.0.10621.0/08_Transformation.html#SelectMany">Transformation - Select Many</a></li>
+<li><a href="http://fernandocejas.com/2015/01/11/rxjava-observable-tranformation-concatmap-vs-flatmap/">RxJava Observable tranformation: concatMap() vs flatMap()</a></li>
+<li><a href="http://jschneider.io/2014/11/26/Recursive-Observables-with-RxJava.html">Recursive Observables with RxJava</a></li>
+<li><a href="http://www.introtorx.com/Content/v1.0.10621.0/12_CombiningSequences.html">Combining sequences</a></li>
+<li><a href="http://reactivex.io/documentation/operators/switch.html">switch</a></li>
+<li><a href="https://github.com/ReactiveX/RxSwift/blob/master/Documentation/GettingStarted.md">RxSwift Getting Started</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#supportcode">SupportCode</a></li>
+<li><a href="#introduction">Introduction</a>
+<ul>
+<li><a href="#empty">empty</a></li>
+<li><a href="#never">never</a></li>
+<li><a href="#just">just</a></li>
+<li><a href="#sequenceof">sequenceOf</a></li>
+<li><a href="#from">from</a></li>
+<li><a href="#create">create</a></li>
+<li><a href="#failwith">failWith</a></li>
+<li><a href="#deferred">deferred</a></li>
+</ul>
+</li>
+<li><a href="#subjects">Subjects</a>
+<ul>
+<li><a href="#publishsubject">PublishSubject</a></li>
+<li><a href="#replaysubject">ReplaySubject</a></li>
+<li><a href="#behaviorsubject">BehaviorSubject</a></li>
+<li><a href="#variable">Variable</a></li>
+</ul>
+</li>
+<li><a href="#transform">Transform</a>
+<ul>
+<li><a href="#map">map</a></li>
+<li><a href="#flatmap">flatMap</a></li>
+<li><a href="#scan">scan</a></li>
+</ul>
+</li>
+<li><a href="#filtering">Filtering</a>
+<ul>
+<li><a href="#filter">filter</a></li>
+<li><a href="#distinctuntilchanged">distinctUntilChanged</a></li>
+<li><a href="#take">take</a></li>
+</ul>
+</li>
+<li><a href="#combining">Combining</a>
+<ul>
+<li><a href="#startwith">startWith</a></li>
+<li><a href="#combinelatest">combineLatest</a></li>
+<li><a href="#zip">zip</a></li>
+<li><a href="#merge">merge</a></li>
+<li><a href="#switch">switch</a></li>
+</ul>
+</li>
+<li><a href="#error-handling">Error Handling</a>
+<ul>
+<li><a href="#catcherror">catchError</a></li>
+<li><a href="#retry">retry</a></li>
+</ul>
+</li>
+<li><a href="#utility">Utility</a>
+<ul>
+<li><a href="#subscribe">subscribe</a></li>
+<li><a href="#subscribenext">subscribeNext</a></li>
+<li><a href="#subscribecompleted">subscribeCompleted</a></li>
+<li><a href="#subscribeerror">subscribeError</a></li>
+<li><a href="#doon">doOn</a></li>
+</ul>
+</li>
+<li><a href="#conditional">Conditional</a>
+<ul>
+<li><a href="#takeuntil">takeUntil</a></li>
+<li><a href="#takewhile">takeWhile</a></li>
+</ul>
+</li>
+<li><a href="#aggregate">Aggregate</a>
+<ul>
+<li><a href="#concat">concat</a></li>
+<li><a href="#reduce">reduce</a></li>
+</ul>
+</li>
+<li><a href="#connectable">Connectable</a></li>
+<li><a href="#next">Next</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/use-yeoman-with-angular-and-gulp/">
+              <h3 class="post-title">
+                使用 Yeoman + AngularJS + Gulp 搭建 Web 应用
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

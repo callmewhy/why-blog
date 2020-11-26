@@ -1,0 +1,371 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Yoapp 小记 - 简单方便的扩展们 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Yoapp 小记 - 简单方便的扩展们
+            </h2>
+            <div class="post-info">
+              <span>
+                2015-10-21
+              </span>
+              <span>
+                5 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/fthQHH2l27/" class="post-tag">
+                  # Swift
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h3 id="sppedup">SppedUp</h3>
+<p>我们团队每隔两周会有一次 SppedUp ，两天时间开发一款全新的应用。从前天凌晨到昨天深夜整整48小时，第一次 SpeedUp 理论上应该已经结束，但是事实上并没有想象中那么理想，一直拖到今天还在继续，而且还存在诸如『登录时键盘遮挡输入框』这种低级错误。今天花了一天时间完善了细节，并且整理一下代码，整理一些 Swift 中的代码优化细节。</p>
+<h3 id="uistoryboardsegue">UIStoryboardSegue</h3>
+<p>作为一名纯粹的 IB 党，少不了和 <code>UIStoryboardSegue</code> 打交道。主要的使用场景是以下两个方法：</p>
+<ul>
+<li><code>performSegueWithIdentifier(_:sender:)</code></li>
+<li><code>prepareForSegue(_:sender:)</code></li>
+</ul>
+<p>一开始我们是这么写的：</p>
+<pre><code class="language-swift">performSegueWithIdentifier(&quot;show_detail&quot;, sender: nil)
+
+</code></pre>
+<p>后来发觉这种 <code>hard code</code> 并不科学，于是用 struct 封装了一下定义成常量，这样合理多了：</p>
+<pre><code class="language-swift">struct SegueIdentifier {
+    static let showDetail = &quot;show_detail&quot;
+}
+performSegueWithIdentifier(SegueIdentifier.showDetail, sender: dataSource[indexPath.row])
+</code></pre>
+<p>再后来感觉 <code>prepareForSegue</code> 里不能 <code>switch</code> 不开心啊！于是改成用 <code>enum</code> 封装：</p>
+<pre><code class="language-swift">enum SegueIdentifier: String {
+        case Detail = &quot;show_detail&quot;
+    }
+
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        guard
+            let identifier = segue.identifier,
+            let segueIdentifier = SegueIdentifier(rawValue: identifier) else {
+                fatalError(&quot;INVALID SEGUE IDENTIFIER \(segue.identifier)&quot;)
+        }
+
+        switch segueIdentifier {
+        case .Detail:
+            // DO SOMETHING
+        }
+    }
+</code></pre>
+<p>但是在调用 <code>performSegue</code> 的时候还是有点难受，不能直接传 <code>enum</code> 进去，必须要 <code>rawValue</code> 才行：</p>
+<pre><code class="language-swift">performSegueWithIdentifier(SegueIdentifier.Detail.rawValue, sender: nil)
+</code></pre>
+<p>后来昨天看 <a href="https://developer.apple.com/videos/play/wwdc2015-411/">Swift in Practice</a> 的时候发现，其实可以利用 <code>protocol extension</code> 把通用的部分封装起来：</p>
+<pre><code class="language-swift">protocol SegueHandlerType {
+    typealias SegueIdentifier: RawRepresentable
+}
+
+extension SegueHandlerType where Self: UIViewController, SegueIdentifier.RawValue == String {
+    func performSegueWithIdentifier(identifier: SegueIdentifier, sender: AnyObject?) {
+        performSegueWithIdentifier(identifier.rawValue, sender: sender)
+    }
+    
+    func segueIdentifierForSegue(segue: UIStoryboardSegue) -&gt; SegueIdentifier {
+        guard
+            let identifier = segue.identifier,
+            let segueIdentifier = SegueIdentifier(rawValue: identifier) else {
+                fatalError(&quot;INVALID SEGUE IDENTIFIER \(segue.identifier)&quot;)
+        }
+        return segueIdentifier
+    }
+}
+</code></pre>
+<p>这样只要 <code>UIViewController</code> 实现 <code>SegueHandlerType</code> 协议便可获得封装好的方法，比如更好用的 <code>performSegueWithIdentifier</code> ：</p>
+<pre><code class="language-swift">performSegueWithIdentifier(.LoginViewController, sender: nil)
+</code></pre>
+<p>而且 <code>prepareForSegue</code> 可以直接通过 <code>switch segueIdentifierForSegue(segue)</code> 对不同 <code>segue</code> 做处理：</p>
+<pre><code class="language-swift">extension RankingViewController: SegueHandlerType {
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        switch segueIdentifierForSegue(segue) {
+        case .Detail:
+            guard
+                let controller = segue.destinationViewController as? DetailViewController,
+                let cell = sender as? RankingCell,
+                let app = cell.appDetail else {
+                    return
+            }
+            controller.appDetail = app
+        }
+    }
+}
+</code></pre>
+<h3 id="dequeuereusablecellwithidentifier">dequeueReusableCellWithIdentifier</h3>
+<p>在写 <code>UITableView</code> 的时候总会有一段很难记但是又不得不记的代码：</p>
+<pre><code class="language-swift">let cell = tableView.dequeueReusableCellWithIdentifier(&quot;XxxxxCell&quot;) as! XxxxxCell
+</code></pre>
+<p>注意这里又出现了 <code>&quot;XxxxxCell&quot;</code> 这样的 <code>hard code</code> ，我们可以用 <code>Class</code> 的名称作为它的 <code>identifier</code> ，这样只要能获取到 <code>className</code> 就行了。在 Swift 里可以这样获取 <code>className</code> ：</p>
+<pre><code class="language-swift">extension NSObject {
+    static var className: String {
+        get {
+            return self.description().componentsSeparatedByString(&quot;.&quot;).last!
+        }
+    }
+}
+</code></pre>
+<p>于是乎我们的代码变成了这样：</p>
+<pre><code class="language-swift">let cell = tableView.dequeueReusableCellWithIdentifier(XxxxxCell.className) as! XxxxxCell
+</code></pre>
+<p>接下来我们可以给 <code>UITableView</code> 添加个扩展，封装一下上面的代码：</p>
+<pre><code class="language-swift">extension UITableView {
+    func dequeueCell&lt;T: UITableViewCell&gt;(cell: T.Type) -&gt; T {
+        return dequeueReusableCellWithIdentifier(T.className) as! T
+    }
+}
+</code></pre>
+<p>这样就可以这样生成 <code>cell</code> 了：</p>
+<pre><code class="language-swift">let cell = tableView.dequeueCell(RankingCell)
+</code></pre>
+<h3 id="avobject">AVObject</h3>
+<p>由于在使用 <code>LeanCloud</code> 做后台服务，所以不可避免要和 <code>AVObject</code> 打交道，<code>AVObject</code> 基本和 <code>NSDictionary</code> 接口一致，所以做了如下封装：</p>
+<pre><code class="language-swift">import Foundation
+import AVOSCloud
+
+extension AVObject {
+    func stringForKey(key: String) -&gt; String? {
+        return self.objectForKey(key) as? String
+    }
+    func doubleForKey(key: String) -&gt; Double? {
+        let o = self.objectForKey(key)
+        if let r = o as? Double {
+            return r
+        } else if let r = o as? String {
+            return Double(r)
+        }
+        return nil
+    }
+    ...
+}
+</code></pre>
+<h3 id="settorouded">setToRouded</h3>
+<p>将图片设为圆角是一个比较常见的操作，可以通过 <code>extension</code> 简单封装一下：</p>
+<pre><code class="language-swift">extension UIView {
+    func setToRounded(radius: CGFloat? = nil) {
+        let r = radius ?? min(self.frame.size.width, self.frame.size.height) / 2
+        self.layer.cornerRadius = r
+        self.clipsToBounds = true
+    }
+}
+</code></pre>
+<p>如果指定半径就设置圆角半径，如果没有值则取高和宽的最小值，实现『半圆』效果。</p>
+<h3 id="question">QUESTION</h3>
+<p>这里有个问题没太理解。请看下面两段代码：</p>
+<pre><code class="language-swift">import UIKit
+
+extension UITableView {
+    static func dequeueCell1&lt;T: UITableViewCell&gt;(name: String, cell: T.Type) {
+        print(cell)
+    }
+    
+    static func dequeueCell2&lt;T: UITableViewCell&gt;(cell: T.Type) {
+        print(cell)
+    }
+}
+</code></pre>
+<p>唯一的区别就是参数数目不同，但是调用的时候：</p>
+<pre><code class="language-swift">UITableView.dequeueCell1(&quot;&quot;, cell: UITableViewCell.self)
+UITableView.dequeueCell2(UITableViewCell)
+</code></pre>
+<p>两个参数的需要 <code>.self</code> 而另一个则不需要。=。=没太搞懂这是哪出，还望赐教！</p>
+<hr>
+<p>参考文献：</p>
+<ul>
+<li><a href="https://developer.apple.com/videos/play/wwdc2015-411/">Swift in Practice</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#sppedup">SppedUp</a></li>
+<li><a href="#uistoryboardsegue">UIStoryboardSegue</a></li>
+<li><a href="#dequeuereusablecellwithidentifier">dequeueReusableCellWithIdentifier</a></li>
+<li><a href="#avobject">AVObject</a></li>
+<li><a href="#settorouded">setToRouded</a></li>
+<li><a href="#question">QUESTION</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/rxswift-getting-started-1/">
+              <h3 class="post-title">
+                RxSwift 入坑手册 Part1 - 示例实战
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

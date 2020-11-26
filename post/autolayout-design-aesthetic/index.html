@@ -1,0 +1,492 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Auto Layout 设计美学 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Auto Layout 设计美学
+            </h2>
+            <div class="post-info">
+              <span>
+                2016-08-24
+              </span>
+              <span>
+                19 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/datMGg0r-6V/" class="post-tag">
+                  # iOS
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="背景闲聊">背景闲聊</h2>
+<p>大家好。</p>
+<p>请原谅我用了这样一个高调奢华张扬浮夸的标题。毕竟这是一篇设计相关的文章，为了表现本人的美学修养，为了营造良好的艺术氛围，我决定放弃『奥土雷奥特从入门到精通』『垃圾小波教你30分钟掌握设计大局观』『艾欧哀思布局看这篇就够了』这样土爆了的名字，而使用和我本人一样低调又有内涵的『设计美学』作为这篇文章标题。</p>
+<p>UI 可以说是 iOS 开发中不可避免的一个重要环节。手撕还是拖拽的咸淡豆腐脑之争先放在一边，在这篇文章里我希望和大家分享一些我在使用 Auto Layout 开发 UI 时的想法。</p>
+<p>亲爱的手写党们，请不要看到这里就关闭浏览器。文章虽然是关于 Auto Layout 的，但是其实最核心的部分是如何将设计稿中的像素转化为开发稿中的约束，而这点在所有开发场合中都是通用的。</p>
+<p>『如何将设计稿中的像素，转化为开发稿中的约束。』这句话居然还押韵，我真是个天才。</p>
+<h2 id="基础概念">基础概念</h2>
+<p>Auto Layout  是一种通过约束规定页面组件的依赖关系后自动布局的 UI 编写方式。</p>
+<p>本质上， Auto Layout 是规定了两个组件属性的线性关系。</p>
+<pre><code>y = ax + b
+</code></pre>
+<p>关于 Auto Layout 的基础知识本文不再赘述，请参考阅读：</p>
+<ul>
+<li><a href="https://developer.apple.com/library/ios/documentation/UserExperience/Conceptual/AutolayoutPG/">Auto Layout Guide</a></li>
+<li><a href="https://www.raywenderlich.com/50317/beginning-auto-layout-tutorial-in-ios-7-part-1">Beginning Auto Layout Tutorial in iOS 7: Part 1</a></li>
+<li><a href="https://www.raywenderlich.com/115440/auto-layout-tutorial-in-ios-9-part-1-getting-started-2">Auto Layout Tutorial in iOS 9 Part 1: Getting Started</a></li>
+<li><a href="https://www.weheartswift.com/auto-layout-101/">Auto Layout 101</a></li>
+</ul>
+<h2 id="设计理念">设计理念</h2>
+<p>学完了 Auto Layout 的基础之后，Auto Layout 的学习其实才刚刚开始。</p>
+<p>一个居中对齐的按钮，通过以下属性搭配就至少有16种组合：</p>
+<ul>
+<li>Horizontally Vertical Spacing</li>
+<li>Aspect Radio</li>
+<li>Width、Height</li>
+<li>Equal Width、Equal Heights</li>
+<li>Center Horizontally、Center Vertically</li>
+</ul>
+<p>不同的设计场景下有着不同的选择。如何用课本上学来的知识解决实际问题，如何优雅而高效的实现种种设计需求，这是我们需要考虑的问题。</p>
+<h3 id="初步理解设计稿">初步理解设计稿</h3>
+<p>在开始 Auto Layout 之前，首先要充分地理解设计稿。设计稿不仅仅是一堆花哨的切图和死板的标注，它是设计师努力思考的成果。</p>
+<p>为什么这里是这个配色？为什么这里会有投影？为什么这里要加个蒙版？为什么这俩按钮的间距是20而不是30？为什么这个按钮是圆的而不是方的？</p>
+<p>有些问题是有答案的，比如基本的色彩搭配，比如让页面更有层次感，比如为了更容易阅读。也有些是没答案的，可能只是设计师天马行空的想法和脑海里灵感碰撞的结果。但是这些都不影响你理解设计。理解了设计之后，你就不会犯那些忘了设背景色之类的低级错误了，因为你自己看效果的时候都会忍不住骂：『这文字没蒙版太难阅读了！』</p>
+<p>理解设计的第一步是对设计稿整体的理解和分析。熟悉基础控件、熟悉常用配色、熟悉跳转流程，在脑海中对各个页面有个完整的印象。</p>
+<p>以一个语音日记本为例：</p>
+<figure data-type="image" tabindex="1"><img src="http://ww1.sinaimg.cn/large/61d238c7gw1f741kdcdl0j21kw0ea43i.jpg" alt="" loading="lazy"></figure>
+<p>这个应用非常简单，一共就2个页面，6个状态。大致浏览一边之后便会获取以下信息：</p>
+<ul>
+<li>主题色是紫黄搭配，可以用全局变量存储，方便主题定制</li>
+<li>按钮控件都有投影，想想是用 PNG 还是用 CALayer 。</li>
+<li>两个页面之间的切换没有按钮，不过可以点击右上角的日历区域，然后做个展开的动效，通过缩放和透明度的变化，过渡到第二张图。</li>
+<li>月份切换没有按钮，可能需要滑动手势实现，加上一些引导图示。</li>
+<li>第一页的布局可以纵向分四份，顶部左右对齐且横向按比例切分。</li>
+<li>第二页的布局可以纵向分三份，保证在不同屏幕下也可以完美还原设计稿的效果。</li>
+<li>日历图部分可以复用，不过有两个状态：缩略图（无数字）和展开图（有数字且可点击）。可以自定义 UIView 实现。</li>
+</ul>
+<p>经过这样初步的分析之后，对整个页面的有了大致的了解，对布局和动效的处理也有了一个初步设计，同时对某些细节还有一些疑问，经过和设计师的沟通后，解决疑问点，然后开始开发。</p>
+<h3 id="与设计师高效合作">与设计师高效合作</h3>
+<p>我和设计师合作的时候是不需要设计师给标注的。因为他不知道我要什么，我其实也不缺什么。如果导出的是标准的 640 x 1136 设计稿，那我只要用系统自带的 Preview.app 就能看到我想要知道的任何数值。</p>
+<p>我开发页面的流程是这样的：</p>
+<ul>
+<li>设计师给我 640 宽的设计稿</li>
+<li>在设计稿上自己量一些必要的数值</li>
+<li>将像素值转换成约束布局，整理出布局方案</li>
+<li>和设计师沟通布局方案和设计细节</li>
+<li>独自完成页面开发，不和任何人交流</li>
+<li>生成不同设备下的截图给设计师看效果</li>
+</ul>
+<p>为什么这样做，主要有以下几个原因：</p>
+<ul>
+<li>大部分情况下，像素值其实并不是那么重要。比如这个按钮宽度是 120 像素，仅仅是因为它等于屏幕宽度的四分之一再减去左右 margin 的值。它只是恰好是120，而不是必须是120。</li>
+<li>不同屏幕下的适配，设计师不可能都考虑到，理解设计的思路才是一劳永逸的。有些东西看着好看，并不是因为它是 120 像素，而是因为它在屏幕中的比例令人感觉看着和谐。</li>
+<li>如果告诉你在不同的屏幕下按钮宽度分别是 120、130、150 行不行呢？也行，但是以后再出了新屏幕怎么办？还要做适配。写死数值，那样的设计没有灵魂。</li>
+</ul>
+<p>所以我不会让设计师给我标注稿，因为我想要的东西，标注是给不了的。我想要的，是读懂他的心。</p>
+<p>我理想中的设计与开发的合作，是灵魂上的高度统一，是思想上的心有灵犀，是感性设计和理性分析紧密结合旋转跳跃升腾交融后的智慧结晶。</p>
+<p>怎么写着写着玄幻了，上面那句划去吧。</p>
+<h3 id="auto-layout-最佳实践">Auto Layout 最佳实践</h3>
+<p>初步了解了设计稿之后，接下来就是实现的部分了。</p>
+<p>我个人开发页面的流程大致如下：</p>
+<ul>
+<li>使用 StoryBoard 搭建框架，复杂的应用则通过 StoryBoard Reference 拆分模块，人数较多则考虑只用 xib 开发。</li>
+<li>通过 IB + Auto Layout 设计页面的大体布局。</li>
+<li>根据具体需求选择 Subview 的技术方案：
+<ul>
+<li>静止页面， Auto Layout 拖拽生成。</li>
+<li>动效页面，看情况而定：
+<ul>
+<li>渐隐渐现、拉长拉短，拖拽 Constraint 实现。</li>
+<li>飞来飞去、时有时无，则用代码实现。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>当然这其中还有很多别的细节，比如是否需要 IBDesignable 、是否需要 Size Class 、是用 IB 写 CustomeView 还是 drawRect 里写、是用 CALayer 还是用 UIView 实现动画、要不要考虑 ChildViewController 等等。</p>
+<p>回顾过去几年的 iOS 开发经历，我的所有应用最终基本都是通过 StoryBoard 或者 xib 实现的。有很多应用一开始是用代码写的，手撕过 Frame、Autoresizing Mask、Auto Layout 等原始代码，也用过 Mansory、SnapKit、PureLayout、CocoaUI 等第三方库，最后无一例外，统统被我改成了 IB 实现。在后期出新设计稿的时候非常高效，开发效率大幅提升。</p>
+<p>当然啦，使用 IB 只是我的个人喜好，很多人也喜欢使用代码手撕页面，这没有任何问题。不管是 IB 拖拽还是手写代码， Auto Layout的设计理念都是通用的，主要是三方面内容：</p>
+<ul>
+<li>不同层次上，各个控件的层次关系</li>
+<li>相同层次上，各个控件的依赖关系</li>
+<li>设置关系时，如何选择最优的属性</li>
+</ul>
+<p>在熟练掌握各种属性的基础上，深入理解上面三个方面的细节，最后融会贯通，便是我心中的 Auto Layout 最佳实践。</p>
+<h4 id="不同层次捋清层次关系">不同层次：捋清层次关系</h4>
+<p>视图的层次是一个标准的树状结构。比如下面这个页面：</p>
+<figure data-type="image" tabindex="2"><img src="http://ww3.sinaimg.cn/large/61d238c7gw1f75992onrej21kw0namyp.jpg" alt="" loading="lazy"></figure>
+<p>我们可以将页面进行分解：</p>
+<ul>
+<li>根视图
+<ul>
+<li>顶部的日期和日历
+<ul>
+<li>左侧日期
+<ul>
+<li>数字：日</li>
+<li>数字：月</li>
+</ul>
+</li>
+<li>右侧日历</li>
+</ul>
+</li>
+<li>中间的问候语</li>
+<li>底部的按钮
+<ul>
+<li>上面的三个按钮
+<ul>
+<li>按钮1</li>
+<li>按钮2</li>
+<li>按钮3</li>
+</ul>
+</li>
+<li>下面的提交按钮</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>使用 IB 拖拽的效果如下：</p>
+<figure data-type="image" tabindex="3"><img src="http://ww1.sinaimg.cn/large/61d238c7gw1f74m3ckzppj219k15yaii.jpg" alt="" loading="lazy"></figure>
+<p>在一些复杂的场景中，通过透明的 UIView 将各个控件组织起来，可以让页面的层次更加清晰。不信看图：</p>
+<figure data-type="image" tabindex="4"><img src="http://ww2.sinaimg.cn/large/61d238c7gw1f74n4rxlohj20mj0hemzw.jpg" alt="" loading="lazy"></figure>
+<p>清晰的层级关系、合理的组织结构、良好的命名规范，不管是手写代码还是 IB 拖拽，都是非常重要的基础素养。</p>
+<h4 id="相同层次使用相对布局">相同层次：使用相对布局</h4>
+<p>有了层次基础，接下来就是同层级控件间的依赖关系。以顶部为例：</p>
+<figure data-type="image" tabindex="5"><img src="http://ww1.sinaimg.cn/large/61d238c7gw1f74nbstitzj215k0mogo5.jpg" alt="" loading="lazy"></figure>
+<p>这样一个控件，主要就是左边的日期和右边的日历，应该如何设计才比较合理呢？依赖关系有以下几种设计方式：</p>
+<ul>
+<li>日期和日历独立，位置和尺寸都基于 SuperView</li>
+<li>以日期为核心，日历的高度和宽度设置比例依赖于日期</li>
+<li>以日历为核心，日期的高度和宽度设置比例依赖于日历</li>
+</ul>
+<p>我选择的方案是第一种，主要原因是：两个控件没有明显的主次关系，不需要相互依赖，只要控制间距即可。</p>
+<h4 id="设置关系选择最优属性">设置关系：选择最优属性</h4>
+<p>最后就是选择最优的属性将控件之间的关系表现出来了。Auto Layout 提供了很多属性供我们选择，不同的属性适用于不同的使用场景，选择更合理的属性，可以大幅提高页面的可读性和可扩展性。</p>
+<p>还是以前面的需求为例：</p>
+<figure data-type="image" tabindex="6"><img src="http://ww1.sinaimg.cn/large/61d238c7gw1f74nbstitzj215k0mogo5.jpg" alt="" loading="lazy"></figure>
+<p>首先，先确定它们的对齐方式。从图中来看，日期应该左对齐，日历应该右对齐，所以使用 Leading 和 Trailing 设置对齐即可。</p>
+<p>然后，确定它们的拉伸方式。这个方法就比较多了，主要有以下几种：</p>
+<ul>
+<li>方案一：写死 Width/Height</li>
+<li>方案二：设置和 SuperView 的 Proportional Width/Height 约束，通过比例计算。</li>
+<li>方案三：设置和 SuperView 的 Proportional Width 约束，设置 Aspect Ratio 计算高度。</li>
+</ul>
+<p>最终我的选择是方案三。原因如下：</p>
+<ul>
+<li>写死宽高的方案不可取，因为这样在大屏和小屏手机上效果很不好，大屏会显得稀疏，小屏会显得拥挤。</li>
+<li>宽高都依赖于 SuperView 也不好，因为右侧的日历控件元素数目和元素间距都是固定的，所以长宽比是固定的，如果高度也是根据屏幕宽度来定，那么在长屏手机下会有纵向间距大于横向间距的情况。</li>
+<li>根据屏幕宽度计算控件宽度，再通过长宽比计算控件高度，然后用子控件撑满父控件，实现整体布局。</li>
+</ul>
+<h4 id="综上所述更灵活的适配">综上所述：更灵活的适配</h4>
+<p>综合上面三点，我再举另一个完整的例子：</p>
+<figure data-type="image" tabindex="7"><img src="http://ww3.sinaimg.cn/large/61d238c7gw1f759c3n1rej21kw0nawfs.jpg" alt="" loading="lazy"></figure>
+<p>在这个页面中，主要是纵向上的三个控件：</p>
+<ul>
+<li>上部的日历</li>
+<li>中部的文字</li>
+<li>下部的按钮</li>
+</ul>
+<p>如何优雅的实现这个页面呢？</p>
+<p>首先，将页面分解成3个大块：</p>
+<figure data-type="image" tabindex="8"><img src="http://ww1.sinaimg.cn/large/61d238c7gw1f759blwhumj21kw0naq48.jpg" alt="" loading="lazy"></figure>
+<p>将它们依次命名为：</p>
+<ul>
+<li>TopView</li>
+<li>GreetingView</li>
+<li>RecordView</li>
+</ul>
+<p>然后设计依赖关系。主要问题在于，上中下三个部分的高度和 Y 坐标如何确立。</p>
+<p>我的方案是：</p>
+<ul>
+<li>TopView 顶部对齐，高度是根据内部元素计算出来的高度，前面的章节已经提到，这样的好处是：不会破坏右侧日历的美感。</li>
+<li>GreetingView 顶部对齐 TopView ，高度根据文字自适应。不设置 Bottom 对齐屏幕中间的原因是：如果极端宽屏会把 GreetingView 挤扁。</li>
+<li>RecordView 底部对齐，高度为 SuperView 的 1/4 ，内部按钮根据自身高宽计算半径。这样不管屏幕如何变化，按钮在屏幕中的比例不变，不会显得太大或者太小。</li>
+</ul>
+<p>上面的方案有没有问题？</p>
+<p>有问题。</p>
+<p>什么问题？</p>
+<p>如果屏幕长宽比 1:1 ，那么可能把 GreetingView 挤了盖住底部的按钮，因为它没设置 Bottom ，如果 TopView 的高度超过了屏幕高度的 3/4 ，那文字就没地方放了。</p>
+<p>但是这个问题需要解决吗？</p>
+<p>不需要。因为如果屏幕的比例真的离奇到了这种程度，那么设计稿也是作废的。等真的到了那个时候，需要的不是更新约束，而是出新的设计稿。</p>
+<h2 id="小结">小结</h2>
+<p>我理想中优秀的页面开发是一劳永逸的，适配 iPhone 789JQK Plus Mini 各种也都只要调整小部分特殊情况而已，除非苹果出了正方形的屏幕的 iPhone 。从我个人往年的开发经验来看，这是可行的，基本上只要和设计师沟通好控件的依赖关系和自身状态，适配 iPhone 6 和 iPhone 6 Plus 是自然而然的事情。</p>
+<p>对于 iPhone 4 那种小屏导致界面摆不下，那是一开始就该和设计师沟通的事情，双方讨论好控件到底是相对于屏幕（Stick to Bottom）还是放在可滑动的页面上（UIScrollView）上，这和控件的层级关系有关，不该在适配特殊机型时才开始考虑这些问题；对于 iPad 那种因为尺寸差异过大导致需要重新开发那又是另一码事了。</p>
+<p>另外补充一点，设计师在设计页面的时候，也一定不要有 iPhone 6 或者 iPhone 4 的概念，因为页面设计不是针对某个像素值的，而是针对整体的布局和美感的。标注里的 20 30 40 其实不应该绑定不同分辨率的屏幕，而应该找出背后的设计逻辑，更合理地表现出来。</p>
+<h2 id="补充">补充</h2>
+<p>在此补充说明以下，文中的『更好』『更优』『更合理』等主观词语均是『在我眼中更』的缩写，不具有任何权威性，甚至可能不适用于你的团队，这都很正常。</p>
+<p>正所谓，一千个人眼里就有一千个奥土雷敖特。欢迎大家沟通交流。</p>
+<h2 id="q-a">Q &amp; A</h2>
+<p>下面进入自编自导自演的 Q&amp;A 环节。</p>
+<h3 id="问题-1">问题 1</h3>
+<blockquote>
+<p>UI 是廉价的，设计 Auto Layout 的时候花时间考虑这么多有意义吗？</p>
+</blockquote>
+<p>有意义，原因如下：</p>
+<ul>
+<li>其实并没有想象中的花时间。当把优秀成熟的设计理念当成一种习惯的时候，其实和瞎写的速度没有太大区别，反而因为思路清晰，写的还更快一些。</li>
+<li>可以避免很多低级的失误。所谓的『像素眼』，其实并不是真差在那几个像素，而是差在不合理的布局设计导致明显的违和感。</li>
+<li>方便进行更高效的适配。不同屏幕的适配并不是简简单单区分几个数值就行的，花精力思考布局其实反而节省了后期很多时间和精力。</li>
+</ul>
+<h3 id="问题-2">问题 2</h3>
+<blockquote>
+<p>StoryBoard 那么乱真的能用在公司项目里？</p>
+</blockquote>
+<ul>
+<li>如果一个人开发，那没什么问题，随便用。</li>
+<li>如果一个人负责几个页面，那问题也不大，用 Reference 将 StoryBoard 按照业务进行拆分即可。</li>
+<li>如果几个人开发几个页面，那建议考虑 xib ，只要一个页面在一段时间内只有一个人负责维护就行 。</li>
+<li>如果几个人开发一个页面。呃，或许你们公司该裁人了。</li>
+</ul>
+<h3 id="问题-3">问题 3</h3>
+<blockquote>
+<p>手写代码和 IB 如何选择？</p>
+</blockquote>
+<p>正如前面的问题所述， UI 是最廉价的东西，不要把自己的生命浪费在手写代码 UI 上。我的观点是，应用的核心在于业务逻辑，至于 UI 到底是如何实现，除了一群程序员之外无人关心。</p>
+<p>权衡利弊，充分考虑需求、团队、维护等问题，在合适的场合使用高效的方案。</p>
+<p>很多人倾向选择代码写界面，主要因为以下几点：</p>
+<ul>
+<li>代码写界面可复用</li>
+<li>代码写界面可以使用全局定义的变量</li>
+<li>换皮肤的功能代码更容易</li>
+<li>当一个页面上要迭代大量 UI 和动效时，IB 非常低效</li>
+<li>版本管理时经常冲突</li>
+</ul>
+<p>针对以上问题，我的观点如下：</p>
+<ul>
+<li>IB 写的 View 也是可以复用的，不过不可以继承。但是如果你需要继承自己的 CustomView 的话，那可能你的设计是错误的。</li>
+<li>这个确实是的，比如主题色、统一文字颜色。我以前是通过继承 UILabel UIButton 然后在初始化方法里更新配置。这样在 IB 里用起来没有任何区别，只要指定 Class 就行。不过后来发现这种需求其实并不多。</li>
+<li>主题色的定制我以前是使用 UIAppearence 实现的，也可以使用类似于 <a href="https://github.com/jiecao-fm/SwiftTheme/">SwiftTheme</a> 和 <a href="https://github.com/ViccAlexander/Chameleon">Chameleon</a> 这样的第三方库。</li>
+<li>我的观点恰好相反。代码更新视图布局非常麻烦，不够直观， IB 直接删了约束重新拖拽就行。至于动效问题，对于复杂动效的页面，我一般是用 UIView 拖个坑位，然后用代码在里面通过 CALayer 实现动效。</li>
+<li>冲突问题是个硬伤，一大坨 XML 冲突还是蛮麻烦的。但是其实手写代码也会有冲突的问题，而且处理起来也很琐碎。避免冲突最好的方法是明确各个页面的分工，避免同时修改 UI 部分。</li>
+</ul>
+<h3 id="问题-4">问题 4</h3>
+<blockquote>
+<p>IB 维护起来会不会比手写代码复杂很多？</p>
+</blockquote>
+<p>其实并不会，反而还会轻松很多，关键还是看团队成员的质量。</p>
+<p>前段时间看到有人把所有 view 都放在了根视图里面，然后屏幕上就是海量 subview 海量 AutoLayout ，啊我的天呐！</p>
+<p>前段时间看到有人吐槽 xib 里的 Auto Layout 删除之后会变成灰色而无法彻底删除，然后就是满屏的约束，啊我的天呐！</p>
+<p>这就很尴尬了。</p>
+<p>有些人没有层级观念，写什么都是乱糟糟挤成一团，那问题不在 IB ，而在于他自己本身写 UI 的经验和思考不足，就算用代码写 UI 也会有一样的问题。</p>
+<p>有些人不了解 Runtime Attributes 不了解 IBDesignable 不了解 Size Class 然后在那里说 IB 烂透了，这我不能接受。最起码，你应该充分了解 IB ，学习 IB 里的各种技巧，并总结各种最佳实践之后，你才能真正体会到 IB 有多烂。</p>
+<p>没错从某些角度来讲它是很烂， IBDesignable 经常卡死，Runtime Attributes 简直就是埋了个定时炸弹，Size Class 也并没有想象中好用，xib 文件打开一下居然就出现了改动，这简直太坑了。不过这些并不影响我使用 IB 开发。了解这些坑，然后继续利用 IB 中我觉得对我有价值的部分，它给我带来的价值远大于它的弊端。</p>
+<h3 id="问题-5">问题 5</h3>
+<blockquote>
+<p>你看你用 IB 就要考虑这么多问题，学习成本是不是比手写代码高多了？</p>
+</blockquote>
+<p>文中提到的 Auto Layout 相关的观点并不是 IB 所独有，层级关系、依赖关系、属性选择，这些东西手写代码也是需要考虑的。如果你没考虑，呃，那可能是你想的太少了。</p>
+<h2 id="最后">最后</h2>
+<p>关于 IB 和 Auto Layout ，所有我想写的都在这里了。其实我一开始只想写 Auto Layout 的最佳实践，但是 IB 的部分却越写越多。</p>
+<p>手写代码和 IB 拖拽各有优劣，希望各位可以冷静对待，因地制宜，择优而用。毕竟，适合自己的才是最好的。</p>
+<p>我的心愿是，世界和平。</p>
+<p><s>IB 党万岁</s></p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E8%83%8C%E6%99%AF%E9%97%B2%E8%81%8A">背景闲聊</a></li>
+<li><a href="#%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5">基础概念</a></li>
+<li><a href="#%E8%AE%BE%E8%AE%A1%E7%90%86%E5%BF%B5">设计理念</a>
+<ul>
+<li><a href="#%E5%88%9D%E6%AD%A5%E7%90%86%E8%A7%A3%E8%AE%BE%E8%AE%A1%E7%A8%BF">初步理解设计稿</a></li>
+<li><a href="#%E4%B8%8E%E8%AE%BE%E8%AE%A1%E5%B8%88%E9%AB%98%E6%95%88%E5%90%88%E4%BD%9C">与设计师高效合作</a></li>
+<li><a href="#auto-layout-%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5">Auto Layout 最佳实践</a>
+<ul>
+<li><a href="#%E4%B8%8D%E5%90%8C%E5%B1%82%E6%AC%A1%E6%8D%8B%E6%B8%85%E5%B1%82%E6%AC%A1%E5%85%B3%E7%B3%BB">不同层次：捋清层次关系</a></li>
+<li><a href="#%E7%9B%B8%E5%90%8C%E5%B1%82%E6%AC%A1%E4%BD%BF%E7%94%A8%E7%9B%B8%E5%AF%B9%E5%B8%83%E5%B1%80">相同层次：使用相对布局</a></li>
+<li><a href="#%E8%AE%BE%E7%BD%AE%E5%85%B3%E7%B3%BB%E9%80%89%E6%8B%A9%E6%9C%80%E4%BC%98%E5%B1%9E%E6%80%A7">设置关系：选择最优属性</a></li>
+<li><a href="#%E7%BB%BC%E4%B8%8A%E6%89%80%E8%BF%B0%E6%9B%B4%E7%81%B5%E6%B4%BB%E7%9A%84%E9%80%82%E9%85%8D">综上所述：更灵活的适配</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E5%B0%8F%E7%BB%93">小结</a></li>
+<li><a href="#%E8%A1%A5%E5%85%85">补充</a></li>
+<li><a href="#q-a">Q &amp; A</a>
+<ul>
+<li><a href="#%E9%97%AE%E9%A2%98-1">问题 1</a></li>
+<li><a href="#%E9%97%AE%E9%A2%98-2">问题 2</a></li>
+<li><a href="#%E9%97%AE%E9%A2%98-3">问题 3</a></li>
+<li><a href="#%E9%97%AE%E9%A2%98-4">问题 4</a></li>
+<li><a href="#%E9%97%AE%E9%A2%98-5">问题 5</a></li>
+</ul>
+</li>
+<li><a href="#%E6%9C%80%E5%90%8E">最后</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/make-calculator-with-electron/">
+              <h3 class="post-title">
+                使用 Electron 开发一款理财计算器
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

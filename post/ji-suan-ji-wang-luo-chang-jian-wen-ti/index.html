@@ -1,0 +1,291 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>计算机网络常见问题 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              计算机网络常见问题
+            </h2>
+            <div class="post-info">
+              <span>
+                2019-10-03
+              </span>
+              <span>
+                6 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/ipk4Ziose9/" class="post-tag">
+                  # HTTP
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="基础知识">基础知识</h2>
+<h3 id="常见协议分层">常见协议分层</h3>
+<ul>
+<li>应用层：HTTP，负责封装请求内容</li>
+<li>传输层：TCP、UDP，负责把数据包送达具体应用</li>
+<li>网络层：IP，负责把数据包送达目标主机</li>
+</ul>
+<h2 id="tcp">TCP</h2>
+<h3 id="tcp-三次握手-tcp-四次挥手">TCP 三次握手、TCP 四次挥手</h3>
+<p>￼<img src="https://blog.callmewhy.com/post-images/1578488366688.jpg" alt="" loading="lazy"></p>
+<h3 id="三次握手可以两次吗">三次握手可以两次吗</h3>
+<p>为了实现可靠数据传输， TCP 协议的通信双方， 都必须维护一个序列号， 以标识发送出去的数据包中， 哪些是已经被对方收到的。 三次握手的过程即是通信双方相互告知序列号起始值， 并确认对方已经收到了序列号起始值的必经步骤。<br>
+如果只是两次握手， 至多只有连接发起方的起始序列号能被确认， 另一方选择的序列号则得不到确认。在 S ACK 的时候，C 可能已经关闭无法接受信息，导致网络资源浪费。</p>
+<h3 id="四次挥手可以三次吗">四次挥手可以三次吗</h3>
+<p>当服务端收到客户端的 SYN 连接请求报文后，可以直接发送 SYN+ACK 报文。其中 ACK 报文是用来应答的，SYN 报文是用来同步的。但是关闭连接时，当服务端收到 FIN 报文时，很可能并不会立即关闭，所以只能先回复一个 ACK 报文。只有等到服务端所有的报文都发送完了，才能发送 FIN 报文，因此不能一起发送。所以需要四次挥手。</p>
+<h3 id="客户端第一个syn包丢了怎么办">客户端第一个「SYN」包丢了，怎么办？</h3>
+<p>客户端会尝试三次重传 SYN 包，间隔时间分别是 5.8s、24s、48s。建立一个新连接的最长时间限制为 75 秒。</p>
+<h3 id="服务端收到syn并回复的syn-ack包丢了怎么办">服务端收到「SYN」并回复的「SYN, ACK」包丢了，怎么办？</h3>
+<p>客户端没收到 ACK 会以为是前面 SYN 丢了，尝试重传 SYN 包。<br>
+服务器端在超时时间内没有收到客户端发来的「ACK」包，也会触发重传，此时服务端处于 SYN_RCVD 状态，会依次等待 3s、6s、12s 后，重新发送「SYN, ACK」包。不同的操作系统下，重传的次数有不同的配置，比如 linux 默认是 5 。如果重试后还是没有收到，则会断开连接。<br>
+同时由于客户端在没有收到「SYN,ACK」时，也会进行重传，当客户端重传的「SYN」收到后，会立即重新发送「SYN,ACK」包。</p>
+<h3 id="客户端最后一次回复的ack包丢了怎么办">客户端最后一次回复的「ACK」包丢了，怎么办？</h3>
+<p>客户端此时进入 ESTABLISHED 状态。<br>
+服务端因为收不到「ACK」会走重传机制，依然处于 SYN-RCVD 状态。如果此时接收到客户端真实发送来的数据包时，通过包内 ACK 的确认序号，会认为连接已建立，并进入 ESTABLISHED 状态。</p>
+<h3 id="客户端故意不发最后一次syn包怎么办">客户端故意不发最后一次「SYN」包，怎么办？</h3>
+<p>这就是 SYN FLOOD 攻击，虽然服务器有重试的次数限制，但是随着数量累积，还是会有较大压力。</p>
+<h2 id="http">HTTP</h2>
+<h3 id="http-报文组成部分">HTTP 报文组成部分</h3>
+<p>请求报文：请求行、请求头、空行、请求体<br>
+响应报文：状态行、响应头、空行、响应体</p>
+<h3 id="http10-和-http11-特性">HTTP/1.0 和 HTTP/1.1 特性</h3>
+<p>HTTP/1.0：</p>
+<ul>
+<li>默认没有复用 TCP 连接，connection: close，请求头中显式声明 keep-alive 可以开启</li>
+<li>前一个请求响应到达之后下一个请求才能发送，容易导致队头阻塞</li>
+</ul>
+<p>HTTP/1.1：</p>
+<ul>
+<li>默认是 connection: keep-alive 保持持续连接，一般默认的连接时间长度是 5-15 秒，保持不必要的连接会影响性能</li>
+<li>管道化，可以不等第一个请求响应继续发送后面的请求，但响应的顺序还是按照请求的顺序返回</li>
+<li>缓存处理，新增 cache-control 和 etag</li>
+</ul>
+<h3 id="http2-特性">HTTP/2 特性</h3>
+<ul>
+<li>减少传输数据量：通过二进制传输 和 Header 压缩实现</li>
+<li>多路复用：使用同一个 TCP 连接来传输一个域名下的所有请求，请求还可以有优先级。一个 TCP 连接中可以存在多条流。换句话说，也就是可以发送多个请求，对端可以通过帧中的标识知道属于哪个请求。通过这个技术，可以避免 HTTP 旧版本中的队头阻塞问题，极大的提高传输性能。</li>
+<li>服务端推送：能够在客户端发送第一个请求到服务端时，提前把一部分内容推送给客户端，放入缓存当中，这可以避免客户端请求顺序带来的并行度不高，从而导致的性能问题。</li>
+<li>丢包重传会导致所有请求阻塞，这种情况下性能反而不如 HTTP/1。基于 QUIC 的 HTTP/3 可以彻底解决 TCP 的队头阻塞问题</li>
+</ul>
+<h3 id="https-的工作原理">HTTPS 的工作原理</h3>
+<ul>
+<li>客户端连接 443 端口发送请求，包括：支持的加密压缩算法协议版本、一个随机数 r1</li>
+<li>服务器端返回结果，包括：确认加密算法、包含公钥的证书、一个随机数 r2</li>
+<li>客户端解析证书，验证证书的颁发机构和过期时间，如果证书没问题，则生成一个随机值 pre-master secret，用公钥对该随机值加密，发送给服务端</li>
+<li>服务端用私钥解密，得到 pre-master secret。至此，非对称加密过程结束，实现了身份认证和密钥协商。</li>
+<li>通过 r1、r2、pre-master secret 三个随机数生成一个 master secret，从而得到对话密钥集合 sessions keys ，以后的通讯都用这些密钥进行加密解密</li>
+<li>服务器端用随机值加密后传输信息给客户端</li>
+<li>客户端可以用之前生成的随机值还原出原文。至此，一个对称加密的过程结束，用于服务器端传送给客户端数据。</li>
+<li>因为非对称加密的性能很差，所以传输的时候用对称加密</li>
+</ul>
+<figure data-type="image" tabindex="1"><img src="https://blog.callmewhy.com/post-images/1578301335829.png" alt="" loading="lazy"></figure>
+<hr>
+<p>参考资料</p>
+<ul>
+<li><a href="https://mp.weixin.qq.com/s/LpkCPTh6GmL7GvB4QiEqeg">TCP 意外情况</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86">基础知识</a>
+<ul>
+<li><a href="#%E5%B8%B8%E8%A7%81%E5%8D%8F%E8%AE%AE%E5%88%86%E5%B1%82">常见协议分层</a></li>
+</ul>
+</li>
+<li><a href="#tcp">TCP</a>
+<ul>
+<li><a href="#tcp-%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B-tcp-%E5%9B%9B%E6%AC%A1%E6%8C%A5%E6%89%8B">TCP 三次握手、TCP 四次挥手</a></li>
+<li><a href="#%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B%E5%8F%AF%E4%BB%A5%E4%B8%A4%E6%AC%A1%E5%90%97">三次握手可以两次吗</a></li>
+<li><a href="#%E5%9B%9B%E6%AC%A1%E6%8C%A5%E6%89%8B%E5%8F%AF%E4%BB%A5%E4%B8%89%E6%AC%A1%E5%90%97">四次挥手可以三次吗</a></li>
+<li><a href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%AC%AC%E4%B8%80%E4%B8%AAsyn%E5%8C%85%E4%B8%A2%E4%BA%86%E6%80%8E%E4%B9%88%E5%8A%9E">客户端第一个「SYN」包丢了，怎么办？</a></li>
+<li><a href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF%E6%94%B6%E5%88%B0syn%E5%B9%B6%E5%9B%9E%E5%A4%8D%E7%9A%84syn-ack%E5%8C%85%E4%B8%A2%E4%BA%86%E6%80%8E%E4%B9%88%E5%8A%9E">服务端收到「SYN」并回复的「SYN, ACK」包丢了，怎么办？</a></li>
+<li><a href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%9C%80%E5%90%8E%E4%B8%80%E6%AC%A1%E5%9B%9E%E5%A4%8D%E7%9A%84ack%E5%8C%85%E4%B8%A2%E4%BA%86%E6%80%8E%E4%B9%88%E5%8A%9E">客户端最后一次回复的「ACK」包丢了，怎么办？</a></li>
+<li><a href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%95%85%E6%84%8F%E4%B8%8D%E5%8F%91%E6%9C%80%E5%90%8E%E4%B8%80%E6%AC%A1syn%E5%8C%85%E6%80%8E%E4%B9%88%E5%8A%9E">客户端故意不发最后一次「SYN」包，怎么办？</a></li>
+</ul>
+</li>
+<li><a href="#http">HTTP</a>
+<ul>
+<li><a href="#http-%E6%8A%A5%E6%96%87%E7%BB%84%E6%88%90%E9%83%A8%E5%88%86">HTTP 报文组成部分</a></li>
+<li><a href="#http10-%E5%92%8C-http11-%E7%89%B9%E6%80%A7">HTTP/1.0 和 HTTP/1.1 特性</a></li>
+<li><a href="#http2-%E7%89%B9%E6%80%A7">HTTP/2 特性</a></li>
+<li><a href="#https-%E7%9A%84%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86">HTTPS 的工作原理</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/vue-xiang-guan-yuan-li-xue-xi-bi-ji/">
+              <h3 class="post-title">
+                Vue 相关原理学习笔记
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

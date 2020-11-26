@@ -1,0 +1,294 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>入参空值校验的原因与方法 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              入参空值校验的原因与方法
+            </h2>
+            <div class="post-info">
+              <span>
+                2020-06-10
+              </span>
+              <span>
+                7 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/OO5IWDLuS/" class="post-tag">
+                  # C#
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>入参校验空值是一个非常基础的事儿。很多人看到这个问题，第一反应就是：这事儿也要讨论？大家不都这么写吗？</p>
+<pre><code class="language-csharp">public void DoSomething(Foo foo)
+{
+    if (foo == null)
+    {
+        throw new ArgumentNullException(nameof(foo));
+    }
+}
+</code></pre>
+<h2 id="为何校验">为何校验</h2>
+<p>很多 coding style 建议这样做，很多开源项目也是这样写的，甚至 VS 还提供了一键校验入参的快捷按钮可以自动生成一堆 <code>if params == null throw new Exception</code> 的代码。但是为什么呢？不校验入参会导致什么问题，校验入参又带来了什么好处？请看下面这个例子：</p>
+<pre><code class="language-csharp">public void PrintCar(Car car) 
+{
+    if (car == null)
+    {
+        throw new ArgumentNullException(nameof(foo));
+    }
+    Console.WriteLine(car.Name);
+}
+</code></pre>
+<p>在这个例子里，如果不校验入参，<code>Console.WriteLine(car.Name);</code> 会抛出 <code>NullReferenceException</code> ，如果校验入参，则会抛出 <code>ArgumentNullException</code> 。有人说，这解决了空指针异常的问题。其实仔细琢磨琢磨，并没有。你消灭了一个异常，又抛出了另一个异常，对于调用者来说还是要处理异常。虽然 <code>NullReferenceException</code> 数量看起来减少了，但是换来的是 <code>ArgumentNullException</code>，同样是需要调用者来捕获并处理。本质上，异常数量并没有发生改变，只是名字变了而已。不喊伏地魔的名字并不能消灭伏地魔。</p>
+<p>在上面的例子中，函数捕获到了可能发生的异常，却没有能力处理异常，只能继续往上抛异常，这种情形是否还有入参空值校验的必要？对于这个问题，不同人有不同看法。</p>
+<p>比如 <a href="https://dzone.com/articles/why-i-never-null-check-parameters">Why I Never Null-Check Parameters</a> 这篇文章的作者就提出了反对的看法。他认为，空指针异常是软件中客观存在的问题，无法通过捕获的方式妥善处理并解决，如果捕获后直接上抛，只是换了一个 Exception 的名称而已，这样的问题还是需要捕获并且及时修正；如果捕获后只在非空的时候处理业务逻辑而不上抛，则会隐藏空值传入带来的潜在问题。</p>
+<p>对于这个问题，个人觉得入参空值校验还是有必要的，基于以下两点理由：</p>
+<ul>
+<li>通过入参空值校验，<code>NullReferenceException</code> 和  <code>ArgumentNullException</code> 虽然看起来只是名字不一样，但是更加细分了 Exception 的责任方。<code>ArgumentNullException</code> 明确是调用者的问题，而 <code>NullReferenceException</code> 则可以明确是被调用者的问题。在后期 Debug 的时候会比较清晰。就像是 HTTP Status Code 中的 40x 和 50x 状态码一样，Bad Request 和 Server Error 是两种概念。</li>
+<li>有一些代码逻辑并不是 stateless 的，在这样的方法中如果中途出现异常会导致脏数据的出现，且没有数据库的那种回滚机制，脏数据无法处理。比如以下代码：</li>
+</ul>
+<pre><code class="language-csharp">public void CarCounter(Car car) 
+{
+    this.CarCount += 1;
+    this.CarNames.Add(car.Name);
+}
+</code></pre>
+<p>方法的第二行发现了空指针异常，而在异常发生之前已经执行了一些状态变更的代码。在这种场景下，就会产生错误的脏数据。这个例子比较简单，我们可能做一个类似 try catch count-- 的逻辑就可以实现一个类似于会话回滚的机制。但是大部分场景是比较复杂的，而且对于发送通知这种无法回滚的逻辑而言，这会是巨大的灾难。</p>
+<p>入参的空值校验，其实是为了确保方法本身的<a href="https://zh.wikipedia.org/wiki/%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86#%E5%BC%82%E5%B8%B8%E5%AE%89%E5%85%A8">强异常安全（strong exception safety）</a>，即：运行可以是失败，但失败的运行保证不会有负效应，因此所有涉及的数据都保持代码运行前的初始值。</p>
+<p>综上所述，在很多方法中，入参的空值校验是非常有必要的，可以更加细化 Exception 的分类，明确异常产生的责任方，且可以有效的避免脏数据情况的产生。这种防御式编程的思想，可以有效的提高我们的软件质量。</p>
+<h2 id="何时校验">何时校验</h2>
+<p>虽然入参的校验是有必要的，但是这并不代表我们应该在所有方法里都做入参空值校验。</p>
+<p>对于 public 方法，我们不知道外部会传给我们什么样的参数，在进行业务逻辑之前先校验一下入参是否是空值，可以尽早规避程序中会遇到的空指针异常。<br>
+对于 private 方法，调用者就是我们自己，完全知道会传入什么值，空值校验的工作可以在入口处提前处理妥当，在这种情况下方法内的空值检测就没有什么太大的必要。</p>
+<p>如果你是一名 C# 程序员，建议开启 <a href="https://docs.microsoft.com/en-us/visualstudio/code-quality/ca1062">CA1062 Warning</a>。这样的话，我们就不用纠结什么时候该校验什么时候不该校验了，只需要把关注点放在『什么时候该 public 什么时候该 private』即可。</p>
+<h2 id="如何校验">如何校验</h2>
+<p>道理大家都知道，但是要真的在代码里写一堆 <code>if == null throw new Exception</code> 的冗余代码，还是一件非常恶心的事情。这种冗余代码会降低代码的可读性，无形中增加项目的复杂度。</p>
+<p>在《<a href="https://www.infoq.com/news/2020/01/CSharp-Null-Validation/">C# Futures: Simplified Parameter Null Validation</a>》中，作者畅谈了 C# 中入参空值处理的几种方案，比如 <a href="https://github.com/dotnet/csharplang/issues/2145">C# Proposal #2145</a> 中的 Bang Operator： <code>void Insert(string s!) {}</code>，比如新增一个 Attribute：<code>void Insert([NotNull] string value)</code>，比如通过 <code>Compiler Flag</code> 来让编译器干这个事情。</p>
+<p>在目前的几种方案中，<a href="https://docs.microsoft.com/en-us/dotnet/framework/debug-trace-profile/code-contracts">Code Contract</a> 的 attribute 语法最为优雅：</p>
+<pre><code class="language-csharp">public static void CheckNotNull([ValidatedNotNullAttribute] this object value)
+{
+}
+</code></pre>
+<p>然而 Code Contract 本身已经处于一个 <a href="https://github.com/dotnet/docs/issues/6361#issuecomment-423815289">不再维护</a> 的状态。</p>
+<p>相比之下，封装一个 Helper 的方案最为稳健：</p>
+<pre><code class="language-csharp">internal static class ThrowIf
+{
+    public static class Argument
+    {
+        public static void IsNull(object argument, string argumentName)
+        {
+            if (argument == null)
+            {
+                throw new ArgumentNullException(argumentName);
+            }
+        }
+    }
+}
+public void DoSomething(Foo foo, Bar bar)
+{
+    ThrowIf.Argument.IsNull(foo, &quot;foo&quot;);
+    ThrowIf.Argument.IsNull(bar, &quot;bar&quot;);
+}
+</code></pre>
+<p>随着 C#7 引入了新的运算符 null-coalescing operator，我们也可以把以前的四行代码用 <code>??</code> 放在一行里实现：</p>
+<pre><code class="language-csharp">public void DoSomething(Foo foo, Bar bar)
+{
+    _ = foo ?? throw new ArgumentNullException(nameof(foo));
+    _ = bar ?? throw new ArgumentNullException(nameof(bar));
+}
+</code></pre>
+<p>如果有更好的最佳实践，欢迎评论区指点迷津。感恩。</p>
+<hr>
+<p>参考资料</p>
+<ul>
+<li><a href="https://www.baeldung.com/java-avoid-null-check">Avoid Check for Null Statement in Java</a></li>
+<li><a href="https://dzone.com/articles/why-i-never-null-check-parameters">Why I Never Null-Check Parameters</a></li>
+<li><a href="https://mariusschulz.com/blog/implementing-an-exception-helper-class-for-parameter-null-checking">Implementing an Exception Helper Class for Parameter Null Checking</a></li>
+<li><a href="https://docs.microsoft.com/en-us/dotnet/framework/debug-trace-profile/code-contracts">Code Contracts | MS Docs</a></li>
+<li><a href="https://www.microsoft.com/en-us/research/project/code-contracts/">Code Contracts | MS Reserch</a></li>
+<li><a href="https://blog.rsuter.com/elegant-method-parameter-validation-with-code-contracts-support/">Elegant method parameter validation with Code Contracts support</a></li>
+<li><a href="https://blogs.u2u.be/peter/post/simpler-checking-of-arguments-with-c-7-throw-expressions">Simpler checking of arguments with C# 7 throw expressions</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E4%B8%BA%E4%BD%95%E6%A0%A1%E9%AA%8C">为何校验</a></li>
+<li><a href="#%E4%BD%95%E6%97%B6%E6%A0%A1%E9%AA%8C">何时校验</a></li>
+<li><a href="#%E5%A6%82%E4%BD%95%E6%A0%A1%E9%AA%8C">如何校验</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/ru-he-bian-xie-you-jie-zhi-de-dan-yuan-ce-shi/">
+              <h3 class="post-title">
+                如何编写『有价值』的单元测试
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

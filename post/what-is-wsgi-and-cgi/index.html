@@ -1,0 +1,342 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CGI FastCGI WSGI 学习笔记 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              CGI FastCGI WSGI 学习笔记
+            </h2>
+            <div class="post-info">
+              <span>
+                2015-12-07
+              </span>
+              <span>
+                8 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/5AHHXIh4qj/" class="post-tag">
+                  # Web
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>最近用 Flask 给以前写的 OpenCV 代码配置一个入口供前端调用，翻文档的时候发现部署服务器和在本地运行与我一开始想的并不太一样。于是花点时间了解并整理了一下，补补基础课。</p>
+<h2 id="cgi">CGI</h2>
+<h3 id="概念">概念</h3>
+<p>CGI 是一种服务器和后端可执行程序之间的交互标准，它描述了『如何通过环境变量来传递请求信息』。</p>
+<h3 id="原理">原理</h3>
+<p>最原始的服务器，简单到就是访问文件目录，每次的请求都是请求加载目录下的文件。比如文档放在 <code>/usr/local/apache/htdocs</code> 目录下，访问 http://example.com/index.html 其实就是请求 <code>/usr/local/apache/htdocs/index.html</code> 文件。</p>
+<p>CGI 通过服务器脚本（或者二进制文件），扩展了这个基础的『访问过程』。它利用程序的标准输入输出流，完成 HTTP 通信。每次请求的文本以标准输入流的形式进入服务器端的 CGI 程序，创建进程并执行，然后将运行结果通过进程的标准输出流输出作为响应。</p>
+<p>比如 <code>/usr/local/apache/htdocs/cgi-bin</code> 是我们的 CGI 目录，当请求了 CGI 目录里的文件的时候（比如访问 http://example.com/cgi-bin/printenv.pl ），服务器并不会返回这个文件，而会运行这个程序，然后将生成的内容返回给客户端。所以理论上，任何有输入输出能力的语言都可以用来写 CGI。</p>
+<p>CGI 的工作原理如图：</p>
+<figure data-type="image" tabindex="1"><img src="http://ww1.sinaimg.cn/large/61d238c7jw1eyr31id7kqj20z40cwjtn.jpg" alt="" loading="lazy"></figure>
+<p>解释一下，上面图中的 CGI 指的是 CGI 程序。CGI 是一种协议标准，CGI 程序是实现了 CGI 标准的程序，确保输入输出合法，这是两个相关但不同的概念。</p>
+<h3 id="优点">优点</h3>
+<p>CGI 的优点也就是它的作用了。CGI 程序提供了很多静态网页无法实现的功能，比如加载数据、数据运算等等。早期的动态网页基本都是基于 CGI 实现的。</p>
+<h3 id="缺点">缺点</h3>
+<p>在 CGI 协议下，解析器的反复加载是性能低下的主要原因。每个发送到服务器的请求，都需要经过『启动进程、处理请求、结束进程』三个步骤，所以当访问量增大时，系统资源的开销也会增大，导致服务器性能下降甚至服务中断。</p>
+<p>更惨的是，这种『一个请求一个进程』的模式意味着没有『状态』可言，导致很多资源无法复用，比如连接数据库、内存缓存等等。</p>
+<h2 id="fastcgi">FastCGI</h2>
+<h3 id="概念-2">概念</h3>
+<p>FastCGI 是 CGI 的增强版本，用于减少 Server 与 CGI 应用之间的交互开销，从而使 Server 可以同时处理更多的请求。</p>
+<h3 id="原理-2">原理</h3>
+<p>和 CGI 的 <code>fork-and-execute</code> 模式不同的是，FastCGI 以 <code>Daemon</code> 的形式运行，在初始化的时候会启动一个 <code>FastCGI Server</code> 然后长驻内存，处理一系列的请求。</p>
+<p>Nginx+FastCGI 的工作流程是这样的：</p>
+<ul>
+<li>初始化 FastCGI 进程管理器，启动主进程和多个 CGI 子进程。主进程主要是管理子进程，同时还需要监听端口（例如9000端口）；子进程则是处于等待连接的状态。</li>
+<li>当请求到达服务器时，Nginx 通过 location 指令，将请求（例如以 <code>php</code> 为后缀的文件）分配到指定端口（例如9000端口）来处理。</li>
+<li>FastCGI 进程管理器选择并连接到一个子进程，服务器将环境变量和标准输入发送给子进程。</li>
+<li>子进程接受请求并完成处理后，将标准输出和错误信息从同一连接返回给服务器。</li>
+<li>子进程关闭连接，继续等待下一个请求。</li>
+</ul>
+<p>工作原理如图：</p>
+<figure data-type="image" tabindex="2"><img src="http://ww4.sinaimg.cn/large/61d238c7jw1eyr2zrcgzrj218e0c4ju1.jpg" alt="" loading="lazy"></figure>
+<p>上图中的 <code>wrapper</code> 可以理解为用于启动另一个程序的程序，因为 Nginx 本身不支持对外部程序的直接调用或者解析，所以外部程序必须通过 FastCGI 接口来调用。</p>
+<h3 id="优点-2">优点</h3>
+<p>除了继承 CGI 原有的优点之外， FastCGI 还有以下特点：</p>
+<ul>
+<li>业务分离：FastCGI 后端和 Web Server 运行在不同的进程中，后端的故障不会导致 Web Server 停止服务。</li>
+<li>分布式计算：由于 FastCGI 服务器是可以独立运行的，所以 FastCGI 程序可以在服务器以外的主机上执行，并且接受来自其它服务器的请求。</li>
+<li>多个可扩展角色：在 FastCGI 中，程序被赋予明确的角色，例如响应器角色、认证器角色、过滤器角色等等。</li>
+</ul>
+<h2 id="wsgi">WSGI</h2>
+<h3 id="概念-3">概念</h3>
+<p>WSGI 是 Web 服务器和 Web 应用程序之间的一种简单而通用的接口，最初是为 Python 量身定做。</p>
+<h3 id="原理-3">原理</h3>
+<p>WSGI 属于接口规范，从层级上来讲要比 CGI/FastCGI 高级。</p>
+<p>WSGI 中存在两种角色：接受请求的 Server 和处理请求的 Application，它们底层是通过 FastCGI 沟通的。</p>
+<p>WSGI 的工作流程如下：</p>
+<ul>
+<li>客户端发起 HTTP 请求到 Nginx</li>
+<li>Nginx 转成 FastCGI 请求发送到 WSGI 的 Server（例如 flup）</li>
+<li>WSGI 的 Server 通过 app(environ, start_response) 函数调用 Application</li>
+<li>Application 再根据 environ 里的内容，对用户代码中注册的路由和响应函数进行调用。</li>
+</ul>
+<h4 id="server">Server</h4>
+<p>Server 端从规定的输入中获取 Request 数据，然后把环境变量（environ）和回调函数（start_response）传给 Application 。</p>
+<h4 id="application">Application</h4>
+<p>Application 会处理请求并通过回调函数将结果返回给 Server。</p>
+<p>和 Serve 对应，一个标准的 Application 接受两个参数：</p>
+<ul>
+<li>environ：一个包含所有 HTTP 请求信息的 dict 对象</li>
+<li>start_response：一个发送 HTTP 响应的函数</li>
+</ul>
+<h4 id="middleware">Middleware</h4>
+<p>Middleware 是一个比较特殊的存在，它是夹在二者之间的，对于 Server 端而言它是个 Application ，而对于 Application 而言它就是 Server 端。</p>
+<p>它可以实现以下功能：</p>
+<ul>
+<li>重写环境变量，根据目标 URL，将请求消息路由到不同的应用对象。</li>
+<li>允许在一个进程中同时运行多个应用程序或应用框架。</li>
+<li>负载均衡和远程处理，通过在网络上转发请求和响应消息。</li>
+<li>进行内容后处理，例如应用 XSLT 样式表。</li>
+</ul>
+<h3 id="优点-3">优点</h3>
+<p>WSGI 将请求的工作通过异步回调进行拆解，可以很方便的在一个线程空间里同时处理多个请求。</p>
+<p>另外，方便进行负载均衡和请求转发，不会造成后端应用阻塞。</p>
+<h2 id="其他">其他</h2>
+<p>其他一些相关的名词一起梳理一下：</p>
+<ul>
+<li>uWSGI：一个应用服务器，实现了 uwsgi 、FastCGI 和 HTTP 等协议。</li>
+<li>uwsgi：uWSGI 服务器的自有协议，用于定义传输信息的类型。</li>
+<li>flup：WSGI 中的 Server 的一种实现</li>
+<li>Spawn-FCGI：Python 中的管理 FastCGI 进程管理器。</li>
+<li>PHP-CGI： PHP 自带的 FastCGI 管理器。</li>
+<li>PHP-FPM：PHP 的 Fastcgi 进程管理器。</li>
+</ul>
+<p>OK 就是这样。对这方面不是很了解，如果有错误还望及时指出，不胜感激：）</p>
+<hr>
+<p>参考文献：</p>
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/Common_Gateway_Interface">Common Gateway Interface</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Simple_Common_Gateway_Interface">Simple Common Gateway Interface</a></li>
+<li><a href="https://en.wikipedia.org/wiki/FastCGI">FastCGI</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Web_Server_Gateway_Interface">Web Server Gateway Interface</a></li>
+<li><a href="http://taobaofed.org/blog/2015/11/24/nodejs-php-process-manager/">浅谈 Node.js 和 PHP 进程管理</a></li>
+<li><a href="http://www.2cto.com/os/201111/111318.html">Linux PHP 的运行模式与其相关名词术语</a></li>
+<li><a href="http://stackoverflow.com/questions/2089271/i-never-really-understood-what-is-cgi">I never really understood: what is CGI?</a></li>
+<li><a href="http://www.fastcgi.com/drupal/">FastCGI/drupal</a></li>
+<li><a href="http://zires.info/2011/01/fcgi-scgi-wsgi-cgi/">fcgi，scgi，wsgi，cgi</a></li>
+<li><a href="http://www.zhihu.com/question/19998865">如何理解 CGI WSGI</a></li>
+<li><a href="http://www.cgi101.com/learn/">CGI Programming 101: Learn CGI Today!</a></li>
+<li><a href="http://tools.ietf.org/html/rfc3875">RFC3875: The Common Gateway Interface (CGI) Version 1.1</a></li>
+<li><a href="http://www.fastcgi.com/devkit/doc/fcgi-spec.html">FastCGI Specification</a></li>
+<li><a href="http://ifxoxo.com/cgi_fastcgi.html">CGI、FastCGI 区别</a></li>
+<li><a href="http://book.51cto.com/art/201202/314840.htm">Nginx+FastCGI 运行原理</a></li>
+<li><a href="http://yansu.org/2014/02/15/apache-and-nginx.html">从运行原理及使用场景看 Apache 和 Nginx</a></li>
+<li><a href="http://blog.51reboot.com/cgi-fastcgi-wsgi/">漫谈 CGI FastCGI WSGI</a></li>
+<li><a href="https://www.python.org/dev/peps/pep-0333/">PEP 0333</a></li>
+<li><a href="http://www.liaoxuefeng.com/wiki/0014316089557264a6b348958f449949df42a6d3a2e542c000/001432012393132788f71e0edad4676a3f76ac7776f3a16000">WSGI 接口</a></li>
+<li><a href="http://yansu.org/2013/05/19/what-is-wsgi.html">WSGI 学习</a></li>
+<li><a href="http://nichol.as/benchmark-of-python-web-servers">Benchmark of Python WSGI Servers</a></li>
+<li><a href="http://cramer.io/2013/06/27/serving-python-web-applications/">You Should Be Using Nginx + UWSGI</a></li>
+<li><a href="http://stackoverflow.com/questions/1747266/is-there-a-speed-difference-between-wsgi-and-fcgi">Is there a speed difference between WSGI and FCGI?</a></li>
+<li><a href="http://www.itopers.com/?p=586">区分 wsgi、uWSGI、uwsgi、php-fpm、CGI、FastCGI 的概念</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#cgi">CGI</a>
+<ul>
+<li><a href="#%E6%A6%82%E5%BF%B5">概念</a></li>
+<li><a href="#%E5%8E%9F%E7%90%86">原理</a></li>
+<li><a href="#%E4%BC%98%E7%82%B9">优点</a></li>
+<li><a href="#%E7%BC%BA%E7%82%B9">缺点</a></li>
+</ul>
+</li>
+<li><a href="#fastcgi">FastCGI</a>
+<ul>
+<li><a href="#%E6%A6%82%E5%BF%B5-2">概念</a></li>
+<li><a href="#%E5%8E%9F%E7%90%86-2">原理</a></li>
+<li><a href="#%E4%BC%98%E7%82%B9-2">优点</a></li>
+</ul>
+</li>
+<li><a href="#wsgi">WSGI</a>
+<ul>
+<li><a href="#%E6%A6%82%E5%BF%B5-3">概念</a></li>
+<li><a href="#%E5%8E%9F%E7%90%86-3">原理</a>
+<ul>
+<li><a href="#server">Server</a></li>
+<li><a href="#application">Application</a></li>
+<li><a href="#middleware">Middleware</a></li>
+</ul>
+</li>
+<li><a href="#%E4%BC%98%E7%82%B9-3">优点</a></li>
+</ul>
+</li>
+<li><a href="#%E5%85%B6%E4%BB%96">其他</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/a-note-a-day/">
+              <h3 class="post-title">
+                阅读周记
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

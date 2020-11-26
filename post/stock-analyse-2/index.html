@@ -1,0 +1,438 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>股票分析（二）：金叉到底灵不灵 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              股票分析（二）：金叉到底灵不灵
+            </h2>
+            <div class="post-info">
+              <span>
+                2016-03-06
+              </span>
+              <span>
+                7 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/kvnAZyCRIA/" class="post-tag">
+                  # Quant
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="基础概念">基础概念</h2>
+<p>金叉和死叉是股票分析中十分常见的技术名词。</p>
+<p>金叉是指短期线上穿长期线，且这两根线方向均朝上，则此线组合为『金叉』，反之为『死叉』。</p>
+<figure data-type="image" tabindex="1"><img src="http://ww1.sinaimg.cn/large/61d238c7jw1f1n22cx3iaj20oq0ctwhq.jpg" alt="" loading="lazy"></figure>
+<p>股票交易中，金叉通常为买进信号：短期线带节奏拽着长期线往上，说明短期强势，可以考虑买进。那『金叉买进』之后到底涨的概率为多少呢？涨幅又如何？不妨通过 Python 来算算看。</p>
+<h2 id="寻找金叉">寻找金叉</h2>
+<p>我们取出过去两年的所有数据，用来计算 MA 的值。然后再取出 2015 年的数据，用于寻找金叉：</p>
+<pre><code class="language-python">%matplotlib inline
+import tushare as ts
+import pandas as pd
+import matplotlib.dates as dates
+import matplotlib.finance as f  
+import matplotlib.pyplot as plt
+import datetime
+
+all_df = ts.get_h_data('601233',start='2014-01-01',end='2016-03-01')
+all_df = all_df.sort_index(ascending=True)
+params = [5, 10, 20, 60]
+for p in params:
+    all_df['ma'+str(p)] = pd.rolling_mean(all_df['close'], window=p)
+df = all_df[all_df.index.year == 2015]
+</code></pre>
+<p>预处理后的数据大概是这样的：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">open</th>
+<th style="text-align:center">high</th>
+<th style="text-align:center">close</th>
+<th style="text-align:center">low</th>
+<th style="text-align:center">volume</th>
+<th style="text-align:center">amount</th>
+<th style="text-align:center">ma5</th>
+<th style="text-align:center">ma10</th>
+<th style="text-align:center">ma20</th>
+<th style="text-align:center">ma60</th>
+<th style="text-align:center">date</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">2015-01-05</td>
+<td style="text-align:center">10.64</td>
+<td style="text-align:center">11.10</td>
+<td style="text-align:center">10.98</td>
+<td style="text-align:center">10.34</td>
+<td style="text-align:center">19559160</td>
+<td style="text-align:center">210219728</td>
+<td style="text-align:center">10.916</td>
+<td style="text-align:center">10.405</td>
+<td style="text-align:center">9.3165</td>
+<td style="text-align:center">8.095000</td>
+</tr>
+<tr>
+<td style="text-align:center">2015-01-06</td>
+<td style="text-align:center">10.97</td>
+<td style="text-align:center">11.59</td>
+<td style="text-align:center">10.67</td>
+<td style="text-align:center">10.49</td>
+<td style="text-align:center">39208700</td>
+<td style="text-align:center">431741216</td>
+<td style="text-align:center">10.942</td>
+<td style="text-align:center">10.570</td>
+<td style="text-align:center">9.4515</td>
+<td style="text-align:center">8.153833</td>
+</tr>
+<tr>
+<td style="text-align:center">2015-01-07</td>
+<td style="text-align:center">10.58</td>
+<td style="text-align:center">10.71</td>
+<td style="text-align:center">10.42</td>
+<td style="text-align:center">10.26</td>
+<td style="text-align:center">17181430</td>
+<td style="text-align:center">179871040</td>
+<td style="text-align:center">10.708</td>
+<td style="text-align:center">10.636</td>
+<td style="text-align:center">9.5755</td>
+<td style="text-align:center">8.211667</td>
+</tr>
+<tr>
+<td style="text-align:center">...</td>
+<td style="text-align:center">...</td>
+<td style="text-align:center">...</td>
+<td style="text-align:center">...</td>
+<td style="text-align:center">...</td>
+<td style="text-align:center">...</td>
+<td style="text-align:center">...</td>
+<td style="text-align:center">...</td>
+<td style="text-align:center">...</td>
+<td style="text-align:center">...</td>
+<td style="text-align:center">...</td>
+</tr>
+<tr>
+<td style="text-align:center">2015-12-30</td>
+<td style="text-align:center">13.37</td>
+<td style="text-align:center">13.54</td>
+<td style="text-align:center">13.42</td>
+<td style="text-align:center">13.31</td>
+<td style="text-align:center">8711024</td>
+<td style="text-align:center">116829360</td>
+<td style="text-align:center">13.816</td>
+<td style="text-align:center">13.699</td>
+<td style="text-align:center">13.8625</td>
+<td style="text-align:center">13.012667</td>
+</tr>
+<tr>
+<td style="text-align:center">2015-12-31</td>
+<td style="text-align:center">13.42</td>
+<td style="text-align:center">13.47</td>
+<td style="text-align:center">13.15</td>
+<td style="text-align:center">13.04</td>
+<td style="text-align:center">16588625</td>
+<td style="text-align:center">218821303</td>
+<td style="text-align:center">13.588</td>
+<td style="text-align:center">13.640</td>
+<td style="text-align:center">13.7710</td>
+<td style="text-align:center">13.066167</td>
+</tr>
+</tbody>
+</table>
+<p>我们先用 MA5(5日滑动平均) 和 MA10(10日滑动平均) 来寻找金叉。</p>
+<p>金叉需要满足一下两个条件：</p>
+<ul>
+<li>昨日的 MA5 小于昨天的 MA10</li>
+<li>今天的 MA5 大于今日的 MA10</li>
+<li>今天的 MA5 大于昨天的 MA5</li>
+<li>今天的 MA10 大于昨日的 MA10</li>
+</ul>
+<p>我们用 <code>pre</code> 临时存储昨日的数据，用 <code>golden_cross</code> 存储金叉的具体数据，方便后面标记，则寻找金叉的代码如下：</p>
+<pre><code class="language-python">pre = None
+golden_cross = pd.DataFrame()
+for index, row in df.iterrows():
+    if not pre is None:
+        if pre['ma5'] &lt; pre['ma10'] and row['ma5'] &gt; row['ma10'] \
+        and pre['ma5'] &lt; row['ma5'] and pre['ma10'] &lt; row['ma10']:
+            golden_cross = golden_cross.append(row)
+            print index
+            print '昨日MA5 = %s ，昨日MA10 = %s' % (pre['ma5'], pre['ma10'],)
+            print '今日MA5 = %s ，今日MA10 = %s' % (row['ma5'], row['ma10'])
+            print '----------'
+    pre = row
+</code></pre>
+<p>运行结果：</p>
+<pre><code>2015-01-28 00:00:00
+昨日MA5 = 10.258 ，昨日MA10 = 10.264
+今日MA5 = 10.386 ，今日MA10 = 10.316
+----------
+2015-02-17 00:00:00
+昨日MA5 = 11.564 ，昨日MA10 = 11.671
+今日MA5 = 11.692 ，今日MA10 = 11.677
+----------
+...
+----------
+2015-11-25 00:00:00
+昨日MA5 = 12.97 ，昨日MA10 = 12.999
+今日MA5 = 13.434 ，今日MA10 = 13.206
+----------
+</code></pre>
+<p>如果希望更直观的表现出金叉，可以用 Pandas 的绘图工具绘制均线，并且将找到的金叉标记出来：</p>
+<pre><code>%matplotlib inline
+
+fig = plt.figure()
+ax = fig.add_axes([0, 0, 1, 1])
+param_colors = ['y', 'b']
+params = [5, 10]
+for (i,p) in enumerate(params):
+    ax.plot(df.index, df[['ma'+str(p)]], param_colors[i])
+ax.plot(golden_cross.index, golden_cross[['ma5']], 'rD')
+fig.autofmt_xdate()
+</code></pre>
+<p>绘图结果如下：</p>
+<figure data-type="image" tabindex="2"><img src="http://ww2.sinaimg.cn/large/61d238c7jw1f1n8wrng8rj20cv09kq3n.jpg" alt="" loading="lazy"></figure>
+<p>乍一看似乎确实是几个不错的买入时机。我们不妨试一下，如果都在金叉后的一天以开盘价买入，然后在第二天按照开盘价卖出，看看收益如何。</p>
+<h2 id="模拟交易">模拟交易</h2>
+<p>『在金叉后的一天以开盘价买入然后在第二天按照开盘价卖出』其实已经是一种量化交易了，我们可以借助一些已有的平台更轻松的完成这个任务。这里我选择的是 <a href="https://www.ricequant.com/">RiceQuant</a> ，国内同类型的还有 <a href="https://uqer.io/">UQER</a> 和 <a href="https://www.joinquant.com/">JoinQuant</a> 可供选择。</p>
+<p>现在我们将量化策略设定为：『金叉买入，第二天卖出』。是不是简单粗暴！来看看如果我们按照这个策略在股市中摸爬滚打数年到底是亏了还是赚了。编写代码如下：</p>
+<pre><code class="language-python">import talib
+import numpy as np
+import math
+import pandas
+
+# 初始化数据，将初始化变量存储在 context 中
+def init(context):
+    context.s1 = &quot;601233.XSHG&quot;
+
+    context.SHORT_PERIOD = 5
+    context.LONG_PERIOD = 10
+    context.fired = False
+
+# 该函数每天调用一次
+def handle_bar(context, bar_dict):
+    # 获取关注股票的历史价格
+    prices = history(context.LONG_PERIOD+1,'1d','close')[context.s1].values
+    # 计算短期均线和长期均线
+    short_ma = talib.SMA(prices,context.SHORT_PERIOD)
+    long_ma = talib.SMA(prices,context.LONG_PERIOD)
+    # 绘制均线
+    plot(&quot;short ma&quot;,short_ma[-1])
+    plot(&quot;long ma&quot;,long_ma[-1])
+
+    # 如果已经买入，则全部卖出
+    if context.fired == True:
+        logger.info('卖出！')
+        order_target_percent(context.s1, 0)
+        context.fired = False
+
+    # 金叉则满仓买入
+    if short_ma[-1]&gt;long_ma[-1] and short_ma[-2]&lt;long_ma[-2] \
+    and short_ma[-1]&gt;short_ma[-2] and long_ma[-1]&gt;long_ma[-2]:
+        logger.info('买入！')
+        order_percent(context.s1,1)
+        context.fired = True
+</code></pre>
+<p>预测一下应该是赚得爽翻天了啊！这可是金叉啊！来看下回测的结果：</p>
+<figure data-type="image" tabindex="3"><img src="http://ww1.sinaimg.cn/large/61d238c7jw1f1naafm0k7j21kw0jj0yi.jpg" alt="" loading="lazy"></figure>
+<p>回测结果并不是很乐观，总体来看如果按照『金叉买入，第二天卖出』的策略来交易的话，回测收益为 -12.533% 左右。问题出在哪里？看下交易详细：</p>
+<figure data-type="image" tabindex="4"><img src="http://ww3.sinaimg.cn/large/61d238c7jw1f1nactkjcej21kw0q9tey.jpg" alt="" loading="lazy"></figure>
+<p>可以看到，最近的四个回合交易里，两次的卖出价比买入价低，而且就算赚了的，也没赚到多少钱。仔细想一下可能是时间太短，上涨的趋势还没能完全表现出来就卖了。于是调整下策略，在出现金叉后的第10天再卖。代码稍作修改就可以了，看下结果：</p>
+<figure data-type="image" tabindex="5"><img src="http://ww1.sinaimg.cn/large/61d238c7jw1f1nal10wc5j21kw0jpgre.jpg" alt="" loading="lazy"></figure>
+<p>从数据上来看要好看很多，对比一下基准收益（沪深300），主要是躲过了六七月的那一波大跌。</p>
+<p>基准收益是一个非常有价值的参考信息，因为如果你是在股市全局大涨的情况下，就算是闭着眼睛买进卖出也是赚得，这并不能说明你的量化策略是优秀的。</p>
+<p>一个优秀的量化策略有以下几个基本特征：</p>
+<ul>
+<li>市场中性，与市场关联度低</li>
+<li>稳定性，高 sharpe 低回撤</li>
+<li>交易频率应该保持稳定，不长期空仓也不频繁交易</li>
+</ul>
+<p>为了更方便观察，可以将交易记录绘制在均线图里，红色标记买入，绿色标记卖出：</p>
+<figure data-type="image" tabindex="6"><img src="http://ww1.sinaimg.cn/large/61d238c7jw1f1nawsapqsj20cv09kdgk.jpg" alt="" loading="lazy"></figure>
+<p>从图中可以看到，除了四五月份那次不走运之外，其他几次基本都是赚的。尤其是赶上了五六月份的大涨赚了不少，金叉是一个可以参考的买进信号。</p>
+<h2 id="小结">小结</h2>
+<p>我在量化分析方面还是个新手，前面的内容如果有理解错误的地方欢迎指出。今天小试了一下量化分析平台，感觉效果还可以。</p>
+<p>当然，优秀的量化策略远比这金叉银叉复杂得多，我也还在慢慢学习中。多多指教。</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5">基础概念</a></li>
+<li><a href="#%E5%AF%BB%E6%89%BE%E9%87%91%E5%8F%89">寻找金叉</a></li>
+<li><a href="#%E6%A8%A1%E6%8B%9F%E4%BA%A4%E6%98%93">模拟交易</a></li>
+<li><a href="#%E5%B0%8F%E7%BB%93">小结</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/stock-analyse-1/">
+              <h3 class="post-title">
+                股票分析（一）：常见的技术指标
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

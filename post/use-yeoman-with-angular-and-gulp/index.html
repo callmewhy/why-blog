@@ -1,0 +1,323 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>使用 Yeoman + AngularJS + Gulp 搭建 Web 应用 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              使用 Yeoman + AngularJS + Gulp 搭建 Web 应用
+            </h2>
+            <div class="post-info">
+              <span>
+                2015-09-18
+              </span>
+              <span>
+                6 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/WZhN7vCZ4R/" class="post-tag">
+                  # Frontend
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>最近在做一个简单的资源管理系统，以前都是 PHP+jQuery+Bootstrap 的组合，这一次想尝试一些没接触过的东西。在这里简单的总结一下在开发过程中用到的框架和工具。</p>
+<p>总结的比较简单，新手上路，多多指教！各位如果感兴趣可以进入各个项目的主页深入了解。</p>
+<p>另外，由于我曾经是一名 iOS 程序员（啊现在也是），在文章中可能会情不自禁地乱入一些 iOS 开发相关的东西，可以直接无视我。。。</p>
+<h2 id="npm"><a href="https://www.npmjs.com/">npm</a></h2>
+<p>npm 是 NodeJS 的包管理工具，建议使用 <a href="https://github.com/tj/n">n</a> 管理 NodeJS 版本，无痛体验 NodeJS 4.0 和 0.12 版本。</p>
+<p>同时考虑到国内的网络环境，可以考虑使用 taobao 的 <a href="https://npm.taobao.org/">npm 镜像</a>。</p>
+<p>虽然 homebrew 是神器，但是还是不推荐使用 homebrew 安装 npm ，原因可见：<a href="https://gist.github.com/DanHerbert/9520689">Fixing npm On Mac OS X for Homebrew Users</a>。用 npm 去管理 npm 再好不过了。</p>
+<h2 id="yeoman"><a href="http://yeoman.io/">Yeoman</a></h2>
+<p>在做开发的时候，各种文件的归类和摆放是一个很常见的问题，例如业务逻辑文件放在 app 文件夹，模板文件放在 template 文件夹，每次新建项目都要做一些重复的工作。</p>
+<p>Yeoman 是一款脚手架工具，可以轻松地为你搭建一个项目的大体框架。可以通过 npm 安装：</p>
+<pre><code>npm install -g yo bower grunt-cli gulp
+</code></pre>
+<p>安装完成之后，输入 <code>yo</code> 就可以开始搭建一个项目啦。不过似乎用了 taobao 的 npm 镜像之后，用 yo 安装 generator 会出现一些问题，可以直接用 npm 安装，例如安装 webapp 模板：</p>
+<pre><code>npm install -g generator-webapp
+</code></pre>
+<p>接下来可以试着用 <code>yo webapp</code> 创建一个新项目，生成的目录结构是这样的：</p>
+<pre><code>├── .bowerrc
+...
+├── .editorconfig
+├── app
+    ...
+    ├── fonts
+    ├── images
+    ├── scripts
+    │   └── main.js
+    └── styles
+        └── main.css
+├── bower.json
+└── test
+</code></pre>
+<p>可以看到，不仅是 styles 和 scripts 这样的目录结构，包括 .editorconfig 和 .bowerrc 也是自动生成了。</p>
+<p>在 iOS 里也有类似的脚手架：<a href="https://github.com/thoughtbot/liftoff">liftoff</a>，不过似乎 Xcode7 遇到一些问题，等日后摸索一番再来汇报。</p>
+<h2 id="bower"><a href="http://bower.io/">Bower</a></h2>
+<p>两年前有幸看到了一系列很有意思的文章：<a href="http://segmentfault.com/a/1190000000349384">30 天学习 30 种新技术系列</a>，当时跟着玩了一圈感觉十分好玩。就像是《七天七语言》和《七天七并发模型》一样，世界那么大，一起去看看。</p>
+<p>第一次接触 Bower 就是缘于这其中的第一篇：<a href="http://segmentfault.com/a/1190000000349555">Day 1: Bower —— 管理你的客户端依赖关系</a>。</p>
+<p>使用方法很简单，首先通过 npm 安装 bower (前面安装 yo 的时候其实已经安装了)：</p>
+<pre><code>npm install -g bower
+</code></pre>
+<p>然后就是无脑的 install 了，比如我要装个 Bootstrap ：</p>
+<pre><code>bower install --save bootstrap
+</code></pre>
+<p>嗯就是这么简单。</p>
+<p>在 iOS 中类似的依赖管理工具有 <a href="https://cocoapods.org/">Cocoapods</a> 和 <a href="https://github.com/Carthage/Carthage">Carthage</a> 。</p>
+<h2 id="angular"><a href="https://angularjs.org/">Angular</a></h2>
+<p>Angular 的种种好处就不多说了，双向绑定、依赖注入、指令系统、模板、路由，各种各种。再配合上 <a href="http://angular-ui.github.io/">angular-ui</a>，写起项目来十分酸爽。</p>
+<p>简单的演示一个小例子，通过 <a href="https://leancloud.cn/">LeanCloud</a> 的 JS SDK 加载并显示数据：</p>
+<figure data-type="image" tabindex="1"><img src="http://ww3.sinaimg.cn/large/61d238c7gw1ew6t3ecbaaj21kw0gzwjs.jpg" alt="" loading="lazy"></figure>
+<p>首先定义一个 Provider ，添加获取数据的方法：</p>
+<pre><code>function getItems(className, completion) {
+    var query = new AV.Query(AV.Object.extend('Article'));
+    query.find({
+        success: function(results) {
+            var r = JSON.parse(JSON.stringify(results));
+            completion(r);
+        }
+    })
+}
+</code></pre>
+<p>然后定义界面：</p>
+<pre><code>&lt;div class=&quot;text-center&quot;&gt;
+    &lt;div ui-grid=&quot;article.gridOptions&quot; ui-grid-edit class=&quot;grid&quot;&gt;&lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+<p>再通过 Controller 加载数据：</p>
+<pre><code>/** @ngInject */
+function ArticleController($scope, AVOS) {
+    var vm = this;
+
+    vm.gridOptions = {
+        data: []
+    };
+
+    AVOS.getItems('Article', function(result) {
+        $scope.$apply(function(){
+            vm.gridOptions.data = result.map(function(item) {
+                return {
+                    'index': item.index,
+                    'content': item.content
+                };
+            });
+        });
+    });
+}
+</code></pre>
+<p>和以前用 JS 直接操作 DOM 相比，ViewModel 的逻辑更加友好，做起数据加载刷新的时候尤其顺手。</p>
+<h2 id="gulp"><a href="http://gulpjs.com/">Gulp</a></h2>
+<p>前端项目经常需要进行许多次的类似任务，例如编译 Less ，压缩代码等等。这样单调而重复的任务，我们可以通过工具来完成。 gulp 就是一个不错的选择。</p>
+<p>gulp 是一个基于流的构建工具，个人感觉比 grunt 更简单清晰，也解决了 grunt 插件职责不明的问题。</p>
+<p>什么是『基于流』呢？可以看下一个简单示例：</p>
+<pre><code>gulp.src('client/templates/*.jade')
+    .pipe(jade())
+    .pipe(minify())
+    .pipe(gulp.dest('build/minified_templates'));
+</code></pre>
+<p>可以看到这样一个链式调用的结构，除了开头和结尾，每一个命令的输出都是下一个命令的输入。先把任务分解成一个一个的小模块，然后再各取所需，组装起来。</p>
+<p>具体的教程可以参考官方文档，只需要了解 <code>gulp.src</code> 、 <code>gulp.dest</code> 、 <code>gulp.task</code> 、 <code>gulp.watch</code> 这几个基础 API 即可。</p>
+<h2 id="daocloud"><a href="https://daocloud.io/">DaoCloud </a></h2>
+<p>为了避免每次都重复的部署新服务器，我们可以把项目通过 Docker 打包成应用，然后直接部署。DaoCloud 提供了一个容器云平台，可以直接部署 Docker 应用。</p>
+<p>在我的新项目 Lastone 里，只要在根目录加上 Dockerfile 即可：</p>
+<pre><code>FROM ubuntu:14.04
+MAINTAINER callmewhy whywanghai@gmail.com
+
+RUN apt-get update
+RUN apt-get install -y nginx
+
+ADD ./www/lastone/dist /usr/share/nginx/html/lastone
+
+EXPOSE 80
+CMD [&quot;nginx&quot;, &quot;-g&quot;, &quot;daemon off;&quot;]
+</code></pre>
+<p>Dockerfile 的命令可以阅读 <a href="https://docs.docker.com/reference/builder/">Dockerfile reference</a>。</p>
+<p>Daocloud 默认是每次在代码库中 push 一个 tag 就会自动构建一次，所以基本不用操什么心，而且有一个永久免费的份额，基本够玩耍使用了。</p>
+<h2 id="next">Next</h2>
+<p>以上就是这次折腾的一些笔记啦。下一个小项目准备试一下 <a href="https://facebook.github.io/react/">React</a>。</p>
+<p>最近准备做一些小项目，到处玩一玩，如果大家有什么有趣的东西欢迎分享给我。（纯洁的微笑：]</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#npm">npm</a></li>
+<li><a href="#yeoman">Yeoman</a></li>
+<li><a href="#bower">Bower</a></li>
+<li><a href="#angular">Angular</a></li>
+<li><a href="#gulp">Gulp</a></li>
+<li><a href="#daocloud">DaoCloud </a></li>
+<li><a href="#next">Next</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/how-to-make-uther/">
+              <h3 class="post-title">
+                Uther 小记 - 一个简单地蠢萌机器人
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

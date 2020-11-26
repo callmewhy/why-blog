@@ -1,0 +1,305 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>用函数式编程解决逻辑难题 - Swift 版本 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              用函数式编程解决逻辑难题 - Swift 版本
+            </h2>
+            <div class="post-info">
+              <span>
+                2015-03-14
+              </span>
+              <span>
+                7 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/fthQHH2l27/" class="post-tag">
+                  # Swift
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <blockquote>
+<p>这篇翻译的文章，用两种方法解决了同一个逻辑难题。第一种方法的编程风格接近大多数 iOS 开发者，实现了指令式编程的解决方案。第二种方法利用了 Swift 的一些语言特性，实现了函数式编程的解决方案。</p>
+</blockquote>
+<blockquote>
+<p>源代码可以在这里下载：<a href="https://github.com/ijoshsmith/break-a-dollar">https://github.com/ijoshsmith/break-a-dollar</a></p>
+</blockquote>
+<h2 id="逻辑难题">逻辑难题</h2>
+<p>前阵子朋友和我说起，把1美元分解成更小的面额，有293种方法。换句话说，如果一个哥们儿告诉你他有1美元，那么他的手里有293种可能的组合，有可能是两个50美分，也可能是4个25美分。第二天，我就开始尝试用代码去解决这个问题。这篇博客回顾了当时想到的两种解决方案。</p>
+<h2 id="美元硬币">美元硬币</h2>
+<p>对于不熟悉美元硬币的同学，可以先了解一下美元的硬币。如下图所示，1美元(dollar) = 100美分(cent)：</p>
+<figure data-type="image" tabindex="1"><img src="https://ijoshsmith.files.wordpress.com/2014/11/coins1.jpg?w=960&amp;h=296" alt="" loading="lazy"></figure>
+<h2 id="初探问题">初探问题</h2>
+<p>思考后我发现用一种比较简单肮脏的手段解决这个问题并不难，但是这还远远不够。我想找到一种优雅的解决方案，所以我尝试从各个角度思考这个问题，最终得到了想要的答案。</p>
+<p>解决这个问题的关键在于递归的分解问题。“如何用各种硬币组合拼成1美元”，更宽泛点讲，其实就是“如何用各种硬币组合拼成指定金额”。</p>
+<p>举个人民币的例子。你欠人家100块，人家说你100块都不给我。你说好，我给！于是掏出两张50，这便是一个50+50的解决方案。<br>
+这时你发现有一张是崭新的50，你不想给他这张50，于是你的问题变成了：如何用手里的碎钱组合出50面额的钱。<br>
+后来你把50换成了5张10块，这便是一个50+10*5的解决方案，然后感觉有一张10块是崭新的，要不我换成硬币给他。<br>
+于是问题又变成了：如何组合出10面额的钱。就是这样慢慢拆分下去。</p>
+<p>点击 <a href="https://github.com/ijoshsmith/break-a-dollar/blob/master/DollarBreak/algorithm_overview.txt">这里</a> 查看完整的算法回顾。</p>
+<h2 id="先造硬币">先造硬币</h2>
+<p>我多次提到“硬币”这个词，实际上一枚硬币也就是一个整数值，代替了它价值多少美分。我写一个枚举类存储所有的硬币面额，然后再用一个静态方法降序返回所有的值：</p>
+<pre><code>enum Coin: Int {
+    case SilverDollar = 100
+    case HalfDollar   = 50
+    case Quarter      = 25
+    case Dime         = 10
+    case Nickel       = 5
+    case Penny        = 1
+    
+    static func coinsInDescendingOrder() -&gt; [Coin] {
+        return [
+            Coin.SilverDollar,
+            Coin.HalfDollar,
+            Coin.Quarter,
+            Coin.Dime,
+            Coin.Nickel,
+            Coin.Penny,
+        ]
+    }
+}
+</code></pre>
+<h2 id="解决方案1指令式编程-imperative">解决方案1：指令式编程 - Imperative</h2>
+<p>指令式编程的一个重要观点是：变量改变状态。指令式的程序像是一种微型控制器，它告诉计算机如何完成任务。接下来的 Swift 代码大家看起来应该都不陌生，因为 objc 就是一种指令式的编程语言：</p>
+<pre><code>func countWaysToBreakAmout(amount: Int, usingCoins coins:[Coin]) -&gt; Int{
+    let coin = coins[0]
+    if (coin == .Penny) {
+        return 1
+    }
+    
+    var smallerCoins = [Coin]()
+    for index in 1..&lt;coins.count {
+        smallerCoins.append(coins[index])
+    }
+    
+    var sum = 0
+    for coinCount in 0...(amount/coin.rawValue) {
+        let remainingAmount = amount - (coin.rawValue * coinCount)
+        sum += countWaysToBreakAmout(remainingAmount, usingCoins: smallerCoins)
+    }
+    
+    return sum
+}
+</code></pre>
+<p>仔细看下上面的代码，计算过程一共分三步：</p>
+<ul>
+<li>首先取出可用数组中的第一个硬币，如果这枚硬币已经是 1 美分，也就是最小的面额，那没有继续拆分的可能性，直接返回1作为结束。</li>
+<li>然后创建了一个数组 (<code>smallerCoins</code>) ，存储比当前硬币更小的硬币，用来作为下次调用的参数。</li>
+<li>最后计算除去第一次取出的硬币之后，还有多少种解决方案。</li>
+</ul>
+<p>这样的代码对于指令式编程来说再平常不过，接下来我们就来看下如何用函数式编程解决这个问题。</p>
+<h2 id="解决方案2函数式编程-functional">解决方案2：函数式编程 - Functional</h2>
+<p>函数式编程的依赖对象，是函数，而不是状态变化。没有太多的共享数据，就意味着发生错误的可能性更小，需要同步数据的次数也越少。 Swift 中函数已经是一等公民，这让<a href="http://zh.wikipedia.org/wiki/%E9%AB%98%E9%98%B6%E5%87%BD%E6%95%B0">高阶函数</a>变成可能，也就是说，一个函数可以是通过其它函数组装构成的。随着 objc 中 block 的引入， iOS 开发者对这个应该并不陌生。</p>
+<p>下面是我的函数式解决方案：</p>
+<pre><code>func countWaysToBreakAmount(amount: Int, usingCoins coins:Slice&lt;Coin&gt;) -&gt; Int{
+    let (coin, smallerCoins) = (coins[0], coins[1..&lt;coins.count])
+    if (coin == .Penny) {
+        return 1
+    }
+    let coinCounts = [Int](0...amount/coin.rawValue)
+    return coinCounts.reduce(0) { (sum, coinCount) in
+        let remainingAmount = amount - (coin.rawValue * coinCount)
+        return sum + self.countWaysToBreakAmount(remainingAmount, usingCoins: smallerCoins)
+    }
+}
+</code></pre>
+<p>第二个参数是 <code>Slice&lt;Coin&gt;</code> 而不是数组，因为没必要把硬币拷贝到新的数组里。我们只需要用数组的一个切片就可以，也就是第一行代码里的 <code>smallerCoins</code> ，在函数式编程里称之为 <code>tail</code> 。我们把数据中的第一个元素称之为 <code>head</code> ，剩下来的部分称之为 <code>tail</code> 。将数组进行切分在下标越界的情况下也不会引发异常。如果数组中只剩下一个元素，这时 <code>smallerCoins</code> 就为空。</p>
+<p>我用元组的语法同时获取了 <code>coin</code> 和 <code>smallerCoins</code> 这两个数据，因为取头取尾可以说是同一个操作。与其写一堆代码去解释如何先取出第一个元素，然后再获取剩下的元素，不如直接用“取出头部和尾部”这样语义化的方式一步到位。</p>
+<p>接下来，也并没有采用循环然后改变局部变量的方法来计算剩余的组合数，而是用 <code>reduce</code> 这个高阶函数。如果你对 <code>reduce</code> 这个函数不太熟悉，可以看下<a href="http://ijoshsmith.com/2014/06/25/understanding-swifts-reduce-method/">这篇文章</a>有个大概的了解。</p>
+<p>首先 <code>coin</code> 指当前处理的硬币， <code>coinCounts</code> 是一个数组，里面存储了所有当前面额的硬币的可能出现的数目。比如 <code>amount</code> 是10， <code>coin</code> 是3，那么 <code>coinCounts</code> 的值就是，面额为3的硬币可能有多少。显然应该最多出现3个，所以 <code>coinCounts</code> 是 [1,2,3] 这样的一列数。然后在分别对每种情况进行分解计算。</p>
+<h2 id="思考">思考</h2>
+<p>Swift 对于函数式编程的支持让我感觉的兴奋，Excited！换种方式思考或许是个不小的挑战，但是这都是值得的。几年前我自学了一些 Haskell ，我很欣喜的发现一些函数式思考习惯，让我在 iOS 开发中也能受益匪浅。</p>
+<p>示例项目的源代码可以在<a href="https://github.com/ijoshsmith/break-a-dollar">这里</a>下载。</p>
+<hr>
+<p>原文地址：</p>
+<ul>
+<li><a href="http://ijoshsmith.com/2014/11/30/getting-into-functional-programming-with-swift/">Getting into functional programming with Swift</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E9%80%BB%E8%BE%91%E9%9A%BE%E9%A2%98">逻辑难题</a></li>
+<li><a href="#%E7%BE%8E%E5%85%83%E7%A1%AC%E5%B8%81">美元硬币</a></li>
+<li><a href="#%E5%88%9D%E6%8E%A2%E9%97%AE%E9%A2%98">初探问题</a></li>
+<li><a href="#%E5%85%88%E9%80%A0%E7%A1%AC%E5%B8%81">先造硬币</a></li>
+<li><a href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%881%E6%8C%87%E4%BB%A4%E5%BC%8F%E7%BC%96%E7%A8%8B-imperative">解决方案1：指令式编程 - Imperative</a></li>
+<li><a href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%882%E5%87%BD%E6%95%B0%E5%BC%8F%E7%BC%96%E7%A8%8B-functional">解决方案2：函数式编程 - Functional</a></li>
+<li><a href="#%E6%80%9D%E8%80%83">思考</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/jsqmessage-code-reading-notes/">
+              <h3 class="post-title">
+                JSQMessage 源码对比阅读笔记
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

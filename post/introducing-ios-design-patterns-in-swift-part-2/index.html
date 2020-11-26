@@ -1,0 +1,858 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>iOS 中的设计模式 (Swift版本) Part 2 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              iOS 中的设计模式 (Swift版本) Part 2
+            </h2>
+            <div class="post-info">
+              <span>
+                2015-03-01
+              </span>
+              <span>
+                33 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/fthQHH2l27/" class="post-tag">
+                  # Swift
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="更新声明">更新声明</h2>
+<p>翻译自 <a href="http://www.raywenderlich.com/90773/introducing-ios-design-patterns-in-swift-part-2">Introducing iOS Design Patterns in Swift – Part 2/2</a> ，本教程 <a href="http://www.raywenderlich.com/46988/ios-design-patterns">objc</a> 版本的作者是 Eli Ganem ，由 Vincent Ngo 更新为 Swift 版本。</p>
+<h2 id="再续前缘">再续前缘</h2>
+<p>欢迎来到教程的第二部分！这是本系列教程的最后一部分，在这一章的学习里，我们会更加深入的学习一些 iOS 开发中常见的设计模式：适配器模式 (Adapter)，观察者模式 (Observer)，备忘录模式 (Memento)。</p>
+<p>开始吧少年们！</p>
+<h2 id="准备工作">准备工作</h2>
+<p>你可以先下载上一章结束时的<a href="http://cdn5.raywenderlich.com/wp-content/uploads/2014/11/BlueLibrarySwift-Part1.zip">项目源码</a> 。</p>
+<p>在第一部分的教程里，我们完成了这样一个简单的应用：</p>
+<figure data-type="image" tabindex="1"><img src="http://cdn3.raywenderlich.com/wp-content/uploads/2014/11/Screen-Shot-2014-11-11-at-12.38.53-AM-179x320.png" alt="" loading="lazy"></figure>
+<p>我们的原计划是在上面的空白处放一个可以横滑浏览专辑的视图。其实仔细想想，这个控件是可以应用在其他地方的，我们不妨把它做成一个可复用的视图。</p>
+<p>为了让这个视图可以复用，显示内容的工作都只能交给另一个对象来完成：它的委托。这个横滑页面应该声明一些方法让它的委托去实现，就像是 <code>UITableView</code> 的 <code>UITableViewDelegate</code> 一样。我们将会在下一个设计模式中实现这个功能。</p>
+<h2 id="适配器模式-adapter">适配器模式 - Adapter</h2>
+<p>适配器把自己封装起来然后暴露统一的接口给其他类，这样即使其他类的接口各不相同，也能相安无事，一起工作。</p>
+<p>如果你熟悉适配器模式，那么你会发现苹果在实现适配器模式的方式稍有不同：苹果通过委托实现了适配器模式。委托相信大家都不陌生。举个例子，如果一个类遵循了 <code>NSCoying</code> 的协议，那么它一定要实现 <code>copy</code> 方法。</p>
+<h3 id="如何使用适配器模式">如何使用适配器模式</h3>
+<p>横滑的滚动栏理论上应该是这个样子的：</p>
+<figure data-type="image" tabindex="2"><img src="http://cdn2.raywenderlich.com/wp-content/uploads/2014/11/swiftDesignPattern7.png" alt="" loading="lazy"></figure>
+<p>新建一个 Swift 文件：<code>HorizontalScroller.swift</code> ，作为我们的横滑滚动控件， <code>HorizontalScroller</code> 继承自 <code>UIView</code> 。</p>
+<p>打开 <code>HorizontalScroller.swift</code> 文件并添加如下代码：</p>
+<pre><code>@objc protocol HorizontalScrollerDelegate {
+}
+</code></pre>
+<p>这行代码定义了一个新的协议： <code>HorizontalScrollerDelegate</code> 。我们在前面加上了 <code>@objc</code> 的标记，这样我们就可以像在 objc 里一样使用 <code>@optional</code> 的委托方法了。</p>
+<p>接下来我们在大括号里定义所有的委托方法，包括必须的和可选的：</p>
+<pre><code>// 在横滑视图中有多少页面需要展示
+func numberOfViewsForHorizontalScroller(scroller: HorizontalScroller) -&gt; Int
+// 展示在第 index 位置显示的 UIView
+func horizontalScrollerViewAtIndex(scroller: HorizontalScroller, index:Int) -&gt; UIView
+// 通知委托第 index 个视图被点击了
+func horizontalScrollerClickedViewAtIndex(scroller: HorizontalScroller, index:Int)
+// 可选方法，返回初始化时显示的图片下标，默认是0
+optional func initialViewIndex(scroller: HorizontalScroller) -&gt; Int
+</code></pre>
+<p>其中，没有 <code>option</code> 标记的方法是必须实现的，一般来说包括那些用来显示的必须数据，比如如何展示数据，有多少数据需要展示，点击事件如何处理等等，不可或缺；有 <code>option</code> 标记的方法为可选实现的，相当于是一些辅助设置和功能，就算没有实现也有默认值进行处理。</p>
+<p>在 <code>HorizontalScroller</code> 类里添加一个新的委托对象：</p>
+<pre><code>weak var delegate: HorizontalScrollerDelegate?
+</code></pre>
+<p>为了避免循环引用的问题，委托是 <code>weak</code> 类型。如果委托是 <code>strong</code> 类型的，当前对象持有了委托的强引用，委托又持有了当前对象的强引用，这样谁都无法释放就会导致内存泄露。</p>
+<p>委托是可选类型，所以很有可能当前类的使用者并没有指定委托。但是如果指定了委托，那么它一定会遵循 <code>HorizontalScrollerDelegate</code> 里约定的内容。</p>
+<p>再添加一些新的属性：</p>
+<pre><code>// 1
+private let VIEW_PADDING = 10
+private let VIEW_DIMENSIONS = 100
+private let VIEWS_OFFSET = 100
+ 
+// 2
+private var scroller : UIScrollView!
+// 3
+var viewArray = [UIView]()
+</code></pre>
+<p>上面标注的三点分别做了这些事情：</p>
+<ul>
+<li>定义一个常量，用来方便的改变布局。现在默认的是显示的内容长宽为100，间隔为10。</li>
+<li>创建一个 <code>UIScrollView</code> 作为容器。</li>
+<li>创建一个数组用来存放需要展示的数据</li>
+</ul>
+<p>接下来实现初始化方法：</p>
+<pre><code>override init(frame: CGRect) {
+    super.init(frame: frame)
+    initializeScrollView()
+}
+ 
+required init(coder aDecoder: NSCoder) {
+    super.init(coder: aDecoder)
+    initializeScrollView()
+}
+ 
+func initializeScrollView() {
+    //1
+    scroller = UIScrollView()
+    addSubview(scroller)
+
+    //2
+    scroller.setTranslatesAutoresizingMaskIntoConstraints(false)
+    //3
+    self.addConstraint(NSLayoutConstraint(item: scroller, attribute: .Leading, relatedBy: .Equal, toItem: self, attribute: .Leading, multiplier: 1.0, constant: 0.0))
+    self.addConstraint(NSLayoutConstraint(item: scroller, attribute: .Trailing, relatedBy: .Equal, toItem: self, attribute: .Trailing, multiplier: 1.0, constant: 0.0))
+    self.addConstraint(NSLayoutConstraint(item: scroller, attribute: .Top, relatedBy: .Equal, toItem: self, attribute: .Top, multiplier: 1.0, constant: 0.0))
+    self.addConstraint(NSLayoutConstraint(item: scroller, attribute: .Bottom, relatedBy: .Equal, toItem: self, attribute: .Bottom, multiplier: 1.0, constant: 0.0))
+
+    //4
+    let tapRecognizer = UITapGestureRecognizer(target: self, action:Selector(&quot;scrollerTapped:&quot;))
+    scroller.addGestureRecognizer(tapRecognizer)
+}
+</code></pre>
+<p>上面的代码做了如下工作：</p>
+<ul>
+<li>创建一个 <code>UIScrollView</code> 对象并且把它加到父视图中。</li>
+<li>关闭 <code>autoresizing masks</code> ，从而可以使用 <code>AutoLayout</code> 进行布局。</li>
+<li>给 <code>scrollview</code> 添加约束。我们希望 <code>scrollview</code> 能填满 <code>HorizontalScroller</code> 。</li>
+<li>创建一个点击事件，检测是否点击到了专辑封面，如果确实点击到了专辑封面，我们需要通知 <code>HorizontalScroller</code> 的委托。</li>
+</ul>
+<p>添加委托方法：</p>
+<pre><code>func scrollerTapped(gesture: UITapGestureRecognizer) {
+  let location = gesture.locationInView(gesture.view)
+  if let delegate = self.delegate {
+    for index in 0..&lt;delegate.numberOfViewsForHorizontalScroller(self) {
+      let view = scroller.subviews[index] as UIView
+      if CGRectContainsPoint(view.frame, location) {
+        delegate.horizontalScrollerClickedViewAtIndex(self, index: index)
+        scroller.setContentOffset(CGPointMake(view.frame.origin.x - self.frame.size.width/2 + view.frame.size.width/2, 0), animated:true)
+        break
+      }
+    }
+  }
+}
+</code></pre>
+<p>我们把 <code>gesture</code> 作为一个参数传了进来，这样就可以获取点击的具体坐标了。</p>
+<p>接下来我们调用了 <code>numberOfViewsForHorizontalScroller</code> 方法，<code>HorizontalScroller</code> 不知道自己的 <code>delegate</code> 具体是谁，但是知道它一定实现了 <code>HorizontalScrollerDelegate</code> 协议，所以可以放心的调用。</p>
+<p>对于 <code>scroll view</code> 中的 <code>view</code> ，通过 <code>CGRectContainsPoint</code> 进行点击检测，从而获知是哪一个 <code>view</code> 被点击了。当找到了点击的 <code>view</code> 的时候，则会调用委托方法里的 <code>horizontalScrollerClickedViewAtIndex</code> 方法通知委托。在跳出 <code>for</code> 循环之前，先把点击到的 <code>view</code> 居中。</p>
+<p>接下来我们再加个方法获取数组里的 <code>view</code> ：</p>
+<pre><code>func viewAtIndex(index :Int) -&gt; UIView {
+  return viewArray[index]
+} 
+</code></pre>
+<p>这个方法很简单，只是用来更方便获取数组里的 <code>view</code> 而已。在后面实现高亮选中专辑的时候会用到这个方法。</p>
+<p>添加如下代码用来重新加载 <code>scroller</code> ：</p>
+<pre><code>func reload() {
+  // 1 - Check if there is a delegate, if not there is nothing to load.
+  if let delegate = self.delegate {
+    //2 - Will keep adding new album views on reload, need to reset.
+    viewArray = []
+    let views: NSArray = scroller.subviews
+ 
+    // 3 - remove all subviews
+    views.enumerateObjectsUsingBlock {
+    (object: AnyObject!, idx: Int, stop: UnsafeMutablePointer&lt;ObjCBool&gt;) -&gt; Void in
+      object.removeFromSuperview()
+    }
+    // 4 - xValue is the starting point of the views inside the scroller            
+    var xValue = VIEWS_OFFSET
+    for index in 0..&lt;delegate.numberOfViewsForHorizontalScroller(self) {
+      // 5 - add a view at the right position
+      xValue += VIEW_PADDING
+      let view = delegate.horizontalScrollerViewAtIndex(self, index: index)
+      view.frame = CGRectMake(CGFloat(xValue), CGFloat(VIEW_PADDING), CGFloat(VIEW_DIMENSIONS), CGFloat(VIEW_DIMENSIONS))
+      scroller.addSubview(view)
+      xValue += VIEW_DIMENSIONS + VIEW_PADDING
+      // 6 - Store the view so we can reference it later
+     viewArray.append(view)
+    }
+    // 7
+    scroller.contentSize = CGSizeMake(CGFloat(xValue + VIEWS_OFFSET), frame.size.height)
+ 
+    // 8 - If an initial view is defined, center the scroller on it
+    if let initialView = delegate.initialViewIndex?(self) {
+      scroller.setContentOffset(CGPointMake(CGFloat(initialView)*CGFloat((VIEW_DIMENSIONS + (2 * VIEW_PADDING))), 0), animated: true)
+    }
+  }
+}
+</code></pre>
+<p>这个 <code>reload</code> 方法有点像是 <code>UITableView</code> 里面的 <code>reloadData</code> 方法，它会重新加载所有数据。</p>
+<p>一段一段的看下上面的代码：</p>
+<ul>
+<li>在调用 <code>reload</code> 之前，先检查一下是否有委托。</li>
+<li>既然要清除专辑封面，那么也需要重新设置 <code>viewArray</code> ，要不然以前的数据会累加进来。</li>
+<li>移除先前加入到 <code>scrollview</code> 的子视图。</li>
+<li>所有的 <code>view</code> 都有一个偏移量，目前默认是100，我们可以修改 <code>VIEW_OFFSET</code> 这个常量轻松的修改它。</li>
+<li><code>HorizontalScroller</code> 通过委托获取对应位置的 <code>view</code> 并且把它们放在对应的位置上。</li>
+<li>把 <code>view</code> 存进 <code>viewArray</code> 以便后面的操作。</li>
+<li>当所有 <code>view</code> 都安放好了，再设置一下 <code>content size</code> 这样才可以进行滑动。</li>
+<li><code>HorizontalScroller</code> 检查一下委托是否实现了 <code>initialViewIndex()</code> 这个可选方法，这种检查十分必要，因为这个委托方法是可选的，如果委托没有实现这个方法则用0作为默认值。最终设置 <code>scroll view</code> 将初始的 <code>view</code> 放置到居中的位置。</li>
+</ul>
+<p>当数据发生改变的时候，我们需要调用 <code>reload</code> 方法。当 <code>HorizontalScroller</code> 被加到其他页面的时候也需要调用这个方法，我们在 <code>HorizontalScroller.swift</code> 里面加入如下代码：</p>
+<pre><code>override func didMoveToSuperview() {
+    reload()
+}
+</code></pre>
+<p>在当前 <code>view</code> 添加到其他 <code>view</code> 里的时候就会自动调用 <code>didMoveToSuperview</code> 方法，这样可以在正确的时间重新加载数据。</p>
+<p><code>HorizontalScroller</code> 的最后一部分是用来确保当前浏览的内容时刻位于正中心的位置，为了实现这个功能我们需要在用户滑动结束的时候做一些额外的计算和修正。</p>
+<p>添加下面这个方法：</p>
+<pre><code>func centerCurrentView() {
+    var xFinal = scroller.contentOffset.x + CGFloat((VIEWS_OFFSET/2) + VIEW_PADDING)
+    let viewIndex = xFinal / CGFloat((VIEW_DIMENSIONS + (2*VIEW_PADDING)))
+    xFinal = viewIndex * CGFloat(VIEW_DIMENSIONS + (2*VIEW_PADDING))
+    scroller.setContentOffset(CGPointMake(xFinal, 0), animated: true)
+    if let delegate = self.delegate {
+        delegate.horizontalScrollerClickedViewAtIndex(self, index: Int(viewIndex))
+    }  
+}
+</code></pre>
+<p>上面的代码计算了当前视图里中心位置距离多少，然后算出正确的居中坐标并滑动到那个位置。最后一行是通知委托所选视图已经发生了改变。</p>
+<p>为了检测到用户滑动的结束时间，我们还需要实现 <code>UIScrollViewDelegate</code> 的方法。在文件结尾加上下面这个扩展：</p>
+<pre><code>extension HorizontalScroller: UIScrollViewDelegate {
+    func scrollViewDidEndDragging(scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+        if !decelerate {
+            centerCurrentView()
+        }
+    }
+
+    func scrollViewDidEndDecelerating(scrollView: UIScrollView) {
+        centerCurrentView()
+    }
+}
+</code></pre>
+<p>当用户停止滑动的时候，<code>scrollViewDidEndDragging(_:willDecelerate:)</code> 这个方法会通知委托。如果滑动还没有停止，<code>decelerate</code> 的值为 <code>true</code> 。当滑动完全结束的时候，则会调用 <code>scrollViewDidEndDecelerating</code> 这个方法。在这两种情况下，你都应该把当前的视图居中，因为用户的操作可能会改变当前视图。</p>
+<p>你的 <code>HorizontalScroller</code> 已经可以使用了！回头看看前面写的代码，你会看到我们并没有涉及什么 <code>Album</code> 或者 <code>AlbumView</code> 的代码。这是极好的，因为这样意味着这个 <code>scroller</code> 是完全独立的，可以复用。</p>
+<p>运行一下你的项目，确保编译通过。</p>
+<p>这样，我们的 <code>HorizontalScroller</code> 就完成了，接下来我们就要把它应用到我们的项目里了。首先，打开 <code>Main.Sstoryboard</code> 文件，点击上面的灰色矩形，设置 <code>Class</code> 为 <code>HorizontalScroller</code> ：</p>
+<figure data-type="image" tabindex="3"><img src="http://cdn5.raywenderlich.com/wp-content/uploads/2014/11/swiftDesignPattwern9-700x414.png" alt="" loading="lazy"></figure>
+<p>接下来，在 <code>assistant editor</code> 模式下向 <code>ViewController.swift</code> 拖拽生成 outlet ，命名为 <code>scroller</code> ：</p>
+<figure data-type="image" tabindex="4"><img src="http://cdn5.raywenderlich.com/wp-content/uploads/2014/11/swiftDesignPattern10-700x411.png" alt="" loading="lazy"></figure>
+<p>接下来打开 <code>ViewController.swift</code> 文件，是时候实现 <code>HorizontalScrollerDelegate</code> 委托里的方法啦！</p>
+<p>添加如下扩展：</p>
+<pre><code>extension ViewController: HorizontalScrollerDelegate {
+    func horizontalScrollerClickedViewAtIndex(scroller: HorizontalScroller, index: Int) {
+        //1
+        let previousAlbumView = scroller.viewAtIndex(currentAlbumIndex) as AlbumView
+        previousAlbumView.highlightAlbum(didHighlightView: false)
+        //2
+        currentAlbumIndex = index
+        //3
+        let albumView = scroller.viewAtIndex(index) as AlbumView
+        albumView.highlightAlbum(didHighlightView: true)
+        //4
+        showDataForAlbum(index)
+    }
+}
+</code></pre>
+<p>让我们一行一行的看下这个委托的实现：</p>
+<ul>
+<li>获取上一个选中的相册，然后取消高亮</li>
+<li>存储当前点击的相册封面</li>
+<li>获取当前选中的相册，设置为高亮</li>
+<li>在 <code>table view</code> 里面展示新数据</li>
+</ul>
+<p>接下来在扩展里添加如下方法：</p>
+<pre><code>func numberOfViewsForHorizontalScroller(scroller: HorizontalScroller) -&gt; (Int) {
+    return allAlbums.count
+}
+</code></pre>
+<p>这个委托方法返回 <code>scroll vew</code> 里面的视图数量，因为是用来展示所有的专辑的封面，所以数目也就是专辑数目。</p>
+<p>然后添加如下代码：</p>
+<pre><code>func horizontalScrollerViewAtIndex(scroller: HorizontalScroller, index: Int) -&gt; (UIView) {
+    let album = allAlbums[index]
+    let albumView = AlbumView(frame: CGRectMake(0, 0, 100, 100), albumCover: album.coverUrl)
+    if currentAlbumIndex == index {
+        albumView.highlightAlbum(didHighlightView: true)
+    } else {
+        albumView.highlightAlbum(didHighlightView: false)
+    }
+    return albumView
+}
+</code></pre>
+<p>我们创建了一个新的 <code>AlbumView</code> ，然后检查一下是不是当前选中的专辑，如果是则设为高亮，最后返回结果。</p>
+<p>是的就是这么简单！三个方法，完成了一个横向滚动的浏览视图。</p>
+<p>我们还需要创建这个滚动视图并把它加到主视图里，但是在这之前，先添加如下方法：</p>
+<pre><code>func reloadScroller() {
+    allAlbums = LibraryAPI.sharedInstance.getAlbums()
+    if currentAlbumIndex &lt; 0 {
+        currentAlbumIndex = 0
+    } else if currentAlbumIndex &gt;= allAlbums.count {
+        currentAlbumIndex = allAlbums.count - 1
+    } 
+    scroller.reload() 
+    showDataForAlbum(currentAlbumIndex)
+}
+</code></pre>
+<p>这个方法通过 <code>LibraryAPI</code> 加载专辑数据，然后根据 <code>currentAlbumIndex</code> 的值设置当前视图。在设置之前先进行了校正，如果小于0则设置第一个专辑为展示的视图，如果超出了范围则设置最后一个专辑为展示的视图。</p>
+<p>接下来只需要指定委托就可以了，在 <code>viewDidLoad</code> 最后加入一下代码：</p>
+<pre><code>scroller.delegate = self
+reloadScroller()
+</code></pre>
+<p>因为 <code>HorizontalScroller</code> 是在 <code>StoryBoard</code> 里初始化的，所以我们需要做的只是指定委托，然后调用 <code>reloadScroller()</code> 方法，从而加载所有的子视图并且展示专辑数据。</p>
+<p>标注：如果协议里的方法过多，可以考虑把它分解成几个更小的协议。<code>UITableViewDelegate</code> 和 <code>UITableViewDataSource</code> 就是很好的例子，它们都是 <code>UITableView</code> 的协议。尝试去设计你自己的协议，让每个协议都单独负责一部分功能。</p>
+<p>运行一下当前项目，看一下我们的新页面：</p>
+<figure data-type="image" tabindex="5"><img src="http://cdn1.raywenderlich.com/wp-content/uploads/2014/11/swiftDesignPattern12-288x320.png" alt="" loading="lazy"></figure>
+<p>等下，滚动视图显示出来了，但是专辑的封面怎么不见了？</p>
+<p>啊哈，是的。我们还没完成下载部分的代码，我们需要添加下载图片的方法。因为我们所有的访问都是通过 <code>LibraryAPI</code> 实现的，所以很显然我们下一步应该去完善这个类了。不过在这之前，我们还需要考虑一些问题：</p>
+<ul>
+<li><code>AlbumView</code> 不应该直接和 <code>LibraryAPI</code> 交互，我们不应该把视图的逻辑和业务逻辑混在一起。</li>
+<li>同样， <code>LibraryAPI</code> 也不应该知道 <code>AlbumView</code> 这个类。</li>
+<li>如果 <code>AlbumView</code> 要展示封面，<code>LibraryAPI</code> 需要告诉 <code>AlbumView</code> 图片下载完成。</li>
+</ul>
+<p>看起来好像很难的样子？别绝望，接下来我们会用观察者模式 (<code>Observer Pattern</code>) 解决这个问题！:]</p>
+<h2 id="观察者模式-observer">观察者模式 - Observer</h2>
+<p>在观察者模式里，一个对象在状态变化的时候会通知另一个对象。参与者并不需要知道其他对象的具体是干什么的 - 这是一种降低耦合度的设计。这个设计模式常用于在某个属性改变的时候通知关注该属性的对象。</p>
+<p>常见的使用方法是观察者注册监听，然后再状态改变的时候，所有观察者们都会收到通知。</p>
+<p>在 MVC 里，观察者模式意味着需要允许 <code>Model</code> 对象和 <code>View</code> 对象进行交流，而不能有直接的关联。</p>
+<p><code>Cocoa</code> 使用两种方式实现了观察者模式： <code>Notification</code> 和 <code>Key-Value Observing (KVO)</code>。</p>
+<h3 id="通知-notification">通知 - Notification</h3>
+<p>不要把这里的通知和推送通知或者本地通知搞混了，这里的通知是基于订阅-发布模型的，即一个对象 (发布者) 向其他对象 (订阅者) 发送消息。发布者永远不需要知道订阅者的任何数据。</p>
+<p><code>Apple</code> 对于通知的使用很频繁，比如当键盘弹出或者收起的时候，系统会分别发送 <code>UIKeyboardWillShowNotification/UIKeyboardWillHideNotification</code> 的通知。当你的应用切到后台的时候，又会发送 <code>UIApplicationDidEnterBackgroundNotification</code> 的通知。</p>
+<p>注意：打开 <code>UIApplication.swift</code> 文件，在文件结尾你会看到二十多种系统发送的通知。</p>
+<h4 id="如何使用通知">如何使用通知</h4>
+<p>打开 <code>AlbumView.swift</code> 然后在 <code>init</code> 的最后插入如下代码：</p>
+<pre><code>NSNotificationCenter.defaultCenter().postNotificationName(&quot;BLDownloadImageNotification&quot;, object: self, userInfo: [&quot;imageView&quot;:coverImage, &quot;coverUrl&quot; : albumCover])
+</code></pre>
+<p>这行代码通过 <code>NSNotificationCenter</code> 发送了一个通知，通知信息包含了 <code>UIImageView</code> 和图片的下载地址。这是下载图像需要的所有数据。</p>
+<p>然后在 <code>LibraryAPI.swift</code> 的 <code>init</code> 方法的 <code>super.init()</code> 后面加上如下代码：</p>
+<pre><code>NSNotificationCenter.defaultCenter().addObserver(self, selector:&quot;downloadImage:&quot;, name: &quot;BLDownloadImageNotification&quot;, object: nil)
+</code></pre>
+<p>这是等号的另一边：观察者。每当 <code>AlbumView</code> 发出一个 <code>BLDownloadImageNotification</code> 通知的时候，由于 <code>LibraryAPI</code> 已经注册了成为观察者，所以系统会调用 <code>downloadImage()</code> 方法。</p>
+<p>但是，在实现 <code>downloadImage()</code> 之前，我们必须先在 <code>dealloc</code> 里取消监听。如果没有取消监听消息，消息会发送给一个已经销毁的对象，导致程序崩溃。</p>
+<p>在 <code>LibaratyAPI.swift</code> 里加上取消订阅的代码：</p>
+<pre><code>deinit {
+    NSNotificationCenter.defaultCenter().removeObserver(self)
+}
+</code></pre>
+<p>当对象销毁的时候，把它从所有消息的订阅列表里去除。</p>
+<p>这里还要做一件事情：我们最好把图片存储到本地，这样可以避免一次又一次下载相同的封面。</p>
+<p>打开 <code>PersistencyManager.swift</code> 添加如下代码：</p>
+<pre><code>func saveImage(image: UIImage, filename: String) {
+    let path = NSHomeDirectory().stringByAppendingString(&quot;/Documents/\(filename)&quot;)
+    let data = UIImagePNGRepresentation(image)
+    data.writeToFile(path, atomically: true)
+}
+
+func getImage(filename: String) -&gt; UIImage? {
+    var error: NSError?
+    let path = NSHomeDirectory().stringByAppendingString(&quot;/Documents/\(filename)&quot;)
+    let data = NSData(contentsOfFile: path, options: .UncachedRead, error: &amp;error)
+    if let unwrappedError = error {
+        return nil
+    } else {
+        return UIImage(data: data!)
+    }
+}
+</code></pre>
+<p>代码很简单直接，下载的图片会存储在 <code>Documents</code> 目录下，如果没有检查到缓存文件， <code>getImage()</code> 方法则会返回 <code>nil</code> 。</p>
+<p>然后在 <code>LibraryAPI.swift</code> 添加如下代码：</p>
+<pre><code>func downloadImage(notification: NSNotification) {
+    //1
+    let userInfo = notification.userInfo as [String: AnyObject]
+    var imageView = userInfo[&quot;imageView&quot;] as UIImageView?
+    let coverUrl = userInfo[&quot;coverUrl&quot;] as NSString
+
+    //2
+    if let imageViewUnWrapped = imageView {
+        imageViewUnWrapped.image = persistencyManager.getImage(coverUrl.lastPathComponent)
+        if imageViewUnWrapped.image == nil {
+            //3
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), { () -&gt; Void in
+                let downloadedImage = self.httpClient.downloadImage(coverUrl)
+                //4
+                dispatch_sync(dispatch_get_main_queue(), { () -&gt; Void in
+                    imageViewUnWrapped.image = downloadedImage
+                    self.persistencyManager.saveImage(downloadedImage, filename: coverUrl.lastPathComponent)
+                })
+            })
+        }
+    }
+}
+</code></pre>
+<p>拆解一下上面的代码：</p>
+<ul>
+<li><code>downloadImage</code> 通过通知调用，所以这个方法的参数就是 <code>NSNotification</code> 本身。 <code>UIImageView</code> 和 <code>URL</code> 都可以从其中获取到。</li>
+<li>如果以前下载过，从 <code>PersistencyManager</code> 里获取缓存。</li>
+<li>如果图片没有缓存，则通过 <code>HTTPClient</code> 获取。</li>
+<li>如果下载完成，展示图片并用 <code>PersistencyManager</code> 存储到本地。</li>
+</ul>
+<p>再回顾一下，我们使用外观模式隐藏了下载图片的复杂程度。通知的发送者并不在乎图片是如何从网上下载到本地的。</p>
+<p>运行一下项目，可以看到专辑封面已经显示出来了：</p>
+<figure data-type="image" tabindex="6"><img src="http://cdn1.raywenderlich.com/wp-content/uploads/2014/11/swiftDesignPattern13-288x320.png" alt="" loading="lazy"></figure>
+<p>关了应用再重新运行，注意这次没有任何延时就显示了所有的图片，因为我们已经有了本地缓存。我们甚至可以在没有网络的情况下正常使用我们的应用。不过出了问题：这个用来提示加载网络请求的小菊花怎么一直在显示！</p>
+<p>我们在下载图片的时候开启了这个白色小菊花，但是在图片下载完毕的时候我们并没有停掉它。我们可以在每次下载成功的时候发送一个通知，但是我们不这样做，这次我们来用用另一个观察者模式： KVO 。</p>
+<h3 id="键值观察-kvo">键值观察 - KVO</h3>
+<p>在 KVO 里，对象可以注册监听任何属性的变化，不管它是否持有。如果感兴趣的话，可以读一读<a href="https://developer.apple.com/library/ios/documentation/Cocoa/Conceptual/KeyValueObserving/KeyValueObserving.html">苹果 KVO 编程指南</a>。</p>
+<h4 id="如何使用-kvo">如何使用 KVO</h4>
+<p>正如前面所提及的， 对象可以关注任何属性的变化。在我们的例子里，我们可以用 KVO 关注 <code>UIImageView</code> 的 <code>image</code> 属性变化。</p>
+<p>打开 <code>AlbumView.swift</code> 文件，找到 <code>init(frame:albumCover:)</code> 方法，在把 <code>coverImage</code> 添加到 <code>subView</code> 的代码后面添加如下代码：</p>
+<pre><code>coverImage.addObserver(self, forKeyPath: &quot;image&quot;, options: nil, context: nil)
+</code></pre>
+<p>这行代码把 <code>self</code> (也就是当前类) 添加到了 <code>coverImage</code> 的 <code>image</code> 属性的观察者里。</p>
+<p>在销毁的时候，我们也需要取消观察。还是在 <code>AlbumView.swift</code> 文件里，添加如下代码：</p>
+<pre><code>deinit {
+    coverImage.removeObserver(self, forKeyPath: &quot;image&quot;)
+}
+</code></pre>
+<p>最终添加如下方法：</p>
+<pre><code>override func observeValueForKeyPath(keyPath: String, ofObject object: AnyObject, change: [NSObject : AnyObject], context: UnsafeMutablePointer&lt;Void&gt;) {
+    if keyPath == &quot;image&quot; {
+        indicator.stopAnimating()
+    }
+}
+</code></pre>
+<p>必须在所有的观察者里实现上面的代码。在检测到属性变化的时候，系统会自动调用这个方法。在上面的代码里，我们在图片加载完成的时候把那个提示加载的小菊花去掉了。</p>
+<p>再次运行项目，你会发现一切正常了：</p>
+<figure data-type="image" tabindex="7"><img src="http://cdn3.raywenderlich.com/wp-content/uploads/2014/11/swiftDesignPattern14-292x320.png" alt="" loading="lazy"></figure>
+<p>注意：一定要记得移除观察者，否则如果对象已经销毁了还给它发送消息会导致应用崩溃。</p>
+<p>此时你可以把玩一下当前的应用然后再关掉它，你会发现你的应用的状态并没有存储下来。最后看见的专辑并不会再下次打开应用的时候出现。</p>
+<p>为了解决这个问题，我们可以使用下一种模式：备忘录模式。</p>
+<h2 id="备忘录模式-memento">备忘录模式 - Memento</h2>
+<p>备忘录模式捕捉并且具象化一个对象的内在状态。换句话说，它把你的对象存在了某个地方，然后在以后的某个时间再把它恢复出来，而不会打破它本身的封装性，私有数据依旧是私有数据。</p>
+<h3 id="如何使用备忘录模式">如何使用备忘录模式</h3>
+<p>在 <code>ViewController.swift</code> 里加上下面两个方法：</p>
+<pre><code>//MARK: Memento Pattern
+func saveCurrentState() {
+    // When the user leaves the app and then comes back again, he wants it to be in the exact same state
+    // he left it. In order to do this we need to save the currently displayed album.
+    // Since it's only one piece of information we can use NSUserDefaults.
+    NSUserDefaults.standardUserDefaults().setInteger(currentAlbumIndex, forKey: &quot;currentAlbumIndex&quot;)
+}
+
+func loadPreviousState() {
+    currentAlbumIndex = NSUserDefaults.standardUserDefaults().integerForKey(&quot;currentAlbumIndex&quot;)
+    showDataForAlbum(currentAlbumIndex)
+}
+</code></pre>
+<p><code>saveCurrentState</code> 把当前相册的索引值存到 <code>NSUserDefaults</code> 里。<code>NSUserDefaults</code> 是 iOS 提供的一个标准存储方案，用于保存应用的配置信息和数据。</p>
+<p><code>loadPreviousState</code> 方法加载上次存储的索引值。这并不是备忘录模式的完整实现，但是已经离目标不远了。</p>
+<p>接下来在 <code>viewDidLoad</code> 的 <code>scroller.delegate = self</code> 前面调用：</p>
+<pre><code>loadPreviousState()
+</code></pre>
+<p>这样在刚初始化的时候就加载了上次存储的状态。但是什么时候存储当前状态呢？这个时候我们可以用通知来做。在应用进入到后台的时候， iOS 会发送一个 <code>UIApplicationDidEnterBackgroundNotification</code> 的通知，我们可以在这个通知里调用 <code>saveCurrentState</code> 这个方法。是不是很方便？</p>
+<p>在 <code>viewDidLoad</code> 的最后加上如下代码：</p>
+<pre><code>NSNotificationCenter.defaultCenter().addObserver(self, selector:&quot;saveCurrentState&quot;, name: UIApplicationDidEnterBackgroundNotification, object: nil)
+</code></pre>
+<p>现在，当应用即将进入后台的时候，<code>ViewController</code> 会调用 <code>saveCurrentState</code> 方法自动存储当前状态。</p>
+<p>当然也别忘了取消监听通知，添加如下代码：</p>
+<pre><code>deinit {
+    NSNotificationCenter.defaultCenter().removeObserver(self)
+}
+</code></pre>
+<p>这样就确保在 <code>ViewController</code> 销毁的时候取消监听通知。</p>
+<p>这时再运行程序，随意移到某个专辑上，然后按下 Home 键把应用切换到后台，再在 Xcode 上把 App 关闭。重新启动，会看见上次记录的专辑已经存了下来并成功还原了：</p>
+<figure data-type="image" tabindex="8"><img src="http://cdn2.raywenderlich.com/wp-content/uploads/2014/11/swiftDesignPattern15-202x320.png" alt="" loading="lazy"></figure>
+<p>看起来专辑数据好像是对了，但是上面的滚动条似乎出了问题，没有居中啊！</p>
+<p>这时 <code>initialViewIndex</code> 方法就派上用场了。由于在委托里 (也就是 <code>ViewController</code> ) 还没实现这个方法，所以初始化的结果总是第一张专辑。</p>
+<p>为了修复这个问题，我们可以在 <code>ViewController.swift</code> 里添加如下代码：</p>
+<pre><code>func initialViewIndex(scroller: HorizontalScroller) -&gt; Int {
+    return currentAlbumIndex
+}
+</code></pre>
+<p>现在 <code>HorizontalScroller</code> 可以根据 <code>currentAlbumIndex</code> 自动滑到相应的索引位置了。</p>
+<p>再次重复上次的步骤，切到后台，关闭应用，重启，一切顺利：</p>
+<figure data-type="image" tabindex="9"><img src="http://cdn2.raywenderlich.com/wp-content/uploads/2014/11/swiftDesignPattern16-230x320.png" alt="" loading="lazy"></figure>
+<p>回头看看 <code>PersistencyManager</code> 的 <code>init</code> 方法，你会发现专辑数据是我们硬编码写进去的，而且每次创建 <code>PersistencyManager</code> 的时候都会再创建一次专辑数据。而实际上一个比较好的方案是只创建一次，然后把专辑数据存到本地文件里。我们如何把专辑数据存到文件里呢？</p>
+<p>一种方案是遍历 <code>Album</code> 的属性然后把它们写到一个 <code>plist</code> 文件里，然后如果需要的时候再重新创建 <code>Album</code> 对象。这并不是最好的选择，因为数据和属性不同，你的代码也就要相应的产生变化。举个例子，如果我们以后想添加 <code>Movie</code> 对象，它有着完全不同的属性，那么存储和读取数据又需要重写新的代码。</p>
+<p>况且你也无法存储这些对象的私有属性，因为其他类是没有访问权限的。这也就是为什么 Apple 提供了 归档 的机制。</p>
+<h3 id="归档-archiving">归档 - Archiving</h3>
+<p>苹果通过归档的方法来实现备忘录模式。它把对象转化成了流然后在不暴露内部属性的情况下存储数据。你可以读一读 《iOS 6 by Tutorials》 这本书的第 16 章，或者看下<a href="https://developer.apple.com/library/ios/documentation/Cocoa/Conceptual/Archiving/Archiving.html">苹果的归档和序列化文档</a>。</p>
+<h4 id="如何使用归档">如何使用归档</h4>
+<p>首先，我们需要让 <code>Album</code> 实现 <code>NSCoding</code> 协议，声明这个类是可被归档的。打开 <code>Album.swift</code> 在 <code>class</code> 那行后面加上 <code>NSCoding</code> ：</p>
+<pre><code>class Album: NSObject, NSCoding {
+</code></pre>
+<p>然后添加如下的两个方法：</p>
+<pre><code>required init(coder decoder: NSCoder) {
+    super.init()
+    self.title = decoder.decodeObjectForKey(&quot;title&quot;) as String?
+    self.artist = decoder.decodeObjectForKey(&quot;artist&quot;) as String?
+    self.genre = decoder.decodeObjectForKey(&quot;genre&quot;) as String?
+    self.coverUrl = decoder.decodeObjectForKey(&quot;cover_url&quot;) as String?
+    self.year = decoder.decodeObjectForKey(&quot;year&quot;) as String?
+}
+
+func encodeWithCoder(aCoder: NSCoder) {
+    aCoder.encodeObject(title, forKey: &quot;title&quot;)
+    aCoder.encodeObject(artist, forKey: &quot;artist&quot;)
+    aCoder.encodeObject(genre, forKey: &quot;genre&quot;)
+    aCoder.encodeObject(coverUrl, forKey: &quot;cover_url&quot;)
+    aCoder.encodeObject(year, forKey: &quot;year&quot;)
+}
+</code></pre>
+<p><code>encodeWithCoder</code> 方法是 <code>NSCoding</code> 的一部分，在被归档的时候调用。相对的， <code>init(coder:)</code> 方法则是用来解档的。很简单，很强大。</p>
+<p>现在 <code>Album</code> 对象可以被归档了，添加一些代码来存储和加载 <code>Album</code> 数据。</p>
+<p>在 <code>PersistencyManager.swift</code> 里添加如下代码：</p>
+<pre><code>func saveAlbums() {
+    var filename = NSHomeDirectory().stringByAppendingString(&quot;/Documents/albums.bin&quot;)
+    let data = NSKeyedArchiver.archivedDataWithRootObject(albums)
+    data.writeToFile(filename, atomically: true)
+} 
+</code></pre>
+<p>这个方法可以用来存储专辑。 <code>NSKeyedArchiver</code> 把专辑数组归档到了 <code>albums.bin</code> 这个文件里。</p>
+<p>当我们归档一个包含子对象的对象时，系统会自动递归的归档子对象，然后是子对象的子对象，这样一层层递归下去。在我们的例子里，我们归档的是 <code>albums</code> 因为 <code>Array</code> 和 <code>Album</code> 都是实现 <code>NSCopying</code> 接口的，所以数组里的对象都可以自动归档。</p>
+<p>用下面的代码取代 <code>PersistencyManager</code> 中的 <code>init</code> 方法：</p>
+<pre><code>override init() {
+    super.init()
+    if let data = NSData(contentsOfFile: NSHomeDirectory().stringByAppendingString(&quot;/Documents/albums.bin&quot;)) {
+        let unarchiveAlbums = NSKeyedUnarchiver.unarchiveObjectWithData(data) as [Album]?
+        if let unwrappedAlbum = unarchiveAlbums {
+            albums = unwrappedAlbum
+        }
+    } else {
+        createPlaceholderAlbum()
+    }
+}
+
+func createPlaceholderAlbum() {
+    //Dummy list of albums
+    let album1 = Album(title: &quot;Best of Bowie&quot;,
+             artist: &quot;David Bowie&quot;,
+             genre: &quot;Pop&quot;,
+             coverUrl: &quot;http://www.coversproject.com/static/thumbs/album/album_david%20bowie_best%20of%20bowie.png&quot;,
+             year: &quot;1992&quot;)
+
+    let album2 = Album(title: &quot;It's My Life&quot;,
+           artist: &quot;No Doubt&quot;,
+           genre: &quot;Pop&quot;,
+           coverUrl: &quot;http://www.coversproject.com/static/thumbs/album/album_no%20doubt_its%20my%20life%20%20bathwater.png&quot;,
+           year: &quot;2003&quot;)
+
+    let album3 = Album(title: &quot;Nothing Like The Sun&quot;,
+               artist: &quot;Sting&quot;,
+           genre: &quot;Pop&quot;,
+           coverUrl: &quot;http://www.coversproject.com/static/thumbs/album/album_sting_nothing%20like%20the%20sun.png&quot;,
+           year: &quot;1999&quot;)
+
+    let album4 = Album(title: &quot;Staring at the Sun&quot;,
+           artist: &quot;U2&quot;,
+           genre: &quot;Pop&quot;,
+           coverUrl: &quot;http://www.coversproject.com/static/thumbs/album/album_u2_staring%20at%20the%20sun.png&quot;,
+           year: &quot;2000&quot;)
+
+    let album5 = Album(title: &quot;American Pie&quot;,
+           artist: &quot;Madonna&quot;,
+           genre: &quot;Pop&quot;,
+           coverUrl: &quot;http://www.coversproject.com/static/thumbs/album/album_madonna_american%20pie.png&quot;,
+           year: &quot;2000&quot;)
+    albums = [album1, album2, album3, album4, album5]
+    saveAlbums()
+}
+</code></pre>
+<p>我们把创建专辑数据的方法放到了 <code>createPlaceholderAlbum</code> 里，这样代码可读性更高。在新的代码里，如果存在归档文件， <code>NSKeyedUnarchiver</code> 从归档文件加载数据；否则就创建归档文件，这样下次程序启动的时候可以读取本地文件加载数据。</p>
+<p>我们还想在每次程序进入后台的时候存储专辑数据。看起来现在这个功能并不是必须的，但是如果以后我们加了编辑功能，这样做还是很有必要的，那时我们肯定希望确保新的数据会同步到本地的归档文件。</p>
+<p>因为我们的程序通过 <code>LibraryAPI</code> 来访问所有服务，所以我们需要通过 <code>LibraryAPI</code> 来通知 <code>PersistencyManager</code> 存储专辑数据。</p>
+<p>在 <code>LibraryAPI</code> 里添加存储专辑数据的方法：</p>
+<pre><code>func saveAlbums() {
+    persistencyManager.saveAlbums()
+}
+</code></pre>
+<p>这个方法很简单，就是把 <code>LibraryAPI</code> 的 <code>saveAlbums</code> 方法传递给了 <code>persistencyManager</code> 的 <code>saveAlbums</code> 方法。</p>
+<p>然后在 <code>ViewController.swift</code> 的 <code>saveCurrentState</code> 方法的最后加上：</p>
+<pre><code>LibraryAPI.sharedInstance.saveAlbums()
+</code></pre>
+<p>在 <code>ViewController</code> 需要存储状态的时候，上面的代码通过 <code>LibraryAPI</code> 归档当前的专辑数据。</p>
+<p>运行一下程序，检查一下没有编译错误。</p>
+<p>不幸的是似乎没什么简单的方法来检查归档是否正确完成。你可以检查一下 <code>Documents</code> 目录，看下是否存在归档文件。如果要查看其他数据变化的话，还需要添加编辑专辑数据的功能。</p>
+<p>不过和编辑数据相比，似乎加个删除专辑的功能更好一点，如果不想要这张专辑直接删除即可。再进一步，万一误删了话，是不是还可以再加个撤销按钮？</p>
+<h2 id="最后的润色">最后的润色</h2>
+<p>现在我们将添加最后一个功能：允许用户删除专辑，以及撤销上次的删除操作。</p>
+<p>在 <code>ViewController</code> 里添加如下属性：</p>
+<pre><code>// 为了实现撤销功能，我们用数组作为一个栈来 push 和 pop 用户的操作
+var undoStack: [(Album, Int)] = []
+</code></pre>
+<p>然后在 <code>viewDidLoad</code> 的 <code>reloadScroller()</code> 后面添加如下代码：</p>
+<pre><code>let undoButton = UIBarButtonItem(barButtonSystemItem: .Undo, target: self, action:&quot;undoAction&quot;)
+undoButton.enabled = false;
+let space = UIBarButtonItem(barButtonSystemItem: .FlexibleSpace, target:nil, action:nil)
+let trashButton = UIBarButtonItem(barButtonSystemItem: .Trash, target:self, action:&quot;deleteAlbum&quot;)
+let toolbarButtonItems = [undoButton, space, trashButton]
+toolbar.setItems(toolbarButtonItems, animated: true)
+</code></pre>
+<p>上面的代码创建了一个 <code>toolbar</code> ，上面有两个按钮，在 <code>undoStack</code> 为空的情况下， <code>undo</code> 的按钮是不可用的。注意 <code>toolbar</code> 已经在 <code>storyboard</code> 里了，我们需要做的只是配置上面的按钮。</p>
+<p>我们需要在 <code>ViewController.swift</code> 里添加三个方法，用来处理专辑的编辑事件：增加，删除，撤销。</p>
+<p>先写添加的方法：</p>
+<pre><code>func addAlbumAtIndex(album: Album,index: Int) {
+    LibraryAPI.sharedInstance.addAlbum(album, index: index)
+    currentAlbumIndex = index
+    reloadScroller()
+}
+</code></pre>
+<p>做了三件事：添加专辑，设为当前的索引，重新加载滚动条。</p>
+<p>接下来是删除方法：</p>
+<pre><code>func deleteAlbum() {
+    //1
+    var deletedAlbum : Album = allAlbums[currentAlbumIndex]
+    //2
+    var undoAction = (deletedAlbum, currentAlbumIndex)
+    undoStack.insert(undoAction, atIndex: 0)
+    //3
+    LibraryAPI.sharedInstance.deleteAlbum(currentAlbumIndex)
+    reloadScroller()
+    //4
+    let barButtonItems = toolbar.items as [UIBarButtonItem]
+    var undoButton : UIBarButtonItem = barButtonItems[0]
+    undoButton.enabled = true
+    //5
+    if (allAlbums.count == 0) {
+        var trashButton : UIBarButtonItem = barButtonItems[2]
+        trashButton.enabled = false
+    }
+}
+</code></pre>
+<p>挨个看一下各个部分：</p>
+<ul>
+<li>获取要删除的专辑。</li>
+<li>创建一个 <code>undoAction</code> 对象，用元组存储 <code>Album</code> 对象和它的索引值。然后把这个元组加到了栈里。</li>
+<li>使用 <code>LibraryAPI</code> 删除专辑数据，然后重新加载滚动条。</li>
+<li>既然撤销栈里已经有了数据，那么我们需要设置撤销按钮为可用。</li>
+<li>检查一下是不是还剩专辑，如果没有专辑了那就设置删除按钮为不可用。</li>
+</ul>
+<p>最后添加撤销按钮：</p>
+<pre><code>func undoAction() {
+    let barButtonItems = toolbar.items as [UIBarButtonItem]
+    //1       
+    if undoStack.count &gt; 0 {
+        let (deletedAlbum, index) = undoStack.removeAtIndex(0)
+        addAlbumAtIndex(deletedAlbum, index: index)
+    }
+    //2       
+    if undoStack.count == 0 {
+        var undoButton : UIBarButtonItem = barButtonItems[0]
+        undoButton.enabled = false
+    }
+    //3       
+    let trashButton : UIBarButtonItem = barButtonItems[2]
+    trashButton.enabled = true
+}
+</code></pre>
+<p>照着备注的三个步骤再看一下撤销方法里的代码：</p>
+<ul>
+<li>首先从栈里 <code>pop</code> 出一个对象，这个对象就是我们当初塞进去的元祖，存有删除的 <code>Album</code> 对象和它的索引位置。然后我们把取出来的对象放回了数据源里。</li>
+<li>因为我们从栈里删除了一个对象，所以需要检查一下看看栈是不是空了。如果空了那就设置撤销按钮不可用。</li>
+<li>既然我们已经撤消了一个专辑，那删除按钮肯定是可用的。所以把它设置为 <code>enabled</code> 。</li>
+</ul>
+<p>这时再运行应用，试试删除和插销功能，似乎一切正常了：</p>
+<figure data-type="image" tabindex="10"><img src="http://cdn2.raywenderlich.com/wp-content/uploads/2014/11/swiftDesignPattern1-179x320.png" alt="" loading="lazy"></figure>
+<p>我们也可以趁机测试一下，看看是否及时存储了专辑数据的变化。比如删除一个专辑，然后切到后台，强关应用，再重新开启，看看是不是删除操作成功保存了。</p>
+<p>如果想要恢复所有数据，删除应用然后重新安装即可。</p>
+<h2 id="小结">小结</h2>
+<p>最终项目的源代码可以在 <a href="http://cdn2.raywenderlich.com/wp-content/uploads/2014/12/BlueLibrarySwift-Final.zip">BlueLibrarySwift-Final</a> 下载。</p>
+<p>通过这两篇设计模式的学习，我们接触到了一些基础的设计模式和概念：Singleton、MVC、Delegation、Protocols、Facade、Observer、Memento 。</p>
+<p>这篇文章的目的，并不是推崇每行代码都要用设计模式，而是希望大家在考虑一些问题的时候，可以参考设计模式提出一些合理的解决方案，尤其是应用开发的起始阶段，思考和设计尤为重要。</p>
+<p>如果想继续深入学习设计模式，推荐设计模式的经典书籍：<a href="http://www.amazon.com/Design-Patterns-Elements-Reusable-Object-Oriented/dp/0201633612/">Design Patterns: Elements of Reusable Object-Oriented Software</a>。</p>
+<p>如果想看更多的设计模式相关的代码，推荐这个神奇的项目： <a href="https://github.com/ochococo/Design-Patterns-In-Swift">Swift 实现的种种设计模式</a>。</p>
+<p>接下来你可以看看这篇：<a href="http://www.raywenderlich.com/86053/intermediate-design-patterns-in-swift">Swift 设计模式中级指南</a>，学习更多的设计模式。</p>
+<p>玩的开心。 :]</p>
+<hr>
+<p>原文链接：</p>
+<ul>
+<li><a href="http://www.raywenderlich.com/90773/introducing-ios-design-patterns-in-swift-part-2">Introducing iOS Design Patterns in Swift – Part 2/2</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E6%9B%B4%E6%96%B0%E5%A3%B0%E6%98%8E">更新声明</a></li>
+<li><a href="#%E5%86%8D%E7%BB%AD%E5%89%8D%E7%BC%98">再续前缘</a></li>
+<li><a href="#%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C">准备工作</a></li>
+<li><a href="#%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F-adapter">适配器模式 - Adapter</a>
+<ul>
+<li><a href="#%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F">如何使用适配器模式</a></li>
+</ul>
+</li>
+<li><a href="#%E8%A7%82%E5%AF%9F%E8%80%85%E6%A8%A1%E5%BC%8F-observer">观察者模式 - Observer</a>
+<ul>
+<li><a href="#%E9%80%9A%E7%9F%A5-notification">通知 - Notification</a>
+<ul>
+<li><a href="#%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8%E9%80%9A%E7%9F%A5">如何使用通知</a></li>
+</ul>
+</li>
+<li><a href="#%E9%94%AE%E5%80%BC%E8%A7%82%E5%AF%9F-kvo">键值观察 - KVO</a>
+<ul>
+<li><a href="#%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8-kvo">如何使用 KVO</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E5%A4%87%E5%BF%98%E5%BD%95%E6%A8%A1%E5%BC%8F-memento">备忘录模式 - Memento</a>
+<ul>
+<li><a href="#%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8%E5%A4%87%E5%BF%98%E5%BD%95%E6%A8%A1%E5%BC%8F">如何使用备忘录模式</a></li>
+<li><a href="#%E5%BD%92%E6%A1%A3-archiving">归档 - Archiving</a>
+<ul>
+<li><a href="#%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8%E5%BD%92%E6%A1%A3">如何使用归档</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E6%9C%80%E5%90%8E%E7%9A%84%E6%B6%A6%E8%89%B2">最后的润色</a></li>
+<li><a href="#%E5%B0%8F%E7%BB%93">小结</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/localizable-and-localization-manager/">
+              <h3 class="post-title">
+                Localization 的问题和工具
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,250 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Localization 的问题和工具 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Localization 的问题和工具
+            </h2>
+            <div class="post-info">
+              <span>
+                2015-01-29
+              </span>
+              <span>
+                3 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/datMGg0r-6V/" class="post-tag">
+                  # iOS
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>最近公司的一个项目要发布多语言版本，但是因为以前主要是 English 和 Chinese ，其他语言翻译了一部分，未能完全跟上翻译的步伐。如果全部重新翻译，工作量大且浪费了以前的翻译成果，如果手动对比或者用 <code>git diff</code> 这样的命令去增量翻译，又无形中增加了开发人员和翻译人员的协作成本。</p>
+<p>具体的过程就不多复述了，简单的介绍一下我们目前在 Localization 方面的规范。</p>
+<h2 id="localizablestrings">Localizable.strings</h2>
+<p>iOS 项目中的 <code>Localizable.strings</code> 文件务必要规范化，避免重复的无意义翻译，同时在项目模块变动的时候可以及时去除无需使用的字段。</p>
+<ul>
+<li>key 值统一为驼峰规则+下划线 (历史包袱)，首单词为所属模块名，例如相册部分叫做 <code>Album</code> ，通用按钮命名为 <code>Button</code> 这种。</li>
+<li>对于不同模块的翻译内容不仅要通过命名区分也要通过备注区分，便于后期维护和跟进。</li>
+<li>不用翻译的一律放在文件末尾，并且通过注释表明。</li>
+</ul>
+<p>良好的示例：</p>
+<pre><code>// 照片
+&quot;Album_GroupName_Camera&quot; = &quot;相机&quot;;
+&quot;Album_GroupName_Stream&quot; = &quot;我的照片流&quot;;
+
+// 按钮
+&quot;Button_Add&quot; = &quot;添加&quot;;
+&quot;Button_Album&quot; = &quot;相册&quot;;
+
+
+// DO NOT TRANSLATE
+&quot;Help_Image_Name_Photos&quot; = &quot;help_photos_chs&quot;;
+</code></pre>
+<h2 id="localization-suite">Localization Suite</h2>
+<p><a href="http://www.loc-suite.org/">Localization Suite</a> 是一组 Localization 的工具集合。有利于帮助我们更好更快的完成翻译和校对工作。</p>
+<p>下面简单的介绍一下基本的使用方法。</p>
+<h3 id="localization-manager">Localization Manager</h3>
+<p>打开 Manager 之后，在菜单栏选择 New -&gt; From Xcode ，这样可以从 Xcode 的项目文件中直接读取需要进行翻译的文件。</p>
+<p>导入之后应该是这个样子的：</p>
+<figure data-type="image" tabindex="1"><img src="http://callmewhy.qiniudn.com/QQ20150129-1.png" alt="" loading="lazy"></figure>
+<p>基本的操作按钮在鼠标悬停的时候都有提示。下面演示一下用这个工具的基本用处之一：查找漏翻译的内容。</p>
+<p>以 Korean 为例。选中 Korean 然后在右侧的按钮点击 Edit 按钮。</p>
+<p>这时会打开我们的第二个工具： Localizer：</p>
+<figure data-type="image" tabindex="2"><img src="http://callmewhy.qiniudn.com/QQ20150129-2.png" alt="" loading="lazy"></figure>
+<h3 id="localizer">Localizer</h3>
+<p>Localizer 是用来进行翻译的，我们可以在左侧设定好筛选条件然后在右侧面板就能看到未翻译的内容：</p>
+<figure data-type="image" tabindex="3"><img src="http://callmewhy.qiniudn.com/QQ20150129-3.png" alt="" loading="lazy"></figure>
+<p>由于这个工具把 value 相同认为未翻译，而实际上可能确实存在一些待翻译的内容，比如目前图片资源没跟上，还是先显示 ChatGame 这样的。可以统一把这些放在末尾，并且备注写明不需翻译，这样在对照的时候会更清晰一些：</p>
+<figure data-type="image" tabindex="4"><img src="http://callmewhy.qiniudn.com/QQ20150129-4.png" alt="" loading="lazy"></figure>
+<p>先写这么多。</p>
+<h2 id="kaleidoscope">Kaleidoscope</h2>
+<p>Mac 下一个很好用的文件对比工具，就是有点贵 (几百RMB)，不过确实很方便，可以试用15天再决定是否购买。</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#localizablestrings">Localizable.strings</a></li>
+<li><a href="#localization-suite">Localization Suite</a>
+<ul>
+<li><a href="#localization-manager">Localization Manager</a></li>
+<li><a href="#localizer">Localizer</a></li>
+</ul>
+</li>
+<li><a href="#kaleidoscope">Kaleidoscope</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/wtf-in-old-code/">
+              <h3 class="post-title">
+                要你命三千：老代码中的那些坑
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

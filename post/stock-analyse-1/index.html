@@ -1,0 +1,654 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>股票分析（一）：常见的技术指标 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              股票分析（一）：常见的技术指标
+            </h2>
+            <div class="post-info">
+              <span>
+                2016-02-27
+              </span>
+              <span>
+                11 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/kvnAZyCRIA/" class="post-tag">
+                  # Quant
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="背景">背景</h2>
+<p>最近在学习使用 Python 做数据分析，感觉一个比较有意思的场景是用于股市，比如数据可视化、股票技术指标分析等等。准备写一个系列记录用 Python 分析股票的全过程。</p>
+<h2 id="相关技术">相关技术</h2>
+<p>在折腾的过程中，相关的技术如下：</p>
+<ul>
+<li><a href="https://www.python.org/">Python</a>：用于分析股票的编程语言，选择 Python 的原因是相关科学计算的库十分丰富。</li>
+<li><a href="https://github.com/pypa/virtualenv">Virtualenv</a>：用于创建虚拟的 Python 运行环境，用于保持工作空间互不干扰。</li>
+<li><a href="http://ipython.org/">iPython</a>：代码编写均在 iPython Notebook 中完成，方便查看运行结果和记录分享。</li>
+<li><a href="http://www.numpy.org/">NumPy</a>：一个常见的基础运算库，支援矩阵运算，包含大量常用的数学函数。</li>
+<li><a href="http://pandas.pydata.org/">Pandas</a>：一个基于 NumPy 的数据分析工具，可以简单高效地处理数据。</li>
+<li><a href="http://matplotlib.org/">Matplotlib</a>：基于 NumPy 的绘图工具，可以用一些通用的 GUI 工具很方便的绘制图表。</li>
+</ul>
+<h2 id="基础操作">基础操作</h2>
+<p>股票的数据是通过 <code>matplotlib</code> 的 <code>finance</code> 模块获取的，它提供了一个获取雅虎股票数据的接口：</p>
+<pre><code class="language-python">date1 = datetime.date( 2016, 2, 25 )
+date2 = datetime.date( 2016, 2, 26 )
+sp = f.quotes_historical_yahoo_ohlc('601233.ss', date1, date2, adjusted=True)
+print sp
+</code></pre>
+<p>获取到的数据格式是：日期、开盘价、最高价、最低价、收盘价、成交量：</p>
+<pre><code class="language-python">[(736019.0, 13.130000000000001, 13.140000000000001, 11.83, 11.83, 17447800.0),
+(736020.0, 11.960000000000001, 12.880000000000001, 11.960000000000001, 12.68, 14906700.0)]
+</code></pre>
+<p>用 Pandas 处理之后数据会更易读一些：</p>
+<pre><code class="language-python">pd.DataFrame(sp, columns=['date','open','high','low','close','volume'])
+</code></pre>
+<p>显示的结果是：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">index</th>
+<th style="text-align:center">date</th>
+<th style="text-align:center">open</th>
+<th style="text-align:center">high</th>
+<th style="text-align:center">low</th>
+<th style="text-align:center">close</th>
+<th style="text-align:center">volume</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">0</td>
+<td style="text-align:center">736019</td>
+<td style="text-align:center">13.13</td>
+<td style="text-align:center">13.14</td>
+<td style="text-align:center">11.83</td>
+<td style="text-align:center">11.83</td>
+<td style="text-align:center">17447800</td>
+</tr>
+<tr>
+<td style="text-align:center">1</td>
+<td style="text-align:center">736020</td>
+<td style="text-align:center">11.96</td>
+<td style="text-align:center">12.88</td>
+<td style="text-align:center">11.96</td>
+<td style="text-align:center">12.68</td>
+<td style="text-align:center">14906700</td>
+</tr>
+</tbody>
+</table>
+<h2 id="常见指标">常见指标</h2>
+<p>股市中有很多辅助分析的技术指标，后面会逐渐通过 Python 实现这些技术指标的可视化展示。</p>
+<h3 id="vol-成交量">VOL - 成交量</h3>
+<h4 id="定义">定义</h4>
+<p>成交量是指在某一时段内具体的交易数，它的变化反映了资金进出市场的情况，是印证市场走势的重要指标。</p>
+<figure data-type="image" tabindex="1"><img src="http://ww2.sinaimg.cn/large/61d238c7jw1f1e60sofulj210908uwhc.jpg" alt="" loading="lazy"></figure>
+<h4 id="绘制">绘制</h4>
+<p>在绘制成交量的时候，成交量使用柱状图绘制，若收盘价高于开盘价则为红色，否则为绿色。</p>
+<p>以代码为 601233 的股票『桐昆股份』为例。首先引入基础的类库：</p>
+<pre><code class="language-python">%matplotlib inline
+import matplotlib.dates as dates
+import matplotlib.finance as f  
+import matplotlib.pyplot as plt
+import datetime
+import pandas as pd
+</code></pre>
+<p>然后获取 2016年1月1日 到 2016年2月20日 期间的股票数据：</p>
+<pre><code class="language-python">date1 = datetime.date( 2016, 1, 1 )
+date2 = datetime.date( 2016, 2, 20 )
+sp = f.quotes_historical_yahoo_ohlc('601233.ss', date1, date2, adjusted=True)
+df = pd.DataFrame(sp, columns=['date','open','high','low','close','volume'])
+df['date'] = dates.num2date(df['date'])
+df = df[df['volume'] != 0]
+print df
+</code></pre>
+<p>可以看到目前的数据是这样的：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">date(index)</th>
+<th style="text-align:center">open</th>
+<th style="text-align:center">high</th>
+<th style="text-align:center">low</th>
+<th style="text-align:center">close</th>
+<th style="text-align:center">volume</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">2016-02-01 00:00:00+00:00</td>
+<td style="text-align:center">10.34</td>
+<td style="text-align:center">10.58</td>
+<td style="text-align:center">10.06</td>
+<td style="text-align:center">10.46</td>
+<td style="text-align:center">14063800</td>
+</tr>
+<tr>
+<td style="text-align:center">2016-02-02 00:00:00+00:00</td>
+<td style="text-align:center">10.41</td>
+<td style="text-align:center">10.75</td>
+<td style="text-align:center">10.20</td>
+<td style="text-align:center">10.74</td>
+<td style="text-align:center">19108900</td>
+</tr>
+<tr>
+<td style="text-align:center">2016-02-03 00:00:00+00:00</td>
+<td style="text-align:center">10.42</td>
+<td style="text-align:center">10.49</td>
+<td style="text-align:center">10.09</td>
+<td style="text-align:center">10.37</td>
+<td style="text-align:center">14133400</td>
+</tr>
+<tr>
+<td style="text-align:center">2016-02-04 00:00:00+00:00</td>
+<td style="text-align:center">10.75</td>
+<td style="text-align:center">11.41</td>
+<td style="text-align:center">10.71</td>
+<td style="text-align:center">10.86</td>
+<td style="text-align:center">28524200</td>
+</tr>
+<tr>
+<td style="text-align:center">2016-02-05 00:00:00+00:00</td>
+<td style="text-align:center">11.21</td>
+<td style="text-align:center">11.24</td>
+<td style="text-align:center">10.86</td>
+<td style="text-align:center">10.96</td>
+<td style="text-align:center">11278100</td>
+</tr>
+<tr>
+<td style="text-align:center">2016-02-15 00:00:00+00:00</td>
+<td style="text-align:center">10.67</td>
+<td style="text-align:center">11.30</td>
+<td style="text-align:center">10.45</td>
+<td style="text-align:center">11.12</td>
+<td style="text-align:center">11494100</td>
+</tr>
+<tr>
+<td style="text-align:center">2016-02-16 00:00:00+00:00</td>
+<td style="text-align:center">11.00</td>
+<td style="text-align:center">11.95</td>
+<td style="text-align:center">11.00</td>
+<td style="text-align:center">11.67</td>
+<td style="text-align:center">14092200</td>
+</tr>
+<tr>
+<td style="text-align:center">2016-02-17 00:00:00+00:00</td>
+<td style="text-align:center">11.50</td>
+<td style="text-align:center">11.72</td>
+<td style="text-align:center">11.30</td>
+<td style="text-align:center">11.58</td>
+<td style="text-align:center">11607800</td>
+</tr>
+<tr>
+<td style="text-align:center">2016-02-18 00:00:00+00:00</td>
+<td style="text-align:center">11.88</td>
+<td style="text-align:center">12.73</td>
+<td style="text-align:center">11.76</td>
+<td style="text-align:center">11.93</td>
+<td style="text-align:center">20870100</td>
+</tr>
+<tr>
+<td style="text-align:center">2016-02-19 00:00:00+00:00</td>
+<td style="text-align:center">11.62</td>
+<td style="text-align:center">12.20</td>
+<td style="text-align:center">11.53</td>
+<td style="text-align:center">11.96</td>
+<td style="text-align:center">7751300</td>
+</tr>
+</tbody>
+</table>
+<p>然后就是数据的绘制了，取出 <code>volume</code> 列，通过 <code>plot</code> 方法进行绘制：</p>
+<pre><code class="language-python">temp_df = df[df['date'] &gt;= datetime.date( 2016, 2, 1 )]
+fig, ax = plt.subplots()
+ax = temp_df['volume'].plot(kind='Bar', color=['r' if x[5] &gt; x[2] else 'g' for x in temp_df.itertuples()])
+ax.set_xticklabels([x.strftime('%Y-%m-%d') for x in temp_df['date']])
+fig.show()
+</code></pre>
+<p>结果如下：</p>
+<figure data-type="image" tabindex="2"><img src="http://ww3.sinaimg.cn/large/61d238c7jw1f1e93jutnwj20a9091wez.jpg" alt="" loading="lazy"></figure>
+<p>如果我们希望能够像前面的软件截图一样绘制出均线，可以使用 <code>rolling_mean</code> 函数：</p>
+<pre><code>temp_df = df
+params = [5, 10, 20]
+for p in params:
+    temp_df['vol'+str(p)] = pd.rolling_mean(df['volume'], window=p)
+temp_df = temp_df[temp_df['date'] &gt;= datetime.date( 2016, 2, 1 )]
+print temp_df
+</code></pre>
+<p>结果如下：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">date</th>
+<th style="text-align:center">open</th>
+<th style="text-align:center">high</th>
+<th style="text-align:center">low</th>
+<th style="text-align:center">close</th>
+<th style="text-align:center">volume</th>
+<th style="text-align:center">vol5</th>
+<th style="text-align:center">vol10</th>
+<th style="text-align:center">vol20</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">2016-02-01 00:00:00+00:00</td>
+<td style="text-align:center">10.34</td>
+<td style="text-align:center">10.58</td>
+<td style="text-align:center">10.06</td>
+<td style="text-align:center">10.46</td>
+<td style="text-align:center">14063800</td>
+<td style="text-align:center">20885020</td>
+<td style="text-align:center">16664900</td>
+<td style="text-align:center">12883440</td>
+</tr>
+<tr>
+<td style="text-align:center">2016-02-02 00:00:00+00:00</td>
+<td style="text-align:center">10.41</td>
+<td style="text-align:center">10.75</td>
+<td style="text-align:center">10.20</td>
+<td style="text-align:center">10.74</td>
+<td style="text-align:center">19108900</td>
+<td style="text-align:center">19654100</td>
+<td style="text-align:center">17607560</td>
+<td style="text-align:center">13023730</td>
+</tr>
+<tr>
+<td style="text-align:center">2016-02-03 00:00:00+00:00</td>
+<td style="text-align:center">10.42</td>
+<td style="text-align:center">10.49</td>
+<td style="text-align:center">10.09</td>
+<td style="text-align:center">10.37</td>
+<td style="text-align:center">14133400</td>
+<td style="text-align:center">17720800</td>
+<td style="text-align:center">17859820</td>
+<td style="text-align:center">13265350</td>
+</tr>
+<tr>
+<td style="text-align:center">2016-02-04 00:00:00+00:00</td>
+<td style="text-align:center">10.75</td>
+<td style="text-align:center">11.41</td>
+<td style="text-align:center">10.71</td>
+<td style="text-align:center">10.86</td>
+<td style="text-align:center">28524200</td>
+<td style="text-align:center">19246640</td>
+<td style="text-align:center">19894810</td>
+<td style="text-align:center">14542820</td>
+</tr>
+<tr>
+<td style="text-align:center">2016-02-05 00:00:00+00:00</td>
+<td style="text-align:center">11.21</td>
+<td style="text-align:center">11.24</td>
+<td style="text-align:center">10.86</td>
+<td style="text-align:center">10.96</td>
+<td style="text-align:center">11278100</td>
+<td style="text-align:center">17421680</td>
+<td style="text-align:center">20263980</td>
+<td style="text-align:center">14495145</td>
+</tr>
+<tr>
+<td style="text-align:center">2016-02-15 00:00:00+00:00</td>
+<td style="text-align:center">10.67</td>
+<td style="text-align:center">11.30</td>
+<td style="text-align:center">10.45</td>
+<td style="text-align:center">11.12</td>
+<td style="text-align:center">11494100</td>
+<td style="text-align:center">16907740</td>
+<td style="text-align:center">18896380</td>
+<td style="text-align:center">14474330</td>
+</tr>
+<tr>
+<td style="text-align:center">2016-02-16 00:00:00+00:00</td>
+<td style="text-align:center">11.00</td>
+<td style="text-align:center">11.95</td>
+<td style="text-align:center">11.00</td>
+<td style="text-align:center">11.67</td>
+<td style="text-align:center">14092200</td>
+<td style="text-align:center">15904400</td>
+<td style="text-align:center">17779250</td>
+<td style="text-align:center">14832440</td>
+</tr>
+<tr>
+<td style="text-align:center">2016-02-17 00:00:00+00:00</td>
+<td style="text-align:center">11.50</td>
+<td style="text-align:center">11.72</td>
+<td style="text-align:center">11.30</td>
+<td style="text-align:center">11.58</td>
+<td style="text-align:center">11607800</td>
+<td style="text-align:center">15399280</td>
+<td style="text-align:center">16560040</td>
+<td style="text-align:center">15084490</td>
+</tr>
+<tr>
+<td style="text-align:center">2016-02-18 00:00:00+00:00</td>
+<td style="text-align:center">11.88</td>
+<td style="text-align:center">12.73</td>
+<td style="text-align:center">11.76</td>
+<td style="text-align:center">11.93</td>
+<td style="text-align:center">20870100</td>
+<td style="text-align:center">13868460</td>
+<td style="text-align:center">16557550</td>
+<td style="text-align:center">15712860</td>
+</tr>
+<tr>
+<td style="text-align:center">2016-02-19 00:00:00+00:00</td>
+<td style="text-align:center">11.62</td>
+<td style="text-align:center">12.20</td>
+<td style="text-align:center">11.53</td>
+<td style="text-align:center">11.96</td>
+<td style="text-align:center">7751300</td>
+<td style="text-align:center">13163100</td>
+<td style="text-align:center">15292390</td>
+<td style="text-align:center">15656035</td>
+</tr>
+</tbody>
+</table>
+<p>然后通过指定 <code>ax=ax</code> 可以将多张图标绘制在同一个页面。注意，柱状图默认用 <code>range(0,n)</code> 做 x 轴，而折线图会自动填充索引成等距连续序列，这样会导致最后的结果是：柱状图堆在左边早已画完，而折线图会继续往右延伸。所以需要通过 <code>use_index=False</code> 明确规定不使用索引，绘图代码如下：</p>
+<pre><code>fig, ax = plt.subplots()
+param_colors = [(1,0.7,0.2), (0,0.7,0.9), (0.9,0.5,0.9)]
+for (i,p) in enumerate(params):
+    temp_df[['vol'+str(p)]].plot(kind='line', ax=ax, color=param_colors[i], use_index=False)
+temp_df[['volume']].plot(kind='bar', ax=ax, color=['r' if x[5] &gt; x[2] else 'g' for x in temp_df.itertuples()])
+ax.set_xticklabels([x.strftime('%Y-%m-%d') for x in temp_df['date']])
+plt.show()
+</code></pre>
+<p>绘制结果：</p>
+<figure data-type="image" tabindex="3"><img src="http://ww2.sinaimg.cn/large/61d238c7jw1f1fbh93td9j20a908mdgm.jpg" alt="" loading="lazy"></figure>
+<h3 id="ma-移动平均线">MA - 移动平均线</h3>
+<h4 id="定义-2">定义</h4>
+<p>移动平均就是固定窗口然后滑动窗口计算多日收盘价的平均值，通过设置窗口的大小可以查看短期、中期、长期的移动平均线变化情况。一般常用的是5日、10日、20日等。</p>
+<figure data-type="image" tabindex="4"><img src="http://ww1.sinaimg.cn/large/61d238c7jw1f1l2nn8bafj20lm09z40e.jpg" alt="" loading="lazy"></figure>
+<h4 id="绘制-2">绘制</h4>
+<p>有了前面的 <code>rolling_mean</code> 函数，绘制均线并没什么难度。绘制5天、10天、20天均线的代码如下：</p>
+<pre><code class="language-python">temp_df = df
+params = [5, 10, 20]
+for p in params:
+    temp_df['ma'+str(p)] = pd.rolling_mean(df['close'], window=p)
+temp_df = temp_df[temp_df['date'] &gt;= datetime.date( 2016, 2, 1 )]
+
+fig, ax = plt.subplots()
+param_colors = [(1,0.7,0.2), (0,0.7,0.9), (0.9,0.5,0.9)]
+for (i,p) in enumerate(params):
+    temp_df[['ma'+str(p)]].plot(kind='line', ax=ax, color=param_colors[i], use_index=False)
+ax.set_xticklabels([x.strftime('%d') for x in temp_df['date']])
+fig.show()
+</code></pre>
+<p>绘制结果：</p>
+<figure data-type="image" tabindex="5"><img src="http://ww1.sinaimg.cn/large/61d238c7jw1f1l2eg0a75j20al06zjrq.jpg" alt="" loading="lazy"></figure>
+<h3 id="ema-指数移动平均线">EMA - 指数移动平均线</h3>
+<h4 id="定义-3">定义</h4>
+<p>移动平均线需要绘制在中点处才能正确的反映价格的运动趋势，而指数移动平均线在公式中着重考虑了价格当期行情的权重，离当期越近，权重越高，弥补了其他指标的滞后性：</p>
+<blockquote>
+<p>EMAt1 = EMAt0 + α * (p - EMAt0)</p>
+</blockquote>
+<p>和移动平均线一样， EMA 也可以设置不同的参数值查看不同短期、中期、长期的走势情况。</p>
+<figure data-type="image" tabindex="6"><img src="http://ww2.sinaimg.cn/large/61d238c7jw1f1l2podjjkj20ls0a70ul.jpg" alt="" loading="lazy"></figure>
+<h4 id="绘制-3">绘制</h4>
+<p>主要是通过 <code>pd.ewma</code> 函数进行绘制：</p>
+<pre><code class="language-python">params = [5, 10, 20]
+for p in params:
+    temp_df['ema'+str(p)] = pd.ewma(temp_df['close'], span=p)
+temp_df = temp_df[temp_df['date'] &gt;= datetime.date( 2016, 2, 1 )]
+
+fig, ax = plt.subplots()
+param_colors = [(1,0.7,0.2), (0,0.7,0.9), (0.9,0.5,0.9)]
+for (i,p) in enumerate(params):
+    temp_df[['ema'+str(p)]].plot(kind='line', ax=ax, color=param_colors[i], use_index=False)
+ax.set_xticklabels([x.strftime('%d') for x in temp_df['date']])
+fig.show()
+</code></pre>
+<p>绘制结果：</p>
+<figure data-type="image" tabindex="7"><img src="http://ww4.sinaimg.cn/large/61d238c7jw1f1l2gil2xej20al07474o.jpg" alt="" loading="lazy"></figure>
+<h3 id="macd-指数异同移动平均线">MACD - 指数异同移动平均线</h3>
+<h4 id="定义-4">定义</h4>
+<p>MACD 是一种常见的技术分析工具，由一组曲线与图形组成，通过收盘价快变及慢变的指数移动平均值之间的差计算出来。『快』指更短时段的 EMA，而『慢』则指较长时段的 EMA，最常用的是12及26日 EMA。公式如下：</p>
+<blockquote>
+<p>DIF = EMA(close, 12) - EMA(close, 26)<br>
+DEM = EMA(DIF, 9)<br>
+MACD = (DIF - DEM) * 2</p>
+</blockquote>
+<figure data-type="image" tabindex="8"><img src="http://ww1.sinaimg.cn/large/61d238c7jw1f1m2939n7sj20d606n3zn.jpg" alt="" loading="lazy"></figure>
+<h4 id="绘制-4">绘制</h4>
+<p>先取出 2015年6月1日至2016年2月20日的股票信息：</p>
+<pre><code class="language-python">date1 = datetime.date( 2015, 6, 1 )
+date2 = datetime.date( 2016, 2, 20 )
+sp = f.quotes_historical_yahoo_ohlc('601233.ss', date1, date2, adjusted=True)
+temp_df = pd.DataFrame(sp, columns=['date','open','high','low','close','volume'])
+temp_df['date'] = dates.num2date(temp_df['date'])
+temp_df = temp_df[temp_df['volume'] != 0]
+</code></pre>
+<p>然后计算 DIF DEM MACD 的值并存储到列中：</p>
+<pre><code class="language-python">params = [12, 26]
+for p in params:
+    temp_df['ema'+str(p)] = pd.ewma(temp_df['close'], span=p)
+temp_df['DIF'] = temp_df['ema12'] - temp_df['ema26']
+temp_df['DEM'] = pd.ewma(temp_df['DIF'], span=9)
+temp_df['MACD'] = (temp_df['DIF'] - temp_df['DEM']) * 2
+temp_df = temp_df[temp_df['date'] &gt;= datetime.date( 2015, 12, 1 )]
+</code></pre>
+<p>最后使用 plot 函数绘制即可</p>
+<pre><code class="language-python">fig, ax = plt.subplots()
+param_colors = [(1,0.7,0.2), (0,0.7,0.9), (0.9,0.5,0.9)]
+temp_df[['DIF','DEM']].plot(kind='line', ax=ax, color=param_colors, use_index=False)
+temp_df[['MACD']].plot(kind='bar', ax=ax, color=['r' if x[-1] &gt; 0 else 'g' for x in temp_df.itertuples()])
+ax.set_xticklabels([x.strftime('%d') for x in temp_df['date']])
+fig.show()
+</code></pre>
+<p>绘制结果如下：</p>
+<figure data-type="image" tabindex="9"><img src="http://ww2.sinaimg.cn/large/61d238c7jw1f1m2em0pm0j20aj077wfh.jpg" alt="" loading="lazy"></figure>
+<h2 id="其他">其他</h2>
+<p>其他技术指标就不挨个练习了，RiceQuant 或者 UQER 上都已经提供了现成的 API 可以直接调用。这个练手只是为了熟悉一下 Python 在数据处理和数据可视化方便的基础操作，后面开始做一些量化交易的尝试。</p>
+<p>很有意思，你也试试？</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E8%83%8C%E6%99%AF">背景</a></li>
+<li><a href="#%E7%9B%B8%E5%85%B3%E6%8A%80%E6%9C%AF">相关技术</a></li>
+<li><a href="#%E5%9F%BA%E7%A1%80%E6%93%8D%E4%BD%9C">基础操作</a></li>
+<li><a href="#%E5%B8%B8%E8%A7%81%E6%8C%87%E6%A0%87">常见指标</a>
+<ul>
+<li><a href="#vol-%E6%88%90%E4%BA%A4%E9%87%8F">VOL - 成交量</a>
+<ul>
+<li><a href="#%E5%AE%9A%E4%B9%89">定义</a></li>
+<li><a href="#%E7%BB%98%E5%88%B6">绘制</a></li>
+</ul>
+</li>
+<li><a href="#ma-%E7%A7%BB%E5%8A%A8%E5%B9%B3%E5%9D%87%E7%BA%BF">MA - 移动平均线</a>
+<ul>
+<li><a href="#%E5%AE%9A%E4%B9%89-2">定义</a></li>
+<li><a href="#%E7%BB%98%E5%88%B6-2">绘制</a></li>
+</ul>
+</li>
+<li><a href="#ema-%E6%8C%87%E6%95%B0%E7%A7%BB%E5%8A%A8%E5%B9%B3%E5%9D%87%E7%BA%BF">EMA - 指数移动平均线</a>
+<ul>
+<li><a href="#%E5%AE%9A%E4%B9%89-3">定义</a></li>
+<li><a href="#%E7%BB%98%E5%88%B6-3">绘制</a></li>
+</ul>
+</li>
+<li><a href="#macd-%E6%8C%87%E6%95%B0%E5%BC%82%E5%90%8C%E7%A7%BB%E5%8A%A8%E5%B9%B3%E5%9D%87%E7%BA%BF">MACD - 指数异同移动平均线</a>
+<ul>
+<li><a href="#%E5%AE%9A%E4%B9%89-4">定义</a></li>
+<li><a href="#%E7%BB%98%E5%88%B6-4">绘制</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E5%85%B6%E4%BB%96">其他</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/how-to-make-poemhub/">
+              <h3 class="post-title">
+                PoemHub 小记：如何随机生成唐诗宋词
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

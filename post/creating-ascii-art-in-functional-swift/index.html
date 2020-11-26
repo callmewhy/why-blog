@@ -1,0 +1,386 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>用函数式的 Swift 实现图片转字符画的功能 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              用函数式的 Swift 实现图片转字符画的功能
+            </h2>
+            <div class="post-info">
+              <span>
+                2015-06-07
+              </span>
+              <span>
+                7 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/fthQHH2l27/" class="post-tag">
+                  # Swift
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>今天整理 Pocket 中待看的文章，看到这篇《<a href="http://ijoshsmith.com/2015/04/29/creating-ascii-art-in-functional-swift/">Creating ASCII art in functional Swift</a>》，讲解如何用 Swift 将图片转成 ASCII 字符。具体原理文中讲解的很详细，不再赘述，但是标题中的 <strong>in functional Swift</strong> 让我很感兴趣，想知道 <code>functional</code> 到底体现在哪里，于是下载 <a href="https://github.com/ijoshsmith/swift-ascii-art">swift-ascii-art</a> 源码一探究竟。</p>
+<h2 id="pixel">Pixel</h2>
+<p>图片是由各个像素点组成的，在代码中像素通过 <code>Pixel</code> 这个 <code>struct</code> 实现。每个像素分配了4个字节，这4个字节 (2^8 = 256) 分别用来存储 RBGA 的值。</p>
+<h3 id="createpixelmatrix">createPixelMatrix</h3>
+<p>可以通过 <code>createPixelMatrix</code> 这个静态方法创建一个 <code>width</code> * <code>height</code> 像素矩阵：</p>
+<pre><code class="language-swift">    static func createPixelMatrix(width: Int, _ height: Int) -&gt; [[Pixel]] {
+        return map(0..&lt;height) { row in
+            map(0..&lt;width) { col in
+                let offset = (width * row + col) * Pixel.bytesPerPixel
+                return Pixel(offset)
+            }
+        }
+    }
+</code></pre>
+<p>和传统方法中使用 <code>for</code> 循环来创建多维数组有所不同的是，这里是通过 <code>map</code> 函数实现的。在 Swift 2.0 中， <code>map</code> 函数已经被干掉了，只能作为方法调用。</p>
+<h3 id="intensityfrompixelpointer">intensityFromPixelPointer</h3>
+<pre><code class="language-swift">`intensityFromPixelPointer` 方法计算并返回像素点的亮度值，代码如下：
+
+    func intensityFromPixelPointer(pointer: PixelPointer) -&gt; Double {
+        let
+        red   = pointer[offset + 0],
+        green = pointer[offset + 1],
+        blue  = pointer[offset + 2]
+        return Pixel.calculateIntensity(red, green, blue)
+    }
+
+    private static func calculateIntensity(r: UInt8, _ g: UInt8, _ b: UInt8) -&gt; Double {
+        let
+        redWeight   = 0.229,
+        greenWeight = 0.587,
+        blueWeight  = 0.114,
+        weightedMax = 255.0 * redWeight   +
+                      255.0 * greenWeight +
+                      255.0 * blueWeight,
+        weightedSum = Double(r) * redWeight   +
+                      Double(g) * greenWeight +
+                      Double(b) * blueWeight
+        return weightedSum / weightedMax
+    }
+</code></pre>
+<p><code>calculateIntensity</code> 方法基于 <a href="https://en.wikipedia.org/wiki/Grayscale#Luma_coding_in_video_systems">Y'UV</a> 编码获取某个像素的亮度 (intensity) ：</p>
+<blockquote>
+<p>Y' =  0.299 R' + 0.587 G' + 0.114 B'</p>
+</blockquote>
+<p>YUV 是一种颜色编码方法，Y 表示亮度， UV 用来表示色差， U 和 V 是构成彩色的两个分量。它的优点是可以利用人眼的特性来降低数字彩色图像所需要的存储容量。我们通过这个公式获取到的 Y 就是亮度的值。</p>
+<h3 id="offset">Offset</h3>
+<p><code>Pixel</code> 中其实只存了一个值： <code>offset</code> 。 <code>Pixel.createPixelMatrix</code> 创建出来的矩阵是这样的：</p>
+<pre><code>    [[0, 4, 8, ...], ...]
+</code></pre>
+<p>并没有像想象中那样存储了每个像素相关数据，而更像是一个转换工具，计算 <code>PixelPointer</code> 的灰度值。</p>
+<h2 id="asciiartist">AsciiArtist</h2>
+<p><code>AsciiArtist</code> 里封装了一些生成字符画的方法。</p>
+<h3 id="createasciiart">createAsciiArt</h3>
+<p><code>createAsciiArt</code> 方法就是创建字符画：</p>
+<pre><code class="language-swift">    func createAsciiArt() -&gt; String {
+        let
+        // 加载图片数据，获取指针对象
+        dataProvider = CGImageGetDataProvider(image.CGImage),
+        pixelData    = CGDataProviderCopyData(dataProvider),
+        pixelPointer = CFDataGetBytePtr(pixelData),
+        // 将图片转成亮度值矩阵
+        intensities  = intensityMatrixFromPixelPointer(pixelPointer),
+        // 将亮度值转成对应字符
+        symbolMatrix = symbolMatrixFromIntensityMatrix(intensities)
+        return join(&quot;\n&quot;, symbolMatrix)
+    }
+</code></pre>
+<p>其中 <code>CFDataGetBytePtr</code> 函数返回了图像的字节数组指针，数组里每个元素都是一个字节，即 0~255 的整数。每4个字节组成了一个 <code>Pixel</code> ，分别对应着 RGBA 的值。</p>
+<h3 id="intensitymatrixfrompixelpointer">intensityMatrixFromPixelPointer</h3>
+<p><code>intensityMatrixFromPixelPointer</code> 这个方法是通过 <code>PixelPointer</code> 生成对应的亮度值矩阵：</p>
+<pre><code class="language-swift">    private func intensityMatrixFromPixelPointer(pointer: PixelPointer) -&gt; [[Double]]
+    {
+        let
+        width  = Int(image.size.width),
+        height = Int(image.size.height),
+        matrix = Pixel.createPixelMatrix(width, height)
+        return matrix.map { pixelRow in
+            pixelRow.map { pixel in
+                pixel.intensityFromPixelPointer(pointer)
+            }
+        }
+    }
+</code></pre>
+<p>首先通过 <code>Pixel.createPixelMatrix</code> 方法创建了一个空的二维数组，用来存放数值。然后用两个 <code>map</code> 嵌套遍历里面的所有元素，将像素 (<code>pixel</code>) 转换成亮度 (<code>intensity</code>) 的值。</p>
+<h3 id="symbolmatrixfromintensitymatrix">symbolMatrixFromIntensityMatrix</h3>
+<p><code>symbolMatrixFromIntensityMatrix</code> 函数将亮度值数组转换成字符画数组：</p>
+<pre><code class="language-swift">    private func symbolMatrixFromIntensityMatrix(matrix: [[Double]]) -&gt; [String]
+    {
+        return matrix.map { intensityRow in
+            intensityRow.reduce(&quot;&quot;) {
+                $0 + self.symbolFromIntensity($1)
+            }
+        }
+    }
+</code></pre>
+<p><code>map</code> + <code>reduce</code> 成功实现了字符串的累加，每次 <code>reduce</code> 都是通过 <code>symbolFromIntensity</code> 方法获取到亮度值对应的字符。 <code>symbolFromIntensity</code> 方法如下：</p>
+<pre><code class="language-swift">    private func symbolFromIntensity(intensity: Double) -&gt; String
+    {
+        assert(0.0 &lt;= intensity &amp;&amp; intensity &lt;= 1.0)
+
+        let
+        factor = palette.symbols.count - 1,
+        value  = round(intensity * Double(factor)),
+        index  = Int(value)
+        return palette.symbols[index]
+    }
+</code></pre>
+<p>传入 <code>intensity</code> ，在确保了值的范围是 0 ~ 1 之后，通过 <code>AsciiPalette</code> 将它转换成对应的字符，输出 <code>sumbol</code> 。</p>
+<h2 id="asciipalette">AsciiPalette</h2>
+<p><code>AsciiPalette</code> 是用来将数值转换成字符的工具，像是一个字符画里的调色板一样，根据不同的颜色生成字符。</p>
+<h3 id="loadsymbols">loadSymbols</h3>
+<p><code>loadSymbols</code> 加载了所有的字符：</p>
+<pre><code class="language-swift">    private func loadSymbols() -&gt; [String]
+    {
+        return symbolsSortedByIntensityForAsciiCodes(32...126) // from ' ' to '~'
+    }
+</code></pre>
+<p>可以看到，我们选用的字符范围是 32 ~ 126 的字符，接下来就是通过 <code>symbolsSortedByIntensityForAsciiCodes</code> 方法将这些字符按照亮度进行排序。比如 <code>&amp;</code> 符号肯定代表着比 <code>.</code> 暗的区域，那么它是如何比较的呢？请看排序方法。</p>
+<h3 id="symbolssortedbyintensityforasciicodes">symbolsSortedByIntensityForAsciiCodes</h3>
+<p><code>symbolsSortedByIntensityForAsciiCodes</code> 方法实现了字符串的生成和排序：</p>
+<pre><code class="language-swift">    private func symbolsSortedByIntensityForAsciiCodes(codes: Range&lt;Int&gt;) -&gt; [String]
+    {
+        let
+        // 通过 Ascii 码生成字符数组备用
+        symbols          = codes.map { self.symbolFromAsciiCode($0) },
+        // 将字符绘制出来，把字符数组转换成图片数组，用于比较亮度
+        symbolImages     = symbols.map { UIImage.imageOfSymbol($0, self.font) },
+        // 将图片数组转换成亮度值数组，亮度值的表现形式是图片中白色像素的个数
+        whitePixelCounts = symbolImages.map { self.countWhitePixelsInImage($0) },
+        // 将字符数组通过亮度值就行排序
+        sortedSymbols    = sortByIntensity(symbols, whitePixelCounts)
+        return sortedSymbols
+    }
+</code></pre>
+<p>其中， <code>sortByIntensity</code> 这个排序方法如下：</p>
+<pre><code class="language-swift">    private func sortByIntensity(symbols: [String], _ whitePixelCounts: [Int]) -&gt; [String]
+    {
+        let
+        // 用字典建立 白色像素数目 和 字符 之间的关系
+        mappings      = NSDictionary(objects: symbols, forKeys: whitePixelCounts),
+        // 白色像素数目数组去重
+        uniqueCounts  = Set(whitePixelCounts),
+        // 白色像素数目数组排序
+        sortedCounts  = sorted(uniqueCounts),
+        // 利用前面的字典映射，将排序后的白色像素数目转换成对应的字符，从而输出有序数组
+        sortedSymbols = sortedCounts.map { mappings[$0] as! String }
+        return sortedSymbols
+    }
+</code></pre>
+<h2 id="小结">小结</h2>
+<p>简单了过了一下项目，可以隐约感觉到一些函数式风格的气息，主要体现在一下几个方面：</p>
+<ul>
+<li><code>map</code> <code>reduce</code> 等函数的应用恰到好处，自如处理数组的转换和拼接。</li>
+<li>通过 <code>input</code> 和 <code>output</code> 进行数据处理，比如 <code>sortByIntensity</code> 方法和 <code>symbolFromIntensity</code> 方法。</li>
+<li>很少有状态和属性，更多的是直接的函数转换，函数逻辑不依赖外部变量，只依赖于传入的参数</li>
+</ul>
+<p>代码感觉简单轻快。通过这个简单的小例子，验证了前面在 <a href="http://blog.callmewhy.com/2015/05/11/functional-reactive-programming-1/#%E5%87%BD%E6%95%B0%E5%BC%8F%E7%9A%84%E7%89%B9%E6%80%A7">函数式的特性</a> 中学习到的东西。</p>
+<p>感觉很赞！</p>
+<hr>
+<p>参考文献：</p>
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/Grayscale#Luma_coding_in_video_systems">Luma Coding in Video Systems</a></li>
+<li><a href="http://ijoshsmith.com/2015/04/29/creating-ascii-art-in-functional-swift/">Creating ASCII art in functional Swift</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#pixel">Pixel</a>
+<ul>
+<li><a href="#createpixelmatrix">createPixelMatrix</a></li>
+<li><a href="#intensityfrompixelpointer">intensityFromPixelPointer</a></li>
+<li><a href="#offset">Offset</a></li>
+</ul>
+</li>
+<li><a href="#asciiartist">AsciiArtist</a>
+<ul>
+<li><a href="#createasciiart">createAsciiArt</a></li>
+<li><a href="#intensitymatrixfrompixelpointer">intensityMatrixFromPixelPointer</a></li>
+<li><a href="#symbolmatrixfromintensitymatrix">symbolMatrixFromIntensityMatrix</a></li>
+</ul>
+</li>
+<li><a href="#asciipalette">AsciiPalette</a>
+<ul>
+<li><a href="#loadsymbols">loadSymbols</a></li>
+<li><a href="#symbolssortedbyintensityforasciicodes">symbolsSortedByIntensityForAsciiCodes</a></li>
+</ul>
+</li>
+<li><a href="#%E5%B0%8F%E7%BB%93">小结</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/web-and-native/">
+              <h3 class="post-title">
+                Hybrid App 探索之旅
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

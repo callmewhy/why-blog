@@ -1,0 +1,345 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>浏览器工作原理学习笔记 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              浏览器工作原理学习笔记
+            </h2>
+            <div class="post-info">
+              <span>
+                2020-01-10
+              </span>
+              <span>
+                9 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/WZhN7vCZ4R/" class="post-tag">
+                  # Frontend
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="多进程">多进程</h2>
+<h3 id="单进程问题">单进程问题</h3>
+<ul>
+<li>不稳定，插件崩溃浏览器就崩溃</li>
+<li>不流畅，脚本执行会让页面卡顿，内存泄漏也会导致浏览器变慢</li>
+<li>不安全，恶意插件和恶意脚本容易获取系统权限作恶</li>
+</ul>
+<h3 id="多进程优点">多进程优点</h3>
+<ul>
+<li>进程隔离，插件或者页面崩溃不会导致其他页面崩溃</li>
+<li>页面隔离，即使 JS 阻塞了渲染进程，影响到的也只是当前的渲染页面，而并不会影响浏览器和其他页面，其他页面的脚本是运行在它们自己的渲染进程中的，浏览器也可以正常使用。</li>
+<li>通过安全沙盒解决安全问题</li>
+</ul>
+<h3 id="五个常见进程">五个常见进程</h3>
+<ul>
+<li>浏览器主进程：负责界面显示、用户交互、子进程管理，同时提供存储等功能。</li>
+<li>渲染进程：负责页面渲染，运行在独立沙盒中，排版引擎和 JS 引擎都是运行在该进程中。一般每个标签页创建一个渲染进程，同源标签（域名、协议、端口）复用同一个渲染进程。官方把这个默认策略叫 process-per-site-instance，但是通过 <code>rel=&quot;noopener noreferrer&quot;</code> 可以强制新进程渲染，表示当前页面明确新窗口不需要访问父窗口的内容，防止钓鱼网站。</li>
+<li>网络进程：负责页面的网络资源加载，之前是作为一个线程运行在浏览器进程里面的，后来独立出来，成为一个单独的进程。</li>
+<li>GPU 进程：绘制 UI 界面</li>
+<li>插件进程：负责插件的运行，因插件易崩溃，所以需要通过插件进程来隔离，以保证插件进程崩溃不会对浏览器和页面造成影响。</li>
+</ul>
+<h3 id="渲染">渲染</h3>
+<h3 id="浏览器渲染机制">浏览器渲染机制</h3>
+<ul>
+<li>DOM：渲染引擎解析 HTML 文档，构建 DOM Tree</li>
+<li>Computed Style：解析对应的 CSS 样式信息，生成 document.styleSheets，计算 DOM 样式</li>
+<li>布局（reflow/layout）：计算布局信息，生成布局树 LayoutTree</li>
+<li>分层（layer）：对布局树进行分层。满足以下条件之一就会提升为单独图层：有层叠上下文属性，或者需要裁剪（超出/滚动）。</li>
+<li>绘制（repaint/paint）：遍历渲染树，绘制每个节点，把每一个元素对应的盒变成位图。<br>
+<img src="https://blog.callmewhy.com/post-images/1578326991173.png" alt="" loading="lazy"></li>
+</ul>
+<h3 id="重排-重绘-合成">重排、重绘、合成</h3>
+<ul>
+<li>重排（reflow）：当渲染树中的部分因为元素的尺寸、布局、隐藏等改变而需要重新构建。触发条件：页面渲染初始化（无法避免）、添加或删除 DOM、DOM 位置或尺寸的改变、浏览器窗口尺寸的变化、填充内容的改变，比如文本的改变或图片大小改变而引起的计算值宽度和高度的改变。</li>
+<li>重绘（repaint）：改变元素外观所触发的行为，浏览器会根据元素的新属性重新绘制，省去了布局和分层阶段。比如，仅修改 DOM 元素的字体颜色。</li>
+<li>合成：既不改布局也不需要绘制，比如 CSS transform 动画，避开重排与重绘阶段，在非主线程上执行合成动画操作。</li>
+<li><code>display: none;</code> 会发生 reflow，而 <code>visibility: hidden;</code> 只会触发 repaint</li>
+</ul>
+<h3 id="如何避免重排重绘">如何避免重排重绘</h3>
+<ul>
+<li>通过 class 批量修改样式</li>
+<li>使用离线 DOM 或者 documentFragment</li>
+<li>避免使用 table 布局</li>
+<li>对类似 window resize 这样的事件做 debounce</li>
+<li>对 dom 属性的读写分离</li>
+</ul>
+<h3 id="js-和-css-阻塞">JS 和 CSS 阻塞</h3>
+<ul>
+<li>JS：会先下载并执行，再继续渲染，也就是说，下载和执行，都会阻塞 DOM 解析，因为 JS 可能存在 DOM 操作</li>
+<li>CSS：正常不会阻塞 DOM 解析，但是遇到 script 标签会触发渲染，会等到 CSS 下载完成再继续执行，这种情况下会阻塞 DOM 解析。</li>
+</ul>
+<h3 id="五个常驻线程">五个常驻线程</h3>
+<p>JS Runtime 是单线程，但是浏览器提供多线程环境</p>
+<ul>
+<li>GUI 渲染线程：负责解析HTML，CSS，构建DOM树，布局和绘制，与 JS 引擎线程互斥</li>
+<li>JS 引擎线程：负责处理 JS 脚本，执行会阻塞渲染线程</li>
+<li>定时器触发线程：负责执行定时器一类函数的进程，如 setTimeout、setInterval。主线程执行代码遇到计时器时，会将计时器交给该线程处理，当计时完毕之后，定时器线程会将计时完毕后的事件加入到事件队列的尾部，等待 JS 引擎线程的执行</li>
+<li>事件触发线程：主要负责将准备好执行的事件交给 JS 引擎线程执行，如计时器计时完毕后的事件，AJAX 请求成功返回并触发的回调函数和用户触发点击事件时，事件触发线程会将回调函数加入到任务队列的尾部，等待 JS 引擎线程的执行</li>
+<li>异步 HTTP 请求线程：当主线程依次执行代码时，遇到异步请求，会将函数交给改线程处理，当监听状态码变更时，如果有回调函数，会将回调函数加入到任务队列的尾部，等待 JS 引擎线程的执行</li>
+</ul>
+<h2 id="js">JS</h2>
+<h3 id="编译与执行">编译与执行</h3>
+<ul>
+<li>编译：生成执行上下文（变量环境+词法环境）和可执行代码，变量和函数会被存放到变量环境中，变量的默认值会被设置为 undefined，同名变量会被覆盖。</li>
+<li>执行：从变量空间中寻找函数并调用</li>
+</ul>
+<h3 id="执行上下文">执行上下文</h3>
+<p>执行上下文是 JS 代码执行时的运行环境，主要分为三种，通过栈来管理：</p>
+<ul>
+<li>当 JavaScript 执行全局代码的时候，会编译全局代码并创建全局执行上下文，而且在整个页面的生存周期内，全局执行上下文只有一份。</li>
+<li>当调用一个函数的时候，函数体内的代码会被编译，并创建函数执行上下文，一般情况下，函数执行结束之后，创建的函数执行上下文会被销毁。</li>
+<li>当使用 eval 函数的时候，eval 的代码也会被编译，并创建执行上下文。</li>
+</ul>
+<h3 id="作用域链">作用域链</h3>
+<ul>
+<li>作用域：是运行时代码内变量的独立可访问空间，可以隔离变量，决定了变量的可见性。ES6 之前只有全局作用域（window）和函数作用域（IIFE），ES6 之后引入了块级作用域（let const）。</li>
+<li>作用域链：解析变量时，始终从代码嵌套的最内层开始，如果最内层没有找到变量，就会跳转到上一层父作用域中查找，直到找到该变量。</li>
+</ul>
+<h3 id="变量提升">变量提升</h3>
+<p>在代码执行过程中，JS 引擎会把变量的声明部分和函数的声明部分提升到代码开头。变量被提升后，会被变量设置默认值 undefined。<br>
+实际上变量和函数声明在代码里的位置是不会改变的，而且是在编译阶段被放入内存中。执行上下文中存有一个变量环境，保存了变量提升的内容。<br>
+在 ES6 中，通过 let 声明的变量，在编译阶段会被存放到执行上下文的词法环境里，作用域块执行完后，内部定义的变量会从词法环境的栈顶弹出，从而解决了变量提升的问题。</p>
+<h2 id="循环">循环</h2>
+<h3 id="event-loop">Event Loop</h3>
+<p>主线程从任务队列读取事件这个过程，是循环不断的，称之为 Event Loop。</p>
+<ul>
+<li>执行栈里清空了，才会从任务队列中取任务，浏览器不止一个任务队列（Task Queue 和 Microtask Queue）</li>
+<li>setTimeout 是浏览器行为，和 DOM 事件一样</li>
+<li>宏观任务一个一个执行，微任务一批一批执行</li>
+</ul>
+<p>异步任务有两种：</p>
+<ul>
+<li>宏任务（Macrotask）：宿主发起的任务，包括整体代码 script，setTimeout，setInterval、setImmediate、I/O操作、UI rendering</li>
+<li>微任务（Microtask）：JavaScript 引擎发起的任务，process.nextTick, Promises, Object.observe, MutationObserver</li>
+</ul>
+<figure data-type="image" tabindex="1"><img src="https://blog.callmewhy.com/post-images/1578469337961.jpg" alt="" loading="lazy"></figure>
+<h3 id="事件模型">事件模型</h3>
+<p>DOM 事件模型分为捕获和冒泡。一个事件发生后，会在子元素和父元素之间传播（propagation）。<br>
+这种传播分成三个阶段：</p>
+<ul>
+<li>捕获阶段：事件从 window 对象自上而下向目标节点传播的阶段</li>
+<li>目标阶段：真正的目标节点正在处理事件的阶段</li>
+<li>冒泡阶段：事件从目标节点自下而上向 window 对象传播的阶段</li>
+</ul>
+<p>在实际监听事件时，可以这样使用冒泡和捕获机制：默认使用冒泡模式；当开发组件时，遇到需要父元素控制子元素的行为，可以使用捕获机制。</p>
+<h3 id="事件代理">事件代理</h3>
+<p>由于事件会在冒泡阶段向上传播到父节点，因此可以把子节点的监听函数定义在父节点上，由父节点的监听函数统一处理多个子元素的事件，通过 event.target 来判断。这种方法叫做事件的代理（delegation）。<br>
+优点：</p>
+<ul>
+<li>减少内存消耗，提高性能</li>
+<li>方便动态绑定事件</li>
+</ul>
+<p>参考资料</p>
+<ul>
+<li><a href="https://time.geekbang.org/column/article/0?cid=216">浏览器工作原理与实践</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E5%A4%9A%E8%BF%9B%E7%A8%8B">多进程</a>
+<ul>
+<li><a href="#%E5%8D%95%E8%BF%9B%E7%A8%8B%E9%97%AE%E9%A2%98">单进程问题</a></li>
+<li><a href="#%E5%A4%9A%E8%BF%9B%E7%A8%8B%E4%BC%98%E7%82%B9">多进程优点</a></li>
+<li><a href="#%E4%BA%94%E4%B8%AA%E5%B8%B8%E8%A7%81%E8%BF%9B%E7%A8%8B">五个常见进程</a></li>
+<li><a href="#%E6%B8%B2%E6%9F%93">渲染</a></li>
+<li><a href="#%E6%B5%8F%E8%A7%88%E5%99%A8%E6%B8%B2%E6%9F%93%E6%9C%BA%E5%88%B6">浏览器渲染机制</a></li>
+<li><a href="#%E9%87%8D%E6%8E%92-%E9%87%8D%E7%BB%98-%E5%90%88%E6%88%90">重排、重绘、合成</a></li>
+<li><a href="#%E5%A6%82%E4%BD%95%E9%81%BF%E5%85%8D%E9%87%8D%E6%8E%92%E9%87%8D%E7%BB%98">如何避免重排重绘</a></li>
+<li><a href="#js-%E5%92%8C-css-%E9%98%BB%E5%A1%9E">JS 和 CSS 阻塞</a></li>
+<li><a href="#%E4%BA%94%E4%B8%AA%E5%B8%B8%E9%A9%BB%E7%BA%BF%E7%A8%8B">五个常驻线程</a></li>
+</ul>
+</li>
+<li><a href="#js">JS</a>
+<ul>
+<li><a href="#%E7%BC%96%E8%AF%91%E4%B8%8E%E6%89%A7%E8%A1%8C">编译与执行</a></li>
+<li><a href="#%E6%89%A7%E8%A1%8C%E4%B8%8A%E4%B8%8B%E6%96%87">执行上下文</a></li>
+<li><a href="#%E4%BD%9C%E7%94%A8%E5%9F%9F%E9%93%BE">作用域链</a></li>
+<li><a href="#%E5%8F%98%E9%87%8F%E6%8F%90%E5%8D%87">变量提升</a></li>
+</ul>
+</li>
+<li><a href="#%E5%BE%AA%E7%8E%AF">循环</a>
+<ul>
+<li><a href="#event-loop">Event Loop</a></li>
+<li><a href="#%E4%BA%8B%E4%BB%B6%E6%A8%A1%E5%9E%8B">事件模型</a></li>
+<li><a href="#%E4%BA%8B%E4%BB%B6%E4%BB%A3%E7%90%86">事件代理</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/shu-ju-ku-chang-jian-wen-ti/">
+              <h3 class="post-title">
+                数据库常见问题
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

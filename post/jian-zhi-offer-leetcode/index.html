@@ -1,0 +1,522 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>《剑指 Offer》学习笔记 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              《剑指 Offer》学习笔记
+            </h2>
+            <div class="post-info">
+              <span>
+                2017-09-13
+              </span>
+              <span>
+                20 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/9P-9zx1p7P/" class="post-tag">
+                  # Leetcode
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="面试题2实现单例模式">面试题2：实现单例模式</h2>
+<p>静态属性中创建容易有多线程问题，加锁后效率不高。<br>
+应该用静态构造函数，在声明变量的时候就初始化实例。如果需要按需加载，可以通过嵌套内部类的方式。</p>
+<h2 id="面试题3数组中重复的数字">面试题3：数组中重复的数字</h2>
+<p>要求返回数组中任意一个重复的数字。</p>
+<p>解法一：排序后扫描，时间 O(nlogn)<br>
+解法二：用字典计数，时间 O(n) 空间 O(n)<br>
+解法三：交换数字与下标，直到发现重复的值</p>
+<p>如果要求不能修改原数组，可以用二分查找，计数 &lt; mid 和 &gt; mid 的数量，然后逐渐收敛。<br>
+二分找重复数的缺陷是，置换的是找不出来的，比如 1 2 变成 2 2 就无法找到，只有数量上增加的那个才能确保找到。</p>
+<p>Leetcode 有一道类似的题：<a href="https://leetcode.com/problems/find-the-duplicate-number/">287. Find the Duplicate Number</a>，最佳方案是通过快慢指针的方式，把这道题转变为寻找链表中环的入口节点。</p>
+<h2 id="面试题4二维数组中的查找-240-search-a-2d-matrix-ii">面试题4：二维数组中的查找 - <a href="https://leetcode.com/problems/search-a-2d-matrix-ii/">240. Search a 2D Matrix II</a></h2>
+<p>二维数组，左右上下增序，找指定数的坐标。</p>
+<p>从左下到右上，如果 &lt; target 就右移，如果 &gt; target 就上移，直到找到或者越界退出。<br>
+从左上角走，往右或者往下都是递增，所以不确定往哪走。从左下角走，往上的递减，往右是递增，越界终止，复杂度 N(m+n)。选择起点和方向的时候需要具有确定性，才能逐渐逼近目标值。</p>
+<h2 id="面试题5替换空格">面试题5：替换空格</h2>
+<p>把字符串中的空格替换成 %20</p>
+<p>从前往后遍历，每次遇到空格，都需要往后移 2 格，时间复杂度 0(n^2)<br>
+可以先遍历一遍，算下一共有多少空格，然后提前分配好数组的空间，再从后向前遍历，移动元素，时间复杂度 0(n)</p>
+<p>类似题目，两个有序数组合并：<a href="https://leetcode.com/problems/merge-sorted-array/">88. Merge Sorted Array</a>。可以直接从后往前比较大小，然后放到目标位置即可。</p>
+<h2 id="面试题6从尾到头打印链表">面试题6：从尾到头打印链表</h2>
+<p>用栈或者递归，如果要求空间 O(1) 可以考虑把链表反转过来再打印。</p>
+<h2 id="面试题7重建二叉树-105-construct-binary-tree-from-preorder-and-inorder-traversal">面试题7：重建二叉树 - <a href="https://leetcode.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal/">105. Construct Binary Tree from Preorder and Inorder Traversal</a></h2>
+<p>输入前序和中序，重建二叉树。</p>
+<p>前序遍历的特点是 preorder[0] 就是 root，拿到这个 root 去 inorder 里寻找 root index，从而获取 left count 和 right count ，再去递归</p>
+<h2 id="面试题8二叉树的下一个节点">面试题8：二叉树的下一个节点</h2>
+<p>给定二叉树和其中一个节点，如何找出中序遍历序列的下一个节点。Node 包含一个 parent 指针。</p>
+<ul>
+<li>如果有 right，下一个节点就是右子树的最左子节点</li>
+<li>如果没有 right，即下一个节点不是当前节点的子节点
+<ul>
+<li>如果它是 parent 的 left ，那下一个就是 parent</li>
+<li>如果它是 parent 的 right，就往 parent 找，直到找到一个 curr 不是 curr.parent.right 的节点</li>
+</ul>
+</li>
+</ul>
+<h2 id="面试题9用两个栈实现队列-232-implement-queue-using-stacks">面试题9：用两个栈实现队列 - <a href="https://leetcode.com/problems/implement-queue-using-stacks/">232. Implement Queue using Stacks</a></h2>
+<p>有两种方法。<br>
+第一种方法是时刻保持 s1 是满的 s2 的空的，这样 push 是 O(n)，pop 是 O(1)<br>
+第二种方法是需要 pop/peek 的时候再去用 s1 去填充 s2 ，这样 push 是 O(1) ，pop 是 O(1)</p>
+<h2 id="面试题10斐波那契数列-509-fibonacci-number">面试题10：斐波那契数列 - <a href="https://leetcode.com/problems/fibonacci-number/">509. Fibonacci Number</a></h2>
+<p>加个缓存即可，类似于 dp 问题，f(n) = f(n-1) + f(n-2)</p>
+<p>变种1：<a href="https://leetcode.com/problems/climbing-stairs/">70. Climbing Stairs</a><br>
+变种2：用 2x1 的矩形覆盖 2x8 的矩形</p>
+<h2 id="面试题11旋转数组的最小数字-153-find-minimum-in-rotated-sorted-array">面试题11：旋转数组的最小数字 - <a href="https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/">153. Find Minimum in Rotated Sorted Array</a></h2>
+<p>二分查找的经典应用场景之一：寻找边界。<br>
+二分查找的 L 指向左边的递增数组的结尾，R 指向右边的递增数组的开头，所以当 LR 相邻的时候就是找到边界的时候。<br>
+如果不是严格递增的数组，即存在相同的元素的时候，如果 L = R = MID 则按照顺序查找。</p>
+<h2 id="面试题12矩阵中的路径-79-word-search">面试题12：矩阵中的路径 - <a href="https://leetcode.com/problems/word-search/">79. Word Search</a></h2>
+<p>判断给定的矩阵中是否存在一条包含所有指定字符的路径。</p>
+<p>用回溯法可以解决，通常用递归的方式实现。选中一个字符后，往上下左右试探，如果匹配，就移动到下个字符，并且重复该流程。</p>
+<h2 id="面试题13机器人的运动范围">面试题13：机器人的运动范围</h2>
+<p>m 行 n 列的格子，机器人上下左右移动，但是不能进入行坐标和列坐标的各位数之和大于 k 的格子，问机器人能到达多少个格子。</p>
+<p>同样是回溯法，可以用一个 visited 数组记录该坐标是否被统计过。</p>
+<h2 id="面试题14剪绳子-343-integer-break">面试题14：剪绳子 - <a href="https://leetcode.com/problems/integer-break/">343. Integer Break</a></h2>
+<p>一根长度为 n 的绳子，剪成几段，求问最大乘积是多少。</p>
+<p>可以用动态规划，f(n) = max(f(i) * f(n-i))，0 &lt; i &lt; n，时间 O(n^2) 空间 O(n)<br>
+最好用贪婪算法，尽量剪 3 ，剩 4 的时候剪 2 ，因为当 n &gt;= 5 的时候，3 * (n-3) &gt; 2 * (n-2)，所以尽量 3 就好。</p>
+<h2 id="面试题15二进制中-1-的个数-191-number-of-1-bits">面试题15：二进制中 1 的个数 - <a href="https://leetcode.com/problems/number-of-1-bits/">191. Number of 1 Bits</a></h2>
+<p>比较慢的位运算，是 n&amp;1 == 1 然后 n&gt;&gt;1 做计数，复杂度 O(n)，但是右移会引起死循环，可以用 flag=1 然后把 flag 左移来计数。<br>
+优化一下，是 n&amp;n-1 做计数，有几个 1 就可以减几次。</p>
+<h2 id="面试题16数值的整数次方-50-powx-n">面试题16：数值的整数次方 - <a href="https://leetcode.com/problems/powx-n/">50. Pow(x, n)</a></h2>
+<p>简单的写法是 for 循环 r<em>x，但是 n &lt; 1 要单独处理（0 和负数）<br>
+优化方案：通过 pow(x</em>x, n//2) 来提高效率，O(n) 变 O(logn)了。</p>
+<h2 id="面试题17打印-1-到最大的-n-位数">面试题17：打印 1 到最大的 n 位数</h2>
+<p>用字符串模拟加法，避免整数溢出。本质上就是全排列问题。</p>
+<h2 id="面试题18在-o1-时间删除链表节点-237-delete-node-in-a-linked-list">面试题18：在 O(1) 时间删除链表节点 - <a href="https://leetcode.com/problems/delete-node-in-a-linked-list/">237. Delete Node in a Linked List</a></h2>
+<p>把 next 值给自己，然后删掉 next ，在 val 上相当于删除了，内存上其实删除了 next node ，注意如果要删除的节点是最后一个节点，还是需要从 head 往后遍历。</p>
+<h2 id="面试题19正则表达式匹配-10-regular-expression-matching">面试题19：正则表达式匹配 - <a href="https://leetcode.com/problems/regular-expression-matching/">10. Regular Expression Matching</a></h2>
+<p>实现一个函数来匹配包含 . 和 * 的正则表达式。</p>
+<h2 id="面试题20表示数值的字符串">面试题20：表示数值的字符串</h2>
+<p>实现一个函数来判断字符串是否表示数值，例如：+100、5e2，但是 12e、1a3 就不是。</p>
+<h2 id="面试题21调整数组顺序使奇数位于偶数前面-905-sort-array-by-parity">面试题21：调整数组顺序使奇数位于偶数前面 - <a href="https://leetcode.com/problems/sort-array-by-parity/">905. Sort Array By Parity</a></h2>
+<p>前后双指针，如果遇到偶数在奇数前面就互换。</p>
+<h2 id="面试题22链表中倒数第-k-个节点-19-remove-nth-node-from-end-of-list">面试题22：链表中倒数第 k 个节点 - <a href="https://leetcode.com/problems/remove-nth-node-from-end-of-list/submissions/">19. Remove Nth Node From End of List</a></h2>
+<p>第一个指针先走 k-1 步，然后从第 k 步开始，第二个指针一起走。当第一个指针走到 n-1 的时候，第二个指针刚好是倒数第 k 个节点。<br>
+需要注意边界情况：k &gt;= n 和 head 不为空</p>
+<h2 id="面试题23链表中环的入口点-142-linked-list-cycle-ii">面试题23：链表中环的入口点 - <a href="https://leetcode.com/problems/linked-list-cycle-ii/description/">142. Linked List Cycle II</a></h2>
+<p>两个链表，快的走两步慢的走一步，等重合的时候，快的比慢点多走了一个环。此时从 head 开始再和 slow 一起走，head 比 slow 慢了一个环的距离，等到他们再次重合的时候，就是在环入口点的时候。</p>
+<h2 id="面试题24反转链表-206-reverse-linked-list">面试题24：反转链表 - <a href="https://leetcode.com/problems/reverse-linked-list/">206. Reverse Linked List</a></h2>
+<p>常规操作，俩指针即可</p>
+<h2 id="面试题25合并两个排序的链表-21-merge-two-sorted-lists">面试题25：合并两个排序的链表 - <a href="https://leetcode.com/problems/merge-two-sorted-lists/submissions">21. Merge Two Sorted Lists</a></h2>
+<p>可以递归求解。先把较小的那个节点拎出来，然后把剩下的递归处理放在 next 里。</p>
+<h2 id="面试题26树的子结构-572-subtree-of-another-tree">面试题26：树的子结构 - <a href="https://leetcode.com/problems/subtree-of-another-tree/">572. Subtree of Another Tree</a></h2>
+<p>注意 isEqual !+ isSubtree，容易导致一些边界情况的问题</p>
+<h2 id="面试题27二叉树的镜像-226-invert-binary-tree">面试题27：二叉树的镜像 - <a href="https://leetcode.com/problems/invert-binary-tree/">226. Invert Binary Tree</a></h2>
+<p>递归即可</p>
+<h2 id="面试题28对称的二叉树-101-symmetric-tree">面试题28：对称的二叉树 - <a href="https://leetcode.com/problems/symmetric-tree/">101. Symmetric Tree</a></h2>
+<p>递归即可</p>
+<h2 id="面试题29顺时针打印矩阵-54-spiral-matrix">面试题29：顺时针打印矩阵 - <a href="https://leetcode.com/problems/spiral-matrix/">54. Spiral Matrix</a></h2>
+<p>直接遍历，边界条件比较复杂，可以考虑只打印最外围的圆环，然后递归执行里面的内容。</p>
+<h2 id="面试题30包含-min-函数的栈-155-min-stack">面试题30：包含 min 函数的栈 - <a href="https://leetcode.com/problems/min-stack/">155. Min Stack</a></h2>
+<p>对应存个最小值的辅助栈做缓存。</p>
+<h2 id="面试题31栈的压入弹出序列-946-validate-stack-sequences">面试题31：栈的压入弹出序列 - <a href="https://leetcode.com/problems/validate-stack-sequences/">946. Validate Stack Sequences</a></h2>
+<p>输入两个整数序列，第一个表示压入的顺序，判断第二个有没有可能是该栈的弹出顺序</p>
+<p>如果下一个弹出刚好是栈顶数字，则直接弹出；如果下一个弹出不在栈顶，则继续压栈，直到压到下一个需要的数字为止。如果所有数字都压入还是没找到下一个弹出的数字，则不可能是一个弹出序列。</p>
+<h2 id="面试题32从上往下打印二叉树-102-binary-tree-level-order-traversal">面试题32：从上往下打印二叉树 - <a href="https://leetcode.com/problems/binary-tree-level-order-traversal/">102. Binary Tree Level Order Traversal</a></h2>
+<p>逐层遍历，用一个 queue 存一下每层的 node，下个迭代清空后存 children</p>
+<h2 id="面试题33二叉搜索树的后序遍历序列-255-verify-preorder-sequence-in-binary-search-tree">面试题33：二叉搜索树的后序遍历序列 - <a href="https://leetcode.com/problems/verify-preorder-sequence-in-binary-search-tree/">255. Verify Preorder Sequence in Binary Search Tree</a></h2>
+<p>判断某个数组是否是二叉搜索树的后续遍历序列。</p>
+<p>选中最后一个元素，这个是 root 节点。从前往后遍历，left 应该都比 root 小，right 应该都比 root 大，校验通过后，递归 left right 验证均为二叉搜索树。</p>
+<h2 id="面试题34二叉树中和为某一值的路径-113-path-sum-ii">面试题34：二叉树中和为某一值的路径 - <a href="https://leetcode.com/problems/path-sum-ii/">113. Path Sum II</a></h2>
+<p>递归</p>
+<h2 id="面试题35复杂链表的复制-138-copy-list-with-random-pointer">面试题35：复杂链表的复制 - <a href="https://leetcode.com/problems/copy-list-with-random-pointer/">138. Copy List with Random Pointer</a></h2>
+<p>先遍历一边做 deep copy，再遍历一遍赋值 random ，时间复杂度是 O(n^2)。<br>
+可以通过一个 N -&gt; N' 的映射字典把寻找 random 的时间复杂度降到 O(n)，代价是 O(n) 的空间复杂度。<br>
+如果要进一步优化到 O(1) 的空间复杂度，可以直接在原链表上做 copy ，把新节点 N' 放到 N 的后面，这样 N' 的 random 指针就是 N 的 next 的 random 指针。然后再按照奇偶，把大链表拆分开即可。</p>
+<h2 id="面试题36二叉搜索树与双向链表-426-convert-binary-search-tree-to-sorted-doubly-linked-list">面试题36：二叉搜索树与双向链表 - <a href="https://leetcode.com/problems/convert-binary-search-tree-to-sorted-doubly-linked-list/">426. Convert Binary Search Tree to Sorted Doubly Linked List</a></h2>
+<p>中序遍历+递归</p>
+<h2 id="面试题37序列化二叉树-297-serialize-and-deserialize-binary-tree">面试题37：序列化二叉树 - <a href="https://leetcode.com/problems/serialize-and-deserialize-binary-tree/">297. Serialize and Deserialize Binary Tree</a></h2>
+<p>通过前序遍历+递归的方式，用 $ 之类的符号代表叶子节点的空指针。</p>
+<h2 id="面试题38字符串的排列-46-permutations">面试题38：字符串的排列 - <a href="https://leetcode.com/problems/permutations">46. Permutations</a></h2>
+<p>选出一个数然后把剩下的数组迭代</p>
+<h2 id="面试题39数组中出现次数超过一半的数字-169-majority-element">面试题39：数组中出现次数超过一半的数字 - <a href="https://leetcode.com/problems/majority-element/">169. Majority Element</a></h2>
+<p>通过 set 计数 c &gt; n/2 直接做出现次数的统计。<br>
+也可以通过 quick select 方法找出中位数，类似于快排的操作，随机选择一位，然后调整数字顺序，使得比它小的在左边，比它大的在右边，如果刚好是 n/2 那就是中位数，否则，下标大于 n/2 就去左边递归，下标小于 n/2 就去右边递归。</p>
+<h2 id="面试题40最小的-k-个数-215-kth-largest-element-in-an-array">面试题40：最小的 k 个数 - <a href="https://leetcode.com/problems/kth-largest-element-in-an-array/">215. Kth Largest Element in an Array</a></h2>
+<p>排序后可以得到 N(nlogn) 的解。<br>
+可以用 quick select 的方法优化，时间复杂度 O(n) ，代价是修改输入数组。<br>
+也可以用一个大小为 k 的容器（最大堆或者红黑树）来存放最小的 k 个数字。每次读入，如果数字少于 k 个就直接放到容器里，如果大于 k 个就比较 k 个数中的最大值与这个数值的大小关系，更小就取出最大值然后把读入的数字塞到容器里。时间复杂度 O(nlogk) 。</p>
+<h2 id="面试题41数据流中的中位数-295-find-median-from-data-stream">面试题41：数据流中的中位数 - <a href="https://leetcode.com/problems/find-median-from-data-stream/">295. Find Median from Data Stream</a></h2>
+<table>
+<thead>
+<tr>
+<th>数据结构</th>
+<th>插入的时间复杂度</th>
+<th>得到中位数的时间复杂度</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>没有排序的数组</td>
+<td>O(1)</td>
+<td>O(n)</td>
+</tr>
+<tr>
+<td>排序的数组</td>
+<td>O(n)</td>
+<td>O(1)</td>
+</tr>
+<tr>
+<td>排序的链表</td>
+<td>O(n)</td>
+<td>O(1)</td>
+</tr>
+<tr>
+<td>二叉搜索树</td>
+<td>O(logn)</td>
+<td>O(logn)</td>
+</tr>
+<tr>
+<td>AVL 树</td>
+<td>O(logn)</td>
+<td>O(1)</td>
+</tr>
+<tr>
+<td>最大堆和最小堆</td>
+<td>O(logn)</td>
+<td>O(1)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="面试题42连续子数组的最大和-53-maximum-subarray">面试题42：连续子数组的最大和 - <a href="https://leetcode.com/problems/maximum-subarray/">53. Maximum Subarray</a></h2>
+<p>经典 DP 问题：F(n) = n &gt; 0 ? n + F(n-1) : F(n-1)</p>
+<h2 id="面试题43从-1-到-n-整数中-1-出现的次数-233-number-of-digit-one">面试题43：从 1 到 n 整数中 1 出现的次数 - <a href="https://leetcode.com/problems/number-of-digit-one/submissions/">233. Number of Digit One</a></h2>
+<p>从数学规律着手，去掉最高位然后递归求解。</p>
+<h2 id="面试题44数字序列中某一位的数字-400-nth-digit">面试题44：数字序列中某一位的数字 - <a href="https://leetcode.com/problems/nth-digit/">400. Nth Digit</a></h2>
+<p>数字以 012345678910111213... 的格式序列化到一个字符串中，求第 n 位的数字。</p>
+<p>一样的思路，统计数学规律然后递归。</p>
+<h2 id="面试题45把数组排成最小的数-179-largest-number">面试题45：把数组排成最小的数 - <a href="https://leetcode.com/problems/largest-number/">179. Largest Number</a></h2>
+<p>其实是自定义一个排序规则，然后按这个规则排序即可。<br>
+自定义规则是：两个数字 m 和 n，如果 mn &lt; nm 则打印 mn ，也就是 m 在 n 前面，按照字符串大小规则比较 mn nm 即可。</p>
+<h2 id="面试题46把数字翻译成字符串-91-decode-ways">面试题46：把数字翻译成字符串 - <a href="https://leetcode.com/problems/decode-ways/">91. Decode Ways</a></h2>
+<p>给定一个数字，按照如下规则翻译成字符串：0-&gt; A，1-&gt;B...问给定一个数字，有多少种可能的结果。</p>
+<p>递归求解</p>
+<h2 id="面试题47礼物的最大价值-64-minimum-path-sum">面试题47：礼物的最大价值 - <a href="https://leetcode.com/problems/minimum-path-sum/">64. Minimum Path Sum</a></h2>
+<p>在一个 m*n 的棋盘里，每一格都有一个数字代表价值，从左上角开始拿礼物，直到右下角，计算最多能拿到多少礼物。</p>
+<p>二维的动态规划可以求解，优化空间复杂度的方式是不保存无用的 dp 数据。</p>
+<h2 id="面试题48最长不含重复字符的子字符串-3-longest-substring-without-repeating-characters">面试题48：最长不含重复字符的子字符串 - <a href="https://leetcode.com/problems/longest-substring-without-repeating-characters/">3. Longest Substring Without Repeating Characters</a></h2>
+<p>动态规划，通过一个 26 字母的表来存储该字母最后一次出现的位置，从而确定状态转移方程。<br>
+或者通过 word count + 滑动窗口一趟获取最优解</p>
+<h2 id="面试题49丑数-264-ugly-number-ii">面试题49：丑数 - <a href="https://leetcode.com/problems/ugly-number-ii/">264. Ugly Number II</a></h2>
+<p>按照传统的 2x 3x 5x 的方式往后填充 ugly number，最大的问题是不知道 length 应该是多少，如果发现 nth 达不到，就需要从头重新填充。<br>
+优化的思路是：ugly number 里的每一个数，都会被 235 乘一遍，所以存一下 235 分别乘到哪里了，然后每次取 3 个算出最小值后加入 ugly number 即可。</p>
+<h2 id="面试题50第一个只出现一次的字符-387-first-unique-character-in-a-string">面试题50：第一个只出现一次的字符 - <a href="https://leetcode.com/problems/first-unique-character-in-a-string/">387. First Unique Character in a String</a></h2>
+<p>387. First Unique Character in a String<br>
+https://leetcode.com/problems/first-unique-character-in-a-string/<br>
+Given a string, find the first non-repeating character in it and return it's index. If it doesn't exist, return -1.</p>
+<p>word count 之后找到 value 为 1 的字符即可</p>
+<h2 id="面试题51数组中的逆序对-493-reverse-pairs">面试题51：数组中的逆序对 - <a href="https://leetcode.com/problems/reverse-pairs/">493. Reverse Pairs</a></h2>
+<p>如果前面一个数字大于后面一个数字，则这两个数字组成一个逆序对。输入一个数组，求逆序对的总数。</p>
+<p>归并排序的过程中统计逆序对的数量，相比暴利破解，时间复杂度 O(nlogn)，空间复杂度 O(n)。计数一次逆序对之后就互换，这样就是从小到大排序，直到整个数组是有序的，那就数完了所有的逆序对。</p>
+<h2 id="面试题52两个链表的第一个公共节点-160-intersection-of-two-linked-lists">面试题52：两个链表的第一个公共节点 - <a href="https://leetcode.com/problems/intersection-of-two-linked-lists/">160. Intersection of Two Linked Lists</a></h2>
+<p>用两个栈存这两个链表的节点，然后从后往前 pop ，直到不相等，就找到了最后一个公共节点。<br>
+优化方案是：双指针从 AB 出发，先到终点后，互换起点继续，重合的时候就是第一个公共节点。其实就是直接走一遍，统计长度，然后让长节点先走一下差的节点数，再继续一起走。这样第一个相同的节点就是重合的节点了。</p>
+<h2 id="面试题53数字在排序数组中出现的次数-34-find-first-and-last-position-of-element-in-sorted-array">面试题53：数字在排序数组中出现的次数 - <a href="https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/">34. Find First and Last Position of Element in Sorted Array</a></h2>
+<p>两边都进行二分查找即可。二分查找的边界处理是个问题，可以套用模板。</p>
+<h2 id="面试题54二叉搜索树的第-k-大节点-230-kth-smallest-element-in-a-bst">面试题54：二叉搜索树的第 k 大节点 - <a href="https://leetcode.com/problems/kth-smallest-element-in-a-bst/">230. Kth Smallest Element in a BST</a></h2>
+<p>中序遍历的第 k-1 个元素</p>
+<h2 id="面试题551二叉树的深度-104-maximum-depth-of-binary-tree">面试题55.1：二叉树的深度 - <a href="https://leetcode.com/problems/maximum-depth-of-binary-tree/">104. Maximum Depth of Binary Tree</a></h2>
+<p>递归即可</p>
+<h2 id="面试题552平衡二叉树-110-balanced-binary-tree">面试题55.2：平衡二叉树 - <a href="https://leetcode.com/problems/balanced-binary-tree/">110. Balanced Binary Tree</a></h2>
+<p>计算出 height 之后，递归即可。注意，会有很多重复运算，可以通过后序遍历的方式，遍历子树的同时记录下子树的高度。</p>
+<h2 id="面试题561数组中只出现一次的数字-260-single-number-iii">面试题56.1：数组中只出现一次的数字 - <a href="https://leetcode.com/problems/single-number-iii/">260. Single Number III</a></h2>
+<p>数组中除两个数字外，其他都出现了两次</p>
+<p>简单的做法是用 set 计数，存在就 remove 不存在就 add。<br>
+正确的做法是位运算，先通过异或找到 a^b ，然后通过 n&amp;~(n-1) 找到最后一位 1 的二进制数 m，然后通过 m 把数组分组，分别做异或运算，最后剩下的 n1 n2 就是结果</p>
+<h2 id="面试题562数组中只出现一次的数字-137-single-number-ii">面试题56.2：数组中只出现一次的数字 - <a href="https://leetcode.com/problems/single-number-ii/">137. Single Number II</a></h2>
+<p>数组中除一个数字外，其他都出现了三次</p>
+<p>二进制逐位统计 1 的数量，如果能被 3 整除，这一位就是 0，否则就是 1。</p>
+<h2 id="面试题571和为-s-的两个数字-167-two-sum-ii-input-array-is-sorted">面试题57.1：和为 s 的两个数字 - <a href="https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/">167. Two Sum II - Input array is sorted</a></h2>
+<p>增序数组中找两个数字，和为 s ，返回这两个数字。</p>
+<p>和 Two Sum I 一样用 set 解比较快。由于是 sorted 所以多了一个  left right 指针的做法。</p>
+<h2 id="面试题572和为-s-的连续正数序列">面试题57.2：和为 s 的连续正数序列</h2>
+<p>输入一个正数 s ，打印所有和为 s 的连续正数序列</p>
+<p>small 从 1 开始，big 从 2 开始，如果和小于就 big 增加，如果和大于就 small 增加。</p>
+<h2 id="面试题581翻转单词顺序-151-reverse-words-in-a-string">面试题58.1：翻转单词顺序 - <a href="https://leetcode.com/problems/reverse-words-in-a-string/">151. Reverse Words in a String</a></h2>
+<p>用 split+reverse 比较简单，也可以先翻句子再翻词。</p>
+<h2 id="面试题582左旋转字符串-189-rotate-array">面试题58.2：左旋转字符串 - <a href="https://leetcode.com/problems/rotate-array/">189. Rotate Array</a></h2>
+<p>O(1) 的空间复杂度就需要用轮换的方式来做，先全部翻转，再分别翻转左右两个部分。</p>
+<h2 id="面试题591滑动窗口的最大值-239-sliding-window-maximum">面试题59.1：滑动窗口的最大值 - <a href="https://leetcode.com/problems/sliding-window-maximum/">239. Sliding Window Maximum</a></h2>
+<p>维护一个队列，存放最大值的下标，如果下一个数字比它大，就 pop 掉然后 push 进去，如果比它小，就直接 push 进去。维护这个队列即可。</p>
+<h2 id="面试题592队列的最大值-155-min-stack">面试题59.2：队列的最大值 - <a href="https://leetcode.com/problems/min-stack/">155. Min Stack</a></h2>
+<p>同步维护一个最大值队列即可。</p>
+<h2 id="面试题60n-个骰子的点数-1155-number-of-dice-rolls-with-target-sum">面试题60：N 个骰子的点数 - <a href="https://leetcode.com/problems/number-of-dice-rolls-with-target-sum/">1155. Number of Dice Rolls With Target Sum</a></h2>
+<p>求 N 个骰子点数和为 s 的概率</p>
+<p>简单粗暴的方式就是递归求解。<br>
+优化的方案可以基于循环，逐渐增加骰子，记录出现的次数。</p>
+<h2 id="面试题61扑克牌中的顺子">面试题61：扑克牌中的顺子</h2>
+<p>大小王可以是任意牌，抽五张牌，判断是否是顺子</p>
+<p>先定义哈希表，然后把五张牌放进去，然后再看看空档能否用大小王填充上。</p>
+<h2 id="面试题62圆圈中最后剩下的数字-390-elimination-game">面试题62：圆圈中最后剩下的数字 - <a href="https://leetcode.com/problems/elimination-game/">390. Elimination Game</a></h2>
+<p>0～n-1 组成环，从 0 开始，每次删除第 m 个数字，求最后剩下的数字。</p>
+<p>方法一：直接用数组或者链表模拟<br>
+方法二：推导公式，得出： f(n) = (f(n-1)+m) % n</p>
+<h2 id="面试题63股票的最大利润">面试题63：股票的最大利润</h2>
+<p>只能卖卖一次，求最大利润</p>
+<p>记录最小值，然后更新最小值后算当前值距离最小值的最大值。</p>
+<p>相关题：</p>
+<ul>
+<li>只能买卖一次：<a href="https://leetcode.com/problems/best-time-to-buy-and-sell-stock/">121. Best Time to Buy and Sell Stock</a></li>
+<li>可以买卖多次：<a href="https://leetcode.com/problems/best-time-to-buy-and-sell-stock-ii/">122. Best Time to Buy and Sell Stock II</a></li>
+<li>最多同时两笔：<a href="https://leetcode.com/problems/best-time-to-buy-and-sell-stock-iii/">123. Best Time to Buy and Sell Stock III</a></li>
+<li>买卖后要冷静：<a href="https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown/">309. Best Time to Buy and Sell Stock with Cooldown</a></li>
+</ul>
+<h2 id="面试题65不用加减乘除做加法-371-sum-of-two-integers">面试题65：不用加减乘除做加法 - <a href="https://leetcode.com/problems/sum-of-two-integers/">371. Sum of Two Integers</a></h2>
+<p>不用加减乘除做加减乘除是一系列位运算的题目。在这一题里是用位运算模拟进位加一，只要 num2 &gt; 0 就重复 num1 = num1^num2，num2 = (num1&amp;num2)&lt;&lt;1 即可</p>
+<h2 id="面试题67把字符串转成整数-8-string-to-integer-atoi">面试题67：把字符串转成整数 - <a href="https://leetcode.com/problems/string-to-integer-atoi/">8. String to Integer (atoi)</a></h2>
+<p>就是把字符串变成数字，做好最大最小值的边界判断，空格处理，正负处理即可</p>
+<h2 id="面试题68树中两个节点的最低公共祖先-236-lowest-common-ancestor-of-a-binary-tree">面试题68：树中两个节点的最低公共祖先 - <a href="https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree/">236. Lowest Common Ancestor of a Binary Tree</a></h2>
+<p>分别找到两个节点，保存根节点往下的路径，然后再找两个路径的公共节点</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%982%E5%AE%9E%E7%8E%B0%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F">面试题2：实现单例模式</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%983%E6%95%B0%E7%BB%84%E4%B8%AD%E9%87%8D%E5%A4%8D%E7%9A%84%E6%95%B0%E5%AD%97">面试题3：数组中重复的数字</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%984%E4%BA%8C%E7%BB%B4%E6%95%B0%E7%BB%84%E4%B8%AD%E7%9A%84%E6%9F%A5%E6%89%BE-240-search-a-2d-matrix-ii">面试题4：二维数组中的查找 - 240. Search a 2D Matrix II</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%985%E6%9B%BF%E6%8D%A2%E7%A9%BA%E6%A0%BC">面试题5：替换空格</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%986%E4%BB%8E%E5%B0%BE%E5%88%B0%E5%A4%B4%E6%89%93%E5%8D%B0%E9%93%BE%E8%A1%A8">面试题6：从尾到头打印链表</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%987%E9%87%8D%E5%BB%BA%E4%BA%8C%E5%8F%89%E6%A0%91-105-construct-binary-tree-from-preorder-and-inorder-traversal">面试题7：重建二叉树 - 105. Construct Binary Tree from Preorder and Inorder Traversal</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%988%E4%BA%8C%E5%8F%89%E6%A0%91%E7%9A%84%E4%B8%8B%E4%B8%80%E4%B8%AA%E8%8A%82%E7%82%B9">面试题8：二叉树的下一个节点</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%989%E7%94%A8%E4%B8%A4%E4%B8%AA%E6%A0%88%E5%AE%9E%E7%8E%B0%E9%98%9F%E5%88%97-232-implement-queue-using-stacks">面试题9：用两个栈实现队列 - 232. Implement Queue using Stacks</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9810%E6%96%90%E6%B3%A2%E9%82%A3%E5%A5%91%E6%95%B0%E5%88%97-509-fibonacci-number">面试题10：斐波那契数列 - 509. Fibonacci Number</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9811%E6%97%8B%E8%BD%AC%E6%95%B0%E7%BB%84%E7%9A%84%E6%9C%80%E5%B0%8F%E6%95%B0%E5%AD%97-153-find-minimum-in-rotated-sorted-array">面试题11：旋转数组的最小数字 - 153. Find Minimum in Rotated Sorted Array</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9812%E7%9F%A9%E9%98%B5%E4%B8%AD%E7%9A%84%E8%B7%AF%E5%BE%84-79-word-search">面试题12：矩阵中的路径 - 79. Word Search</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9813%E6%9C%BA%E5%99%A8%E4%BA%BA%E7%9A%84%E8%BF%90%E5%8A%A8%E8%8C%83%E5%9B%B4">面试题13：机器人的运动范围</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9814%E5%89%AA%E7%BB%B3%E5%AD%90-343-integer-break">面试题14：剪绳子 - 343. Integer Break</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9815%E4%BA%8C%E8%BF%9B%E5%88%B6%E4%B8%AD-1-%E7%9A%84%E4%B8%AA%E6%95%B0-191-number-of-1-bits">面试题15：二进制中 1 的个数 - 191. Number of 1 Bits</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9816%E6%95%B0%E5%80%BC%E7%9A%84%E6%95%B4%E6%95%B0%E6%AC%A1%E6%96%B9-50-powx-n">面试题16：数值的整数次方 - 50. Pow(x, n)</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9817%E6%89%93%E5%8D%B0-1-%E5%88%B0%E6%9C%80%E5%A4%A7%E7%9A%84-n-%E4%BD%8D%E6%95%B0">面试题17：打印 1 到最大的 n 位数</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9818%E5%9C%A8-o1-%E6%97%B6%E9%97%B4%E5%88%A0%E9%99%A4%E9%93%BE%E8%A1%A8%E8%8A%82%E7%82%B9-237-delete-node-in-a-linked-list">面试题18：在 O(1) 时间删除链表节点 - 237. Delete Node in a Linked List</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9819%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F%E5%8C%B9%E9%85%8D-10-regular-expression-matching">面试题19：正则表达式匹配 - 10. Regular Expression Matching</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9820%E8%A1%A8%E7%A4%BA%E6%95%B0%E5%80%BC%E7%9A%84%E5%AD%97%E7%AC%A6%E4%B8%B2">面试题20：表示数值的字符串</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9821%E8%B0%83%E6%95%B4%E6%95%B0%E7%BB%84%E9%A1%BA%E5%BA%8F%E4%BD%BF%E5%A5%87%E6%95%B0%E4%BD%8D%E4%BA%8E%E5%81%B6%E6%95%B0%E5%89%8D%E9%9D%A2-905-sort-array-by-parity">面试题21：调整数组顺序使奇数位于偶数前面 - 905. Sort Array By Parity</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9822%E9%93%BE%E8%A1%A8%E4%B8%AD%E5%80%92%E6%95%B0%E7%AC%AC-k-%E4%B8%AA%E8%8A%82%E7%82%B9-19-remove-nth-node-from-end-of-list">面试题22：链表中倒数第 k 个节点 - 19. Remove Nth Node From End of List</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9823%E9%93%BE%E8%A1%A8%E4%B8%AD%E7%8E%AF%E7%9A%84%E5%85%A5%E5%8F%A3%E7%82%B9-142-linked-list-cycle-ii">面试题23：链表中环的入口点 - 142. Linked List Cycle II</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9824%E5%8F%8D%E8%BD%AC%E9%93%BE%E8%A1%A8-206-reverse-linked-list">面试题24：反转链表 - 206. Reverse Linked List</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9825%E5%90%88%E5%B9%B6%E4%B8%A4%E4%B8%AA%E6%8E%92%E5%BA%8F%E7%9A%84%E9%93%BE%E8%A1%A8-21-merge-two-sorted-lists">面试题25：合并两个排序的链表 - 21. Merge Two Sorted Lists</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9826%E6%A0%91%E7%9A%84%E5%AD%90%E7%BB%93%E6%9E%84-572-subtree-of-another-tree">面试题26：树的子结构 - 572. Subtree of Another Tree</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9827%E4%BA%8C%E5%8F%89%E6%A0%91%E7%9A%84%E9%95%9C%E5%83%8F-226-invert-binary-tree">面试题27：二叉树的镜像 - 226. Invert Binary Tree</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9828%E5%AF%B9%E7%A7%B0%E7%9A%84%E4%BA%8C%E5%8F%89%E6%A0%91-101-symmetric-tree">面试题28：对称的二叉树 - 101. Symmetric Tree</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9829%E9%A1%BA%E6%97%B6%E9%92%88%E6%89%93%E5%8D%B0%E7%9F%A9%E9%98%B5-54-spiral-matrix">面试题29：顺时针打印矩阵 - 54. Spiral Matrix</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9830%E5%8C%85%E5%90%AB-min-%E5%87%BD%E6%95%B0%E7%9A%84%E6%A0%88-155-min-stack">面试题30：包含 min 函数的栈 - 155. Min Stack</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9831%E6%A0%88%E7%9A%84%E5%8E%8B%E5%85%A5%E5%BC%B9%E5%87%BA%E5%BA%8F%E5%88%97-946-validate-stack-sequences">面试题31：栈的压入弹出序列 - 946. Validate Stack Sequences</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9832%E4%BB%8E%E4%B8%8A%E5%BE%80%E4%B8%8B%E6%89%93%E5%8D%B0%E4%BA%8C%E5%8F%89%E6%A0%91-102-binary-tree-level-order-traversal">面试题32：从上往下打印二叉树 - 102. Binary Tree Level Order Traversal</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9833%E4%BA%8C%E5%8F%89%E6%90%9C%E7%B4%A2%E6%A0%91%E7%9A%84%E5%90%8E%E5%BA%8F%E9%81%8D%E5%8E%86%E5%BA%8F%E5%88%97-255-verify-preorder-sequence-in-binary-search-tree">面试题33：二叉搜索树的后序遍历序列 - 255. Verify Preorder Sequence in Binary Search Tree</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9834%E4%BA%8C%E5%8F%89%E6%A0%91%E4%B8%AD%E5%92%8C%E4%B8%BA%E6%9F%90%E4%B8%80%E5%80%BC%E7%9A%84%E8%B7%AF%E5%BE%84-113-path-sum-ii">面试题34：二叉树中和为某一值的路径 - 113. Path Sum II</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9835%E5%A4%8D%E6%9D%82%E9%93%BE%E8%A1%A8%E7%9A%84%E5%A4%8D%E5%88%B6-138-copy-list-with-random-pointer">面试题35：复杂链表的复制 - 138. Copy List with Random Pointer</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9836%E4%BA%8C%E5%8F%89%E6%90%9C%E7%B4%A2%E6%A0%91%E4%B8%8E%E5%8F%8C%E5%90%91%E9%93%BE%E8%A1%A8-426-convert-binary-search-tree-to-sorted-doubly-linked-list">面试题36：二叉搜索树与双向链表 - 426. Convert Binary Search Tree to Sorted Doubly Linked List</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9837%E5%BA%8F%E5%88%97%E5%8C%96%E4%BA%8C%E5%8F%89%E6%A0%91-297-serialize-and-deserialize-binary-tree">面试题37：序列化二叉树 - 297. Serialize and Deserialize Binary Tree</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9838%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%9A%84%E6%8E%92%E5%88%97-46-permutations">面试题38：字符串的排列 - 46. Permutations</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9839%E6%95%B0%E7%BB%84%E4%B8%AD%E5%87%BA%E7%8E%B0%E6%AC%A1%E6%95%B0%E8%B6%85%E8%BF%87%E4%B8%80%E5%8D%8A%E7%9A%84%E6%95%B0%E5%AD%97-169-majority-element">面试题39：数组中出现次数超过一半的数字 - 169. Majority Element</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9840%E6%9C%80%E5%B0%8F%E7%9A%84-k-%E4%B8%AA%E6%95%B0-215-kth-largest-element-in-an-array">面试题40：最小的 k 个数 - 215. Kth Largest Element in an Array</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9841%E6%95%B0%E6%8D%AE%E6%B5%81%E4%B8%AD%E7%9A%84%E4%B8%AD%E4%BD%8D%E6%95%B0-295-find-median-from-data-stream">面试题41：数据流中的中位数 - 295. Find Median from Data Stream</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9842%E8%BF%9E%E7%BB%AD%E5%AD%90%E6%95%B0%E7%BB%84%E7%9A%84%E6%9C%80%E5%A4%A7%E5%92%8C-53-maximum-subarray">面试题42：连续子数组的最大和 - 53. Maximum Subarray</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9843%E4%BB%8E-1-%E5%88%B0-n-%E6%95%B4%E6%95%B0%E4%B8%AD-1-%E5%87%BA%E7%8E%B0%E7%9A%84%E6%AC%A1%E6%95%B0-233-number-of-digit-one">面试题43：从 1 到 n 整数中 1 出现的次数 - 233. Number of Digit One</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9844%E6%95%B0%E5%AD%97%E5%BA%8F%E5%88%97%E4%B8%AD%E6%9F%90%E4%B8%80%E4%BD%8D%E7%9A%84%E6%95%B0%E5%AD%97-400-nth-digit">面试题44：数字序列中某一位的数字 - 400. Nth Digit</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9845%E6%8A%8A%E6%95%B0%E7%BB%84%E6%8E%92%E6%88%90%E6%9C%80%E5%B0%8F%E7%9A%84%E6%95%B0-179-largest-number">面试题45：把数组排成最小的数 - 179. Largest Number</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9846%E6%8A%8A%E6%95%B0%E5%AD%97%E7%BF%BB%E8%AF%91%E6%88%90%E5%AD%97%E7%AC%A6%E4%B8%B2-91-decode-ways">面试题46：把数字翻译成字符串 - 91. Decode Ways</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9847%E7%A4%BC%E7%89%A9%E7%9A%84%E6%9C%80%E5%A4%A7%E4%BB%B7%E5%80%BC-64-minimum-path-sum">面试题47：礼物的最大价值 - 64. Minimum Path Sum</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9848%E6%9C%80%E9%95%BF%E4%B8%8D%E5%90%AB%E9%87%8D%E5%A4%8D%E5%AD%97%E7%AC%A6%E7%9A%84%E5%AD%90%E5%AD%97%E7%AC%A6%E4%B8%B2-3-longest-substring-without-repeating-characters">面试题48：最长不含重复字符的子字符串 - 3. Longest Substring Without Repeating Characters</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9849%E4%B8%91%E6%95%B0-264-ugly-number-ii">面试题49：丑数 - 264. Ugly Number II</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9850%E7%AC%AC%E4%B8%80%E4%B8%AA%E5%8F%AA%E5%87%BA%E7%8E%B0%E4%B8%80%E6%AC%A1%E7%9A%84%E5%AD%97%E7%AC%A6-387-first-unique-character-in-a-string">面试题50：第一个只出现一次的字符 - 387. First Unique Character in a String</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9851%E6%95%B0%E7%BB%84%E4%B8%AD%E7%9A%84%E9%80%86%E5%BA%8F%E5%AF%B9-493-reverse-pairs">面试题51：数组中的逆序对 - 493. Reverse Pairs</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9852%E4%B8%A4%E4%B8%AA%E9%93%BE%E8%A1%A8%E7%9A%84%E7%AC%AC%E4%B8%80%E4%B8%AA%E5%85%AC%E5%85%B1%E8%8A%82%E7%82%B9-160-intersection-of-two-linked-lists">面试题52：两个链表的第一个公共节点 - 160. Intersection of Two Linked Lists</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9853%E6%95%B0%E5%AD%97%E5%9C%A8%E6%8E%92%E5%BA%8F%E6%95%B0%E7%BB%84%E4%B8%AD%E5%87%BA%E7%8E%B0%E7%9A%84%E6%AC%A1%E6%95%B0-34-find-first-and-last-position-of-element-in-sorted-array">面试题53：数字在排序数组中出现的次数 - 34. Find First and Last Position of Element in Sorted Array</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9854%E4%BA%8C%E5%8F%89%E6%90%9C%E7%B4%A2%E6%A0%91%E7%9A%84%E7%AC%AC-k-%E5%A4%A7%E8%8A%82%E7%82%B9-230-kth-smallest-element-in-a-bst">面试题54：二叉搜索树的第 k 大节点 - 230. Kth Smallest Element in a BST</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%98551%E4%BA%8C%E5%8F%89%E6%A0%91%E7%9A%84%E6%B7%B1%E5%BA%A6-104-maximum-depth-of-binary-tree">面试题55.1：二叉树的深度 - 104. Maximum Depth of Binary Tree</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%98552%E5%B9%B3%E8%A1%A1%E4%BA%8C%E5%8F%89%E6%A0%91-110-balanced-binary-tree">面试题55.2：平衡二叉树 - 110. Balanced Binary Tree</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%98561%E6%95%B0%E7%BB%84%E4%B8%AD%E5%8F%AA%E5%87%BA%E7%8E%B0%E4%B8%80%E6%AC%A1%E7%9A%84%E6%95%B0%E5%AD%97-260-single-number-iii">面试题56.1：数组中只出现一次的数字 - 260. Single Number III</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%98562%E6%95%B0%E7%BB%84%E4%B8%AD%E5%8F%AA%E5%87%BA%E7%8E%B0%E4%B8%80%E6%AC%A1%E7%9A%84%E6%95%B0%E5%AD%97-137-single-number-ii">面试题56.2：数组中只出现一次的数字 - 137. Single Number II</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%98571%E5%92%8C%E4%B8%BA-s-%E7%9A%84%E4%B8%A4%E4%B8%AA%E6%95%B0%E5%AD%97-167-two-sum-ii-input-array-is-sorted">面试题57.1：和为 s 的两个数字 - 167. Two Sum II - Input array is sorted</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%98572%E5%92%8C%E4%B8%BA-s-%E7%9A%84%E8%BF%9E%E7%BB%AD%E6%AD%A3%E6%95%B0%E5%BA%8F%E5%88%97">面试题57.2：和为 s 的连续正数序列</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%98581%E7%BF%BB%E8%BD%AC%E5%8D%95%E8%AF%8D%E9%A1%BA%E5%BA%8F-151-reverse-words-in-a-string">面试题58.1：翻转单词顺序 - 151. Reverse Words in a String</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%98582%E5%B7%A6%E6%97%8B%E8%BD%AC%E5%AD%97%E7%AC%A6%E4%B8%B2-189-rotate-array">面试题58.2：左旋转字符串 - 189. Rotate Array</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%98591%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E7%9A%84%E6%9C%80%E5%A4%A7%E5%80%BC-239-sliding-window-maximum">面试题59.1：滑动窗口的最大值 - 239. Sliding Window Maximum</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%98592%E9%98%9F%E5%88%97%E7%9A%84%E6%9C%80%E5%A4%A7%E5%80%BC-155-min-stack">面试题59.2：队列的最大值 - 155. Min Stack</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9860n-%E4%B8%AA%E9%AA%B0%E5%AD%90%E7%9A%84%E7%82%B9%E6%95%B0-1155-number-of-dice-rolls-with-target-sum">面试题60：N 个骰子的点数 - 1155. Number of Dice Rolls With Target Sum</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9861%E6%89%91%E5%85%8B%E7%89%8C%E4%B8%AD%E7%9A%84%E9%A1%BA%E5%AD%90">面试题61：扑克牌中的顺子</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9862%E5%9C%86%E5%9C%88%E4%B8%AD%E6%9C%80%E5%90%8E%E5%89%A9%E4%B8%8B%E7%9A%84%E6%95%B0%E5%AD%97-390-elimination-game">面试题62：圆圈中最后剩下的数字 - 390. Elimination Game</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9863%E8%82%A1%E7%A5%A8%E7%9A%84%E6%9C%80%E5%A4%A7%E5%88%A9%E6%B6%A6">面试题63：股票的最大利润</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9865%E4%B8%8D%E7%94%A8%E5%8A%A0%E5%87%8F%E4%B9%98%E9%99%A4%E5%81%9A%E5%8A%A0%E6%B3%95-371-sum-of-two-integers">面试题65：不用加减乘除做加法 - 371. Sum of Two Integers</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9867%E6%8A%8A%E5%AD%97%E7%AC%A6%E4%B8%B2%E8%BD%AC%E6%88%90%E6%95%B4%E6%95%B0-8-string-to-integer-atoi">面试题67：把字符串转成整数 - 8. String to Integer (atoi)</a></li>
+<li><a href="#%E9%9D%A2%E8%AF%95%E9%A2%9868%E6%A0%91%E4%B8%AD%E4%B8%A4%E4%B8%AA%E8%8A%82%E7%82%B9%E7%9A%84%E6%9C%80%E4%BD%8E%E5%85%AC%E5%85%B1%E7%A5%96%E5%85%88-236-lowest-common-ancestor-of-a-binary-tree">面试题68：树中两个节点的最低公共祖先 - 236. Lowest Common Ancestor of a Binary Tree</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/autolayout-design-aesthetic/">
+              <h3 class="post-title">
+                Auto Layout 设计美学
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

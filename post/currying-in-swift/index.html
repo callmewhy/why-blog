@@ -1,0 +1,455 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Swift 中的柯里化 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Swift 中的柯里化
+            </h2>
+            <div class="post-info">
+              <span>
+                2014-11-23
+              </span>
+              <span>
+                10 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/fthQHH2l27/" class="post-tag">
+                  # Swift
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>新手上路的学习笔记，如有错误还望指出，不胜感激。</p>
+<h2 id="上集理论预备">上集：理论预备</h2>
+<p>在学习柯里化的过程中接触到了三个有趣的概念，在此和各位分享一下。</p>
+<h3 id="偏函数-partial-function">偏函数 (Partial Function)</h3>
+<p>偏函数是只对函数定义域的一个子集进行定义的函数，是一个数学概念。</p>
+<p><a href="http://zh.wikipedia.org/wiki/%E5%87%BD%E6%95%B0">偏函数</a>定义如下：</p>
+<blockquote>
+<p>从输入值集合 X 到可能的输出值集合 Y 的函数 f (记作f:X→Y) 是 X 和 Y 的关系，若 f 满足多个输入可以映射到一个输出，但一个输入不能映射到多个输出，则为偏函数。</p>
+</blockquote>
+<p>换句话说，定义域 <code>X</code> 中可能存在某些值，在值域 <code>Y</code> 中没有对应的值。从定义来看，偏函数是函数的超集。也就是说，函数都是偏函数，但偏函数不都是函数。</p>
+<h3 id="偏函数应用-partial-application-partial-function-application">偏函数应用 (Partial Application || Partial Function Application)</h3>
+<p>上面说的概念是数学中的概念，和我们将要接触的内容无关。和我们关系比较大的是偏函数应用 (Partial Application)。</p>
+<p><a href="http://en.wikipedia.org/wiki/Partial_application">偏函数应用</a>的定义如下：</p>
+<blockquote>
+<p>在计算机科学领域，偏函数应用是指通过固定原函数的一部分参数生成新函数的过程，新函数的参数数目少于原函数。</p>
+</blockquote>
+<p>通过数学公式演示一下，比如原函数 <code>f</code> 有三个参数： <code>f:(X×Y×Z)→N</code> ，通过绑定第一个参数 <code>X</code> ，我们可以得到一个新的函数： <code>partial(f):(Y×Z)→N</code> 。</p>
+<p>编程中的偏函数，比如廖雪峰老师在<a href="http://www.liaoxuefeng.com/wiki/001374738125095c955c1e6d8bb493182103fac9270762a000/001386819893624a7edc0e3e3df4d5d852a352b037c93ec000">偏函数</a>中提及的 <code>functools</code> 模块的用法，其实就是偏函数应用，又叫局部函数应用，有道词典翻译为<a href="http://dict.youdao.com/search?q=partial%20application">切一刀</a>在此表过不提。</p>
+<p>为避免混淆，下文中提及的偏函数均为编程中的偏函数应用 (Partial Application)。</p>
+<p>偏函数有点像是给函数的参数设置默认值一样，不过偏函数更加灵活。比如下面这段 c 语言的代码中，<code>foo23</code> 函数就是 <code>foo</code> 函数的偏函数，参数 <code>b</code> 的值被绑定为 <code>23</code> ：</p>
+<pre><code class="language-swift">    int foo(int a, int b, int c) {
+      return a + b + c;
+    }
+
+    int foo23(int a, int c) {
+      return foo(a, 23, c);
+    }
+</code></pre>
+<h3 id="柯里化">柯里化</h3>
+<p>柯里化和偏函数有些关系，但是是两个完全不同的概念。</p>
+<p><a href="http://en.wikipedia.org/wiki/Currying">柯里化</a>定义如下：</p>
+<blockquote>
+<p>柯里化（英语：Currying）是把接受多个参数的函数变换成接受一个单一参数（最初函数的第一个参数）的函数，并且返回接受余下的参数而且返回结果的新函数的技术。</p>
+</blockquote>
+<p>通过数学公式来简单的演示一下，原始的函数是一个普通的函数：<code>f:(X×Y) → Z</code> ，柯里化之后函数变成了：<code>curry(f):X → (Y→Z)</code> 。</p>
+<p>我们用几段 js 代码演示一下柯里化的过程。首先先看一个普通的函数 <code>foo</code> ，返回参数的平方：</p>
+<pre><code class="language-swift">    var foo = function(a) {
+        return a * a;
+    }
+</code></pre>
+<p>假设我们的函数都只能有一个参数，那么可以用下面的方式模拟出一个多参数函数：</p>
+<pre><code class="language-swift">    var foo = function(a) {
+        return function(b) {
+            return a * a + b * b;
+        }
+    }
+</code></pre>
+<p>我们可以这样调用 <code>foo(3)(4)</code> 。</p>
+<p>柯里化解决的问题是：将多参数函数转变为一系列单参数函数的链式调用。</p>
+<p>柯里化背后的基本想法是函数可以局部应用，意思是一些参数值可以在函数调用之前被指定，并且返回一个新的函数。也就是偏函数的基本思想。</p>
+<h3 id="小结">小结</h3>
+<p>可以看到，柯里化将函数进行了<s>肢解</s>拆分，这样我们可以很容易的实现偏函数。比如：</p>
+<pre><code class="language-swift">    var foo = function(a) {
+        return function(b) {
+            return a * a + b * b;
+        }
+    }
+    var foo3 = foo(3);
+    foo3(4);
+</code></pre>
+<p>这就出来了。函数 <code>foo3</code> 就是 <code>foo</code> 函数的偏函数。</p>
+<p>简单总结一下偏函数和柯里化以及两者的关系：</p>
+<ul>
+<li>偏函数应用：固定原函数的几个参数值，从而得到一个新的函数。</li>
+<li>函数柯里化：一种使用匿名单参数函数来实现多参数函数的方法。</li>
+<li>关系：柯里化能够轻松的实现某些偏函数应用。</li>
+</ul>
+<h2 id="中集柯里化与偏函数">中集：柯里化与偏函数</h2>
+<p>前面扯了很多有的没的，接下来我们来看看在 Swift 中柯里化。</p>
+<p>节目预告：下面的例子极为简单，让各位见笑了。希望通过这些最简单的例子演示柯里化最关键的部分。</p>
+<h3 id="传统手段老老实实传参数">传统手段：老老实实传参数</h3>
+<p>我们先来写个最简单的东西好了：计数器，每次运算后+1即可：</p>
+<pre><code class="language-swift">    func add(a:Int) -&gt; Int{
+        return a + 1;
+    }
+
+    var a = 0
+
+    a = add(a)   // 1
+    a = add(a)   // 2
+</code></pre>
+<p>但是每次都+1，步子有点小了。有时我们可能也需要+2，+3，+4，那么简单，我们把需要加的步长放在参数里就行：</p>
+<pre><code class="language-swift">    func add(a:Int, b:Int) -&gt; Int{
+        return a + b ;
+    }
+
+    var a = 0
+
+    a = add(a, 1)   // 1
+    a = add(a, 2)   // 3
+</code></pre>
+<p>似乎没什么问题。那么问题来了：我大部分时间都只要+1啊，我可能只是100次调用有90次要+1，为了剩下的那10次，每行代码都要多个参数，是不是麻烦了点？OK嫌麻烦我们可以通过设置默认值的方式解决。</p>
+<h3 id="进阶手段可以设置默认值">进阶手段：可以设置默认值</h3>
+<p>在函数定义的时候我们就给它定好默认值是1，那不就得了：</p>
+<pre><code class="language-swift">    func add(a:Int, b:Int=1) -&gt; Int{
+        return a + b ;
+    }
+
+    var a = 0
+
+    a = add(a)   // 1
+    a = add(a, b:2)   // 3
+</code></pre>
+<p>如果你要+1，行，你别写参数我给你调好了自动+1；如果你要+2+3，行，爱加几加几，自己写到参数里去。</p>
+<p>似乎没什么问题。那么问题来了：我有一半的时间要+1，有一半的时间要+2，还有些时间+3+4，怎么玩？</p>
+<p>唉可真是磨人的小妖精。</p>
+<h3 id="柯学手段通过柯里化实现">柯学手段：通过柯里化实现</h3>
+<p>和前面的例子不一样的是，柯里化的函数返回一个新的函数而不是计算后的结果，计算后的结果要通过返回的新函数计算获得。</p>
+<p>比如前面的那个例子，我们新定义一个 <code>add</code> 函数，它有一个参数，是步长 <code>b</code> 。然后它返回一个新的函数 <code>newAdd</code> ，新的函数需要一个参数，也就是 <code>a</code>，完整的代码如下：</p>
+<pre><code class="language-swift">    func add(b:Int) -&gt; (Int-&gt;Int){
+        func newAdd(a:Int) -&gt; Int {
+            return a + b ;
+        }
+        return newAdd
+    }
+
+    let addOne = add(1)
+    let addTwo = add(2)
+
+    var a = 0
+
+    a = addOne(a)    // 1
+    a = addTwo(a)    // 3
+    a = add(2)(3)    // 5
+</code></pre>
+<p>如果你觉得各种 <code>(Int)-&gt;(Int-&gt;Int)</code> 看的晕乎，你也可以参照<a href="https://developer.apple.com/library/ios/documentation/swift/conceptual/Swift_Programming_Language/Declarations.html">官方文档</a>，用下面这种简化的声明：</p>
+<pre><code class="language-swift">    func add(b:Int)(a:Int) -&gt; Int{
+        return a + b ;
+    }
+
+    let addOne = add(1)
+    let addTwo = add(2)
+
+    var a = 0
+
+    a = addOne(a: a)    // 1
+    a = addTwo(a: a)    // 3
+</code></pre>
+<p>在这个例子里，我们生成两个新的函数：<code>addOne</code> 和 <code>addTwo</code> 分别进行+1和+2操作。可以看到，通过柯里化实现偏函数是十分方便的，一切都顺其自然，水到渠成。</p>
+<p>通过这个例子可以看出，柯里化是偏函数的方法论，偏函数是柯里化背后的<s>男人</s>思想。</p>
+<h2 id="下集实例方法与柯里化">下集：实例方法与柯里化</h2>
+<p>实际上，Swift 中的实例方法也是柯里化方法，你可以传个实例作为第一个参数。</p>
+<p>我们还就和计数器杠上了，再次以计数器为例：</p>
+<pre><code class="language-swift">    class Counter {
+        var b: Int = 1
+        func add(a:Int) -&gt; Int{
+            return a + b ;
+        }
+    }
+</code></pre>
+<p>我们可以初始化实例对象然后来调用：</p>
+<pre><code class="language-swift">    let counter = Counter()
+    var a = counter.add(1)  // 2
+</code></pre>
+<p>我们也可以这样做：</p>
+<pre><code class="language-swift">    let add = Counter.add   // Function
+    let counter = Counter()
+    var a = add(counter)(1) // 2
+</code></pre>
+<p>这两个是完全等价的。</p>
+<p>有点神奇啊，不是吗？注意， <code>let add = Counter.add</code> 这个定义后面没有小括号。也就是说，我们并没有调用它，只是指向它，像一个指针一样指了过去。</p>
+<p>我们可以按住 <code>option</code> 键查看一下 <code>add</code> 的类型：<code>let add: Counter -&gt; (Int) -&gt; Int</code> 。它的参数是一个 <code>Counter</code> 类型的实例，返回的是另一个新函数，这个新函数的参数类型是 <code>Int</code> ，返回的类型也是 <code>Int</code> ，和类里定义的函数类型是一样的。</p>
+<p>看起来好像挺有趣的，不过问题来了：有啥用呢？</p>
+<p>这个问题我还没办法回答，因为我也是刚刚接触这部分内容。我只能做一名知识的搬运工了。</p>
+<p>在 <a href="http://oleb.net/blog/2014/07/swift-instance-methods-curried-functions/">Instance Methods are Curried Functions in Swift</a> 这篇文章里，作者举了一个例子：用 <a href="https://developer.apple.com/library/ios/documentation/general/conceptual/Devpedia-CocoaApp/TargetAction.html">Target-Action</a> 模式实现一个 <code>Control</code> ：</p>
+<pre><code class="language-swift">    protocol TargetAction {
+        func performAction()
+    }
+
+    struct TargetActionWrapper&lt;T: AnyObject&gt; : TargetAction {
+        weak var target: T?
+        let action: (T) -&gt; () -&gt; ()
+
+        func performAction() -&gt; () {
+            if let t = target {
+                action(t)()
+            }
+        }
+    }
+
+    enum ControlEvent {
+        case TouchUpInside
+        case ValueChanged
+        // ...
+    }
+
+    class Control {
+        var actions = [ControlEvent: TargetAction]()
+
+        func setTarget&lt;T: AnyObject&gt;(target: T, action: (T) -&gt; () -&gt; (), controlEvent: ControlEvent) {
+            actions[controlEvent] = TargetActionWrapper(target: target, action: action)
+        }
+
+        func removeTargetForControlEvent(controlEvent: ControlEvent) {
+            actions[controlEvent] = nil
+        }
+
+        func performActionForControlEvent(controlEvent: ControlEvent) {
+            actions[controlEvent]?.performAction()
+        }
+    }
+</code></pre>
+<p>用法和平时没什么两样：</p>
+<pre><code class="language-swift">    class MyViewController {
+        let button = Control()
+
+        func viewDidLoad() {
+            button.setTarget(self, action: MyViewController.onButtonTap, controlEvent: .TouchUpInside)
+        }
+
+        func onButtonTap() {
+            println(&quot;Button was tapped&quot;)
+        }
+</code></pre>
+<h2 id="下集的下集其他">下集的下集：其他</h2>
+<p>由于没有在实战中用过，暂时不对柯里化做太多评价。就目前的了解来看，它可以让我们很方便的对函数进行局部调用，让代码更加灵活，语意更加清晰。</p>
+<p>如果想感受一下原汁原味的柯里化，不妨接触一下 Haskell 这门语言。 Haskell 中多参数函数都是通过柯里化实现的。它的作者是 Haskell Brooks Curry，是的就是柯里化 (Curring) 的命名者 (不过并不是他发明的)。</p>
+<p>使用 Mac 的朋友可以下载 <a href="https://www.haskell.org/platform/mac.html">Haskell Platform for Mac</a> ，然后通过 <code>ghci</code> 命令试一试 Haskell 的代码。</p>
+<p>当然也有<a href="http://en.wikipedia.org/wiki/Currying">反柯里化</a>，感兴趣的同学可以继续了解一下：）</p>
+<hr>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="http://en.wikipedia.org/wiki/Currying">Wikipedia - Currying</a></li>
+<li><a href="http://en.wikipedia.org/wiki/Partial_application">Wikipedia - Partial Application</a></li>
+<li><a href="http://programmers.stackexchange.com/questions/185585/what-is-the-advantage-of-currying">What is the advantage of currying?</a></li>
+<li><a href="http://real-wolrd-haskell-note.readthedocs.org/en/latest/chp4.html#currying-partial-function">Currying and Partial Function)</a></li>
+<li><a href="http://hughfdjackson.com/javascript/why-curry-helps/">Why Curry Helps</a></li>
+<li><a href="http://www.ibm.com/developerworks/cn/java/j-lo-funinscala3/">Function Scala</a></li>
+<li><a href="http://ijoshsmith.com/2014/06/09/curried-functions-in-swift/">Curried Functions in Swift</a></li>
+<li><a href="http://blog.xebia.com/2014/11/06/swift-function-currying/">Swift Function Currying</a></li>
+<li><a href="http://oleb.net/blog/2014/07/swift-instance-methods-curried-functions/">Instance Methods are Curried Functions in Swift</a></li>
+<li><a href="http://www.liaoxuefeng.com/wiki/001374738125095c955c1e6d8bb493182103fac9270762a000/001386819893624a7edc0e3e3df4d5d852a352b037c93ec000">Partial Function in Python</a></li>
+<li><a href="http://en.wikipedia.org/wiki/Function_(mathematics)">Function_(mathematics)</a></li>
+<li><a href="http://www.raywenderlich.com/77845/swift-ninja-part-2">Programming Challenge: Are You a Swift Ninja? Part 2</a></li>
+<li><a href="http://www.vaikan.com/currying-partial-application/">Currying and Partial Application</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E4%B8%8A%E9%9B%86%E7%90%86%E8%AE%BA%E9%A2%84%E5%A4%87">上集：理论预备</a>
+<ul>
+<li><a href="#%E5%81%8F%E5%87%BD%E6%95%B0-partial-function">偏函数 (Partial Function)</a></li>
+<li><a href="#%E5%81%8F%E5%87%BD%E6%95%B0%E5%BA%94%E7%94%A8-partial-application-partial-function-application">偏函数应用 (Partial Application || Partial Function Application)</a></li>
+<li><a href="#%E6%9F%AF%E9%87%8C%E5%8C%96">柯里化</a></li>
+<li><a href="#%E5%B0%8F%E7%BB%93">小结</a></li>
+</ul>
+</li>
+<li><a href="#%E4%B8%AD%E9%9B%86%E6%9F%AF%E9%87%8C%E5%8C%96%E4%B8%8E%E5%81%8F%E5%87%BD%E6%95%B0">中集：柯里化与偏函数</a>
+<ul>
+<li><a href="#%E4%BC%A0%E7%BB%9F%E6%89%8B%E6%AE%B5%E8%80%81%E8%80%81%E5%AE%9E%E5%AE%9E%E4%BC%A0%E5%8F%82%E6%95%B0">传统手段：老老实实传参数</a></li>
+<li><a href="#%E8%BF%9B%E9%98%B6%E6%89%8B%E6%AE%B5%E5%8F%AF%E4%BB%A5%E8%AE%BE%E7%BD%AE%E9%BB%98%E8%AE%A4%E5%80%BC">进阶手段：可以设置默认值</a></li>
+<li><a href="#%E6%9F%AF%E5%AD%A6%E6%89%8B%E6%AE%B5%E9%80%9A%E8%BF%87%E6%9F%AF%E9%87%8C%E5%8C%96%E5%AE%9E%E7%8E%B0">柯学手段：通过柯里化实现</a></li>
+</ul>
+</li>
+<li><a href="#%E4%B8%8B%E9%9B%86%E5%AE%9E%E4%BE%8B%E6%96%B9%E6%B3%95%E4%B8%8E%E6%9F%AF%E9%87%8C%E5%8C%96">下集：实例方法与柯里化</a></li>
+<li><a href="#%E4%B8%8B%E9%9B%86%E7%9A%84%E4%B8%8B%E9%9B%86%E5%85%B6%E4%BB%96">下集的下集：其他</a></li>
+<li><a href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/swifty-methods/">
+              <h3 class="post-title">
+                用 Swift 来写 Swift 的方法
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

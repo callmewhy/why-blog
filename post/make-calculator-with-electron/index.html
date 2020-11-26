@@ -1,0 +1,405 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>使用 Electron 开发一款理财计算器 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              使用 Electron 开发一款理财计算器
+            </h2>
+            <div class="post-info">
+              <span>
+                2016-07-01
+              </span>
+              <span>
+                9 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/aQZmVkENFv/" class="post-tag">
+                  # Electron
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <figure data-type="image" tabindex="1"><img src="http://ww2.sinaimg.cn/large/61d238c7gw1f4sm331badj21120h1q51.jpg" alt="" loading="lazy"></figure>
+<h2 id="背景">背景</h2>
+<p><a href="http://electron.atom.io/">Electron</a> 是一个跨平台应用框架，原本为 <a href="https://atom.io/">Atom</a> 设计，后来单独分离了出来。它提供了一些与原生系统交互的 API ，可以方便快速使用 HTML、JavaScript、CSS 等 Web 技术开发跨平台应用。</p>
+<p>最近基于 Electron 开发了一个简单的<a href="https://itunes.apple.com/cn/app/id1123317466?mt=12">理财计算器</a>。发布了 1.0 版本之后，总结一下这段时间的开发经历。哦对了，价格是随便定的，主要是熟悉下流程，大家千万别买。</p>
+<p>这篇文章只包含个人开发小结，不包括各种框架工具的基础使用，如有需要请自行 Google 。</p>
+<p>完整的项目源码请看：<a href="https://github.com/callmewhy/financial-calculator">financial-calculator</a></p>
+<h2 id="过程">过程</h2>
+<p>理财计算器的功能很简单，目前只做了股票的保本卖出价的计算。</p>
+<figure data-type="image" tabindex="2"><img src="http://ww2.sinaimg.cn/large/61d238c7gw1f4smkl3sh9j20si0ldjss.jpg" alt="" loading="lazy"></figure>
+<p>输入买入价、买入数量等信息，算上各种手续费之后，输出保本卖出的价格。</p>
+<p>看起来很简单的功能，大概却做了5天，主要在开发环境配置上卡了挺久。</p>
+<h3 id="基础项目">基础项目</h3>
+<p>一开始需要做的是搭建整个项目的基础框架，主要包含以下几个方面：</p>
+<ul>
+<li><a href="http://electron.atom.io/">electron</a>：跨平台框架，主要是封装 Web 应用，并且打包发布。</li>
+<li><a href="http://webpack.github.io/">webpack</a>：模块加载打包工具，可以通过各种 loader 加载不同资源。</li>
+<li><a href="http://eslint.org/">eslint</a>：JS 代码静态检测工具，可以方便的统一代码的风格。</li>
+<li><a href="http://babeljs.io/">babel</a>：可以将 ES6 代码转为 ES5 代码的语法编译器。</li>
+<li><a href="http://vuejs.org/">vue</a>：前端框架，数据驱动的组件化开发，配上 <a href="http://vue-loader.vuejs.org/">vue-loader</a> 之后十分好用。</li>
+</ul>
+<p>上面这一套东西要搞一下还是比较费时间的，好在网上有各种现成的模板，货比三家之后最后选用了 <a href="https://github.com/bradstewart/electron-boilerplate-vue">electron-boilerplate-vue</a> ，搭建好后文件目录如下：</p>
+<pre><code>.
+├── .babelrc
+├── .editorconfig
+├── .eslintrc.js
+├── .gitignore
+├── README.md
+├── app
+│   ├── ...
+│   ├── main.html
+│   ├── main.js
+│   └── package.json
+├── build
+│   ├── ...
+│   ├── webpack.base.conf.js
+│   ├── webpack.dev-background.conf.js
+│   ├── webpack.dev-server.conf.js
+│   └── webpack.pro-build.conf.js
+├── config.js
+├── package.json
+└── test
+</code></pre>
+<h3 id="前端页面">前端页面</h3>
+<p>接下来就是前端页面部分。一直想试试 Material Design 风格，刚好这次是个不错的机会，于是就开始找找有没有 MD 方面的前端库。</p>
+<p>先是想看看有没有类似于 <a href="http://ant.design/">Ant Design</a> 这样的成套 vue 组件库，于是找到了 <a href="http://www.material-ui.com/">material-ui</a> ，可惜是 React 版本的。找找了 vue 版本的似乎只有 <a href="https://github.com/posva/vue-mdl">vue-mdl</a> 和 <a href="https://github.com/ElvisKang/vue-material">vue-material</a> 这两个不太成气候的库，仔细想想本身它们都依赖于其他前端库和 vue ，万一更新不及时岂不是很坑爹。于是弃了这个想法。</p>
+<p>后来就是去找类似于 <a href="http://semantic-ui.com/">semantic-ui</a> 和 <a href="http://foundation.zurb.com/">Foundation</a> 这样纯粹的前端库，找到 <a href="http://materializecss.com/">materializecss</a> 这个库，页面简洁大方，破儿费(Perfect)啊！</p>
+<p>然后，就是为期两天的填坑之旅。</p>
+<p>是的，一共5天的开发时间，调教这个前端库花了2天，而且坑爹的是，最后还没用上。主要问题在于它的 JS 代码是基于 jQuery 的，而很多插件又是在 <code>$(document).ready</code> 里加载的，对 SPA 非常不友好，因为 document ready 的时候我的 dom 们还没 ready 。再加上我对 Webpack 又不是很熟悉，导致点击事件不响应，不知道是 webpack 打包的问题还是 vue-loader 加载顺序的问题还是 babel-loader 编译的问题还是它自己库的问题还是 jquery 引入的问题。</p>
+<p>总之就是，一套系统过于庞大，虽然脚手架让我避开了大量的体力劳动，但是同时也引入了很多我不熟悉的未知因素。于是就刚好花两天时间，仔细学习了项目中用到的各种技术和工具。熟悉了之后才发现我以前多虑了，问题肯定出在源码上。然后就找到了问题的原因。</p>
+<p>最后决定放弃 materializecss 这个库，然后去试了试 Google 家的 <a href="http://getmdl.io/">Material Design Lite</a> 。</p>
+<p>万万没想到，5分钟解决战斗。</p>
+<p>引入 CSS 的方法和 materializecss 类似，都是在 SCSS 里 <code>import</code> 它的原文件：</p>
+<pre><code class="language-scss">/* IMPORT VARIABLES */
+@import 'material-design-lite/src/_variables.scss';
+/* OVERRIDE VARIABLES */
+$layout-screen-size-threshold: 0px;
+/* IMPORT MDL */
+@import 'material-design-lite/src/material-design-lite.scss';
+</code></pre>
+<p>引入 JS 文件的方法也很简单，和其他库一样 <code>import</code> 就行：</p>
+<pre><code class="language-js">import 'material-design-lite'
+</code></pre>
+<p>不过和 materializecss 不同的是，文档里在 《<a href="https://getmdl.io/started/index.html#dynamic">Use MDL on dynamic websites</a>》 写清楚了动态更新页面后的更新方法：</p>
+<pre><code class="language-js">// upgrade element
+componentHandler.upgradeElement(button)
+// upgrade dom
+componentHandler.upgradeDom()
+</code></pre>
+<p>于是在 vue 的项目里，只要这么写就可以了：</p>
+<pre><code class="language-html">&lt;template&gt;
+  ..
+&lt;/template&gt;
+
+&lt;script type=&quot;text/babel&quot;&gt;
+  export default {
+    ready: () =&gt; {
+      componentHandler.upgradeDom()
+    },
+    components: {
+      ...
+    },
+  }
+&lt;/script&gt;
+
+&lt;style lang=&quot;scss&quot; rel=&quot;stylesheet/scss&quot;&gt;
+&lt;/style&gt;
+</code></pre>
+<p>谷歌爸爸！受我一拜！</p>
+<h3 id="业务功能">业务功能</h3>
+<p>接下来就是业务部分，计算器嘛还是挺简单的，感觉最有趣的部分是实时更新计算结果，这个功能通过 vue 这种数据绑定框架来实现真是太合适了。</p>
+<p>核心代码是这样的，先用 <code>v-for</code> 组装表单控件：</p>
+<pre><code class="language-html">&lt;div&gt;
+&lt;div class=&quot;mdl-tabs mdl-js-tabs&quot;&gt;
+ &lt;div class=&quot;mdl-tabs__tab-bar&quot;&gt;
+   &lt;a v-on:click.prevent=&quot;clickTab(0)&quot;&gt;沪市 A 股&lt;/a&gt;
+   &lt;a v-on:click.prevent=&quot;clickTab(1)&quot;&gt;沪市 B 股&lt;/a&gt;
+   &lt;a v-on:click.prevent=&quot;clickTab(2)&quot;&gt;深市 A 股&lt;/a&gt;
+   &lt;a v-on:click.prevent=&quot;clickTab(3)&quot;&gt;深市 B 股&lt;/a&gt;
+ &lt;/div&gt;
+ &lt;div&gt;
+   &lt;div v-for=&quot;item of currentTabItem&quot;&gt;
+     &lt;div&gt;
+       &lt;input type=&quot;text&quot; id=&quot;{{ item.id }}&quot; v-model=&quot;item.model&quot;/&gt;
+       &lt;label for=&quot;{{ item.id }}&quot;&gt;{{ item.label }}&lt;/label&gt;
+       &lt;span&gt;{{ item.suffix }}&lt;/span&gt;
+     &lt;/div&gt;
+   &lt;/div&gt;
+   &lt;div id=&quot;result-panel&quot; class=&quot;mdl-color-text--primary&quot;&gt;
+     {{ result }}
+   &lt;/div&gt;
+ &lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+<p>然后在 JS 里绑定数据：</p>
+<pre><code class="language-js">export default{
+  ready: function () {
+    componentHandler.upgradeDom()
+  },
+  methods: {
+    clickTab: function (index) {
+      this.currentTab = index
+      this.$nextTick(() =&gt; {
+        componentHandler.upgradeDom()
+      })
+    },
+  },
+  data: function () {
+    return {
+      currentTab: 0,
+      items: items,
+    }
+  },
+  computed: {
+    result: function () {
+      ...
+      return `${part1}${part2}`
+    },
+    currentTabItem: function () {
+      return items[this.currentTab]
+    },
+  },
+}
+</code></pre>
+<p>这样一旦输入的数字发生改变， model 就会改变，就会触发 result 改变，从而刷新 dom 上的显示结果。</p>
+<h2 id="其他">其他</h2>
+<p>其他杂七杂八的东西比较多，拎一些踩过的坑记录一下。</p>
+<h3 id="打包">打包</h3>
+<p>Electron 虽然提供了简单快捷的跨平台开发方案，但是并没有简单快捷的跨平台打包方案。从 《<a href="http://electron.atom.io/docs/tutorial/application-packaging/">Electron application packaging</a>》 来看，打包过程比较繁琐，反正我是划了5次触摸板才滚到了底部。</p>
+<p>所幸的是， <a href="https://github.com/electron-userland/electron-packager">electron-packager</a> 帮我们解决了这个问题，这个工具已经包含在了前面的了 <a href="https://github.com/bradstewart/electron-boilerplate-vue">electron-boilerplate-vue</a> 里，现在打包只需以下命令即可：</p>
+<pre><code class="language-js">&quot;package&quot;: &quot;node build/package.js&quot;,
+&quot;package:osx&quot;: &quot;node build/package.js --platform=darwin&quot;,
+&quot;package:mas&quot;: &quot;node build/package.js --platform=mas&quot;,
+&quot;package:win&quot;: &quot;node build/package.js --platform=win32&quot;,
+&quot;package:linux&quot;: &quot;node build/package.js --platform=linux&quot;,
+&quot;release&quot;: &quot;npm run build &amp;&amp; npm run package&quot;,
+</code></pre>
+<p>签名也很容易，只要加上 <code>osx-sign</code> 的选项即可：</p>
+<pre><code class="language-js">if (packagerConfig.platform === 'mas') {
+  Object.assign(packagerConfig, {
+    'app-bundle-id': appManifest.bundleId,
+    'osx-sign': true,
+  })
+}
+</code></pre>
+<p>打包之后的结果是 <code>.app</code> 文件，如果需要上传到 Mac App Store 可以用 <a href="https://github.com/electron-userland/electron-osx-sign">electron-osx-flat</a> 将其转化成 <code>.pkg</code> 文件，然后通过 Xcode 里的 Application Loader 上传。</p>
+<p>然而，并没那么省心。。。打包之后提交审核，审核人员说你这应用打开白屏了。我自己打开一看还真是。。。感觉是 osx-sign 导致的问题，于是就不打 mas 的包了，还是通过手动写脚本的方式签名，参照 <a href="http://electron.atom.io/docs/tutorial/mac-app-store-submission-guide/">Mac App Store Submission Guide</a> 即可。</p>
+<h3 id="图标">图标</h3>
+<p>图标问题也卡了几个小时，主要是因为提交到 iTunes 之后提示说，需要提供 512 和 512@2 的 icns 文件，而打包结果里没找着。</p>
+<p>这就奇怪了，我明明放进去了为什么它找不到呢？后来我仔细看了下我的 icns 文件发现是 png 转 icns 的时候出了问题。</p>
+<p>在我使用 <a href="https://iconverticons.com/online/">iconvert icons</a> 的时候，导出的图片没有 1024*1024 的图：</p>
+<figure data-type="image" tabindex="3"><img src="http://ww2.sinaimg.cn/large/61d238c7gw1f4swqp6vdzj20jh0ci0u8.jpg" alt="" loading="lazy"></figure>
+<p>而在我使用 <a href="https://cloudconvert.com/png-to-icns">cloudconvert</a> 的时候，则只有 1024*1024 的图：</p>
+<figure data-type="image" tabindex="4"><img src="http://ww4.sinaimg.cn/large/61d238c7gw1f4swq503gxj20f708xmxr.jpg" alt="" loading="lazy"></figure>
+<p>嗯？！</p>
+<figure data-type="image" tabindex="5"><img src="http://ww4.sinaimg.cn/large/61d238c7gw1f4swnt4hacj20cn08c0t1.jpg" alt="" loading="lazy"></figure>
+<p>这不是坑爹吗！</p>
+<p>于是只好手动撸，刚好电脑里有以前做 iOS Icon 时装的 <a href="https://itunes.apple.com/cn/app/prepo/id476533227">prepo</a> ，可以将 1024 的 png 导出各个尺寸的图片并且放到 iconset 里：</p>
+<figure data-type="image" tabindex="6"><img src="http://ww3.sinaimg.cn/large/61d238c7gw1f4swtzl2k3j20ar07n0tx.jpg" alt="" loading="lazy"></figure>
+<p>然后只要用一行自带的命令就能将它们打包成 icns 文件：</p>
+<pre><code>iconutil -c icns icon.iconset
+</code></pre>
+<p>大功告成。</p>
+<h2 id="小结">小结</h2>
+<p>因为最近忙着搬家的事情，这篇小结就暂时写到这里。</p>
+<p>总的来看， Webpack+Vue+MDL+Electron 开发跨平台应用是一种很不错的开发体验。</p>
+<p>虽然一路踩了很多坑，但是在应用上架的那个时刻。</p>
+<p>我只想说。</p>
+<p>Excited!</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E8%83%8C%E6%99%AF">背景</a></li>
+<li><a href="#%E8%BF%87%E7%A8%8B">过程</a>
+<ul>
+<li><a href="#%E5%9F%BA%E7%A1%80%E9%A1%B9%E7%9B%AE">基础项目</a></li>
+<li><a href="#%E5%89%8D%E7%AB%AF%E9%A1%B5%E9%9D%A2">前端页面</a></li>
+<li><a href="#%E4%B8%9A%E5%8A%A1%E5%8A%9F%E8%83%BD">业务功能</a></li>
+</ul>
+</li>
+<li><a href="#%E5%85%B6%E4%BB%96">其他</a>
+<ul>
+<li><a href="#%E6%89%93%E5%8C%85">打包</a></li>
+<li><a href="#%E5%9B%BE%E6%A0%87">图标</a></li>
+</ul>
+</li>
+<li><a href="#%E5%B0%8F%E7%BB%93">小结</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/sharing-and-copyright/">
+              <h3 class="post-title">
+                分享，请不要忽视了作者的版权
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

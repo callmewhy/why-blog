@@ -1,0 +1,606 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>API Blueprint 指导手册 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              API Blueprint 指导手册
+            </h2>
+            <div class="post-info">
+              <span>
+                2014-06-05
+              </span>
+              <span>
+                14 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/5AHHXIh4qj/" class="post-tag">
+                  # Web
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>欢迎来到<em>API Blueprint</em>指导手册！</p>
+<p><a href="http://apiary.io/"><em>API Blueprint</em></a>是一套<em>API</em>描述标准，和<em>Markdown</em>一样，属于一种标记语言，可以把标记文稿转换成漂亮的接口文档。</p>
+<p>在这里我们假设开发一个关于<em>Gist</em>的接口文档：<em><strong>Gist Fox API</strong></em>，以此来学习<em>API Blueprint</em>的全部核心特性。</p>
+<p><em>Gist</em>是一个粘贴工具，用户把内容粘贴后会得到一个URL，通过这个URL可以访问先前粘帖的文本，方便地共享文本或者代码。具体可以参考<em>Github</em>提供的<a href="https://gist.github.com/"><strong>GitHub Gists</strong></a>服务。</p>
+<p>我们将在我们的<em>API</em>中提供如下功能：</p>
+<ul>
+<li>列出所有的<em>Gist</em></li>
+<li>搜索一个<em>Gist</em></li>
+<li>创建一个<em>Gist</em></li>
+<li>编辑已有的<em>Gist</em></li>
+<li>给一个<em>Gist</em>星标</li>
+<li>给一个<em>Gist</em>取消星标</li>
+<li>检查一个<em>Gist</em>是否星标</li>
+<li>删除一个<em>Gist</em></li>
+</ul>
+<h2 id="gist-fox-api">Gist Fox API</h2>
+<p>刚开始的时候，我们的<em>Gist Fox API</em>是这样的：</p>
+<pre><code>FORMAT: 1A
+
+# Gist Fox API
+Gist Fox API is a **pastes service** similar to [GitHub's Gist][http://gist.github.com].
+</code></pre>
+<p>我们刚刚做了什么？接下来让我们一行一行的来分析一下。</p>
+<ul>
+<li>元数据<em>Metadata</em></li>
+</ul>
+<pre><code>FORMAT: 1A
+</code></pre>
+<p>你需要使用一个元数据(<em>metadata</em>)，来明确指定<em>API Blueprint</em>的版本。<br>
+比如在上述文件中我们使用的版本号是***1A***。</p>
+<ul>
+<li>接口名称<em>API Name</em></li>
+</ul>
+<pre><code># Gist Fox API
+</code></pre>
+<p>每一个好的<em>API</em>都应该有一个名字，我们的API也是这样：<em><strong>Gist Fox API</strong></em>，使用<em>Markdown</em>中的<code>#</code>标记表示<em>API</em>的名字。</p>
+<ul>
+<li>接口描述<em>API Description</em></li>
+</ul>
+<pre><code>Gist Fox API is a **pastes service** similar to [GitHub's Gist][http://gist.github.com].
+</code></pre>
+<p>在<em>API</em>的名字后面可以用<em>Markdown</em>的语法加上一些<em>API</em>的解释。</p>
+<h2 id="markdown">Markdown</h2>
+<p>如果要写一个<em>blueprint</em>文档，你唯一需要的就是一个文本编辑器，最好是一个<em>Markdown</em>的文本编辑器，<em>VI</em>和<em>Byword</em>都是不错的选择，在线的文本编辑器也没有任何问题。你甚至可以直接在<em>Github</em>的仓库里编辑<em>bluePrint</em>格式的文档。</p>
+<p>如果你完全不知道<em>Markdown</em>，现在是一个学习的好机会。只需要点击<a href="http://markdowntutorial.com/"><em>Markdown Tutorial</em></a>就可以开始学习。学完了可别忘了回来看看，我们这里也很精彩！</p>
+<p>如果你需要查阅<em>Markdown</em>的语法可以直接点击<a href="http://daringfireball.net/projects/markdown/syntax"><em>Gruber's Original</em></a>查看。</p>
+<h2 id="first-resource">First Resource</h2>
+<p>我们第一个要写的内容是根目录(<em>root</em>)，我们<em>API</em>的入口可以这样定义：</p>
+<pre><code># Gist Fox API Root [/]
+Gist Fox API entry point.
+
+This resource does not have any attributes. Instead it offers the initial API affordances in the form of the HTTP Link header and HAL links.
+
+## Retrieve Entry Point [GET]
+
++ Response 200 (application/hal+json)
+    + Headers
+
+            Link: &lt;http:/api.gistfox.com/&gt;;rel=&quot;self&quot;,&lt;http:/api.gistfox.com/gists&gt;;rel=&quot;gists&quot;
+
+    + Body
+
+            {
+                &quot;_links&quot;: {
+                    &quot;self&quot;: { &quot;href&quot;: &quot;/&quot; },
+                    &quot;gists&quot;: { &quot;href&quot;: &quot;/gists?{since}&quot;, &quot;templated&quot;: true }
+                }
+            }
+</code></pre>
+<p>这些奇奇怪怪的内容是什么呢？让我们挨个来看一看。</p>
+<ul>
+<li>资源<em>Resource</em></li>
+</ul>
+<pre><code># Gist Fox API Root [/]
+</code></pre>
+<p>在<em>Blueprint</em>里，所有的数据信息都是资源(<em>resource</em>)，比如用户、视频、文章。<br>
+<em>resource</em>的定义以<code>#</code>开始，中间是<em>resource</em>的名称，最后是用中括号包围的路径(<em>URI</em>)，需要注意的是<em>URI</em>是放在<code>[</code> <code>]</code>中的。<em>URI</em>是相对路径，在这里它就是个<code>/</code>。</p>
+<ul>
+<li>资源描述<em>Resource Description</em></li>
+</ul>
+<pre><code># Gist Fox API Root [/]
+Gist Fox API entry point.
+
+This resource does not have any attributes. Instead it offers the initial API affordances in the form of the HTTP Link header and haveL links.
+</code></pre>
+<p>我们可以用<em>Markdown</em>的语法在<em>resource</em>名称的后面加上包含<em>API</em>名称的说明。<br>
+在这里<code>Gist Fox API</code>是<em>API</em>名称，<code>entry point</code>是说明。</p>
+<ul>
+<li>行为<em>Action</em></li>
+</ul>
+<pre><code>## Retrieve Entry Point [GET]
+</code></pre>
+<p>行为<em>action</em>是一个<em>HTTP</em>请求的属性之一，在发送请求的时候会随数据一起发送到服务器。<br>
+我们在这里定义了一个<em>action</em>叫做<em>Retrieve Entry Point (索引入口)</em>，它是一个<em>GET</em>类型的请求。我们可以在后面加上一些描述，但是因为这个<em>action</em>的名字(<em>Retrieve Entry Point</em>)已经把这个行为解释的很清楚了，所以我们就跳过了这一步。<br>
+一般来说常见的<em>action</em>，包括<em>GET</em>和<em>POST</em>两种。在Blueprint有以下四种<em>action</em>：<br>
+- GET ： 获取数据<br>
+- POST ： 添加数据<br>
+- PUT ： 更新数据<br>
+- DELETE ： 删除数据</p>
+<ul>
+<li>回应<em>Response</em></li>
+</ul>
+<pre><code>+ Response 200
+</code></pre>
+<p>在<em>API Blueprint</em>中一个<em>action</em>应该至少包括一个回应(<em>response</em>)。<em>response</em>是指当服务器收到一个请求(request)时候的响应。<br>
+在<em>response</em>中应该有一个状态码<a href="https://github.com/for-GET/know-your-http-well/blob/master/status-codes.md"><em>status code</em></a>和数据<a href="https://github.com/apiaryio/api-blueprint/blob/master/Glossary%20of%20Terms.md#payload"><em>payload</em></a>。<br>
+在这里我们定义最常见的状态码：<em>200</em>，表示请求成功。</p>
+<ul>
+<li>响应负载<em>Response Payload</em></li>
+</ul>
+<pre><code>+ Response 200 (application/hal+json)
+    + Headers
+
+            Link: &lt;http:/api.gistfox.com/&gt;;rel=&quot;self&quot;,&lt;http:/api.gistfox.com/gists&gt;;rel=&quot;gists&quot;
+
+    + Body
+
+            {
+                &quot;_links&quot;: {
+                    &quot;self&quot;: { &quot;href&quot;: &quot;/&quot; },
+                    &quot;gists&quot;: { &quot;href&quot;: &quot;/gists?{since}&quot;, &quot;templated&quot;: true }
+                }
+            }
+</code></pre>
+<p>一个响应(response)经常包含一些负载(<em>payload</em>)。一个负载(<em>payload</em>)通常包含负载体(<em>body</em>)和负载头(<em>header</em>)两个部分。<br>
+在这个例子中，我们采用<a href="https://github.com/mikekelly/hal_specification"><em>application/hal+json</em></a>类型作为返回数据的类型。</p>
+<h2 id="complex-resource">Complex Resource</h2>
+<p>有了前面的根路径作为入口点，我们可以继续后面的内容。既然我们的<em>API</em>是围绕<em>Gist</em>展开的，那就让我们来给<em>Gist</em>一个明确的定义，以及一个用来获取它的<em>action</em>：</p>
+<pre><code># Group Gist
+Gist-related resources of *Gist Fox API*.
+
+## Gist [/gists/{id}]
+A single Gist object. 
+The Gist resource is the central resource in the Gist Fox API. It represents one paste - a single text note.
+
+The Gist resource has the following attributes:
+
+- id
+- created_at
+- description
+- content
+
+The states *id* and *created_at* are assigned by the Gist Fox API at the moment of creation.
+
+
++ Parameters
+    + id (string) ... ID of the Gist in the form of a hash.
+
++ Model (application/hal+json)
+
+    HAL+JSON representation of Gist Resource. In addition to representing its state in the JSON form it offers affordances in the form of the HTTP Link header and HAL links.
+
+    + Headers
+
+            Link: &lt;http:/api.gistfox.com/gists/42&gt;;rel=&quot;self&quot;, &lt;http:/api.gistfox.com/gists/42/star&gt;;rel=&quot;star&quot;
+
+    + Body
+
+            {
+                &quot;_links&quot;: {
+                    &quot;self&quot;: { &quot;href&quot;: &quot;/gists/42&quot; },
+                    &quot;star&quot;: { &quot;href&quot;: &quot;/gists/42/star&quot; },
+                },
+                &quot;id&quot;: &quot;42&quot;,
+                &quot;created_at&quot;: &quot;2014-04-14T02:15:15Z&quot;,
+                &quot;description&quot;: &quot;Description of Gist&quot;,
+                &quot;content&quot;: &quot;String contents&quot;
+            }
+
+### Retrieve a Single Gist [GET]
++ Response 200
+
+    [Gist][]
+</code></pre>
+<p>我们定义了一个和<em>Gist</em>相关的组<em>Group</em>，我们也定义了一个<em>Gist resource</em>以及它的模型阐述，还有一个能够获取<em>Gist</em>的<em>action</em>。</p>
+<p>让我们来把它拆散了看一下。</p>
+<ul>
+<li>资源分组<em>Groups of Resources</em></li>
+</ul>
+<pre><code># Group Gist
+Gist-related resources of *Gist Fox API*.
+</code></pre>
+<p>我们的<em>API</em>最终会提供很多的资源，所以我们需要将相关的内容归类并分组。现在我们先简单的把所有的资源都归类在一个<em>Gist</em>组中。<br>
+不同的分组可以通过在开头的关键字***Group***区别。</p>
+<ul>
+<li>URI模板<em>URI Template</em></li>
+</ul>
+<pre><code>## Gist [/gists/{id}]
+</code></pre>
+<p>在<em>URI</em>中的变量需要遵守<a href="https://github.com/apiaryio/api-blueprint/blob/master/Glossary%20of%20Terms.md#uri-template"><em>URI</em>的模板格式</a>，在这个例子中，<em>Gist</em>的编号(<em>id</em>)在<em>URI</em>中就是<code>{id}</code>。</p>
+<ul>
+<li>URI参数<em>URI Parameters</em></li>
+</ul>
+<pre><code>+ Parameters
+    + id (string) ... ID of the Gist in the form of a hash.
+</code></pre>
+<p>这个<em>id</em>变量是这个<em>resource</em>中的一个参数(<em>parameter</em>)，我们定义它的类型为<em>string</em>，并且在后面加上一些解释。</p>
+<ul>
+<li>资源模型<em>Resource Model</em></li>
+</ul>
+<pre><code>+ Model (application/hal+json)
+
+    HAL+JSON representation of Gist Resource. In addition to representing its state in the JSON form it offers affordances in the form of the HTTP Link header and HAL links.
+
+    + Headers
+
+            Link: &lt;http:/api.gistfox.com/gists/42&gt;;rel=&quot;self&quot;, &lt;http:/api.gistfox.com/gists/42/star&gt;;rel=&quot;star&quot;
+
+    + Body
+
+            {
+                &quot;_links&quot;: {
+                    &quot;self&quot;: { &quot;href&quot;: &quot;/gists/42&quot; },
+                    &quot;star&quot;: { &quot;href&quot;: &quot;/gists/42/star&quot; },
+                },
+                &quot;id&quot;: &quot;42&quot;,
+                &quot;created_at&quot;: &quot;2014-04-14T02:15:15Z&quot;,
+                &quot;description&quot;: &quot;Description of Gist&quot;,
+                &quot;content&quot;: &quot;String contents&quot;
+            }
+</code></pre>
+<p>资源模型<em>Resource Model</em>是前面定义的资源的一个样例，它可以在任何一个<em>request</em>或者<em>response</em>需要的位置引用，一个资源模型有着和前面所说的<em>payload</em>一模一样的结构。<br>
+在前面的例子中，还包含了一个额外的描述，也就是在<code>+ Model</code>和<code>+ Headers</code>中间的那部分内容。</p>
+<ul>
+<li>引用资源模型<em>Referring the Resource Model</em></li>
+</ul>
+<pre><code>### Retrieve a Single Gist [GET]
++ Response 200
+
+    [Gist][]
+</code></pre>
+<p>有了资源模型(<em>Gist Resource Model</em>)，定义一个获取<em>Gist</em>的<em>action</em>就很容易了，直接写上<code>[Gist][]</code>就可以返回一个<em>Gist</em>资源。</p>
+<h2 id="modifying-a-resource">Modifying a Resource</h2>
+<p>接下来我们来写一个修改<em>Gist</em>的行为(<em>action</em>)：<em>Edit a Gist</em>，和删除<em>Gist</em>的行为(<em>action</em>)：<em>Delete a Gist</em>。</p>
+<pre><code>### Edit a Gist [PATCH]
+To update a Gist send a JSON with updated value for one or more of the Gist resource attributes. All attributes values (states) from the previous version of this Gist are carried over by default if not included in the hash.
+
++ Request (application/json)
+
+        {
+            &quot;content&quot;: &quot;Updated file contents&quot;
+        }
+
++ Response 200
+
+    [Gist][]
+
+### Delete a Gist [DELETE]
++ Response 204
+</code></pre>
+<p>我们来看一看这个<em>payload</em>中的新内容：</p>
+<ul>
+<li>请求中的负载<em>Request and its Payload</em></li>
+</ul>
+<pre><code>+ Request (application/json)
+
+        {
+            &quot;content&quot;: &quot;Updated file contents&quot;
+        }
+</code></pre>
+<p>我们需要接受一些输入来修改资源(<em>Gist resource</em>)，这些输入是访问请求(<em>HTTP Request</em>)的一部分，在上面的例子中定义了这样的一个请求以及负载<em>payload</em>的内容。</p>
+<ul>
+<li>空负载<em>Empty Payload</em></li>
+</ul>
+<pre><code>### Delete a Gist [DELETE]
++ Response 204
+</code></pre>
+<p>在<em>Delete a Gist</em>这样一个删除的操作中，我们的返回内容只包含一个<em>204</em>的状态码而没有其他内容，这个<em>204</em>的状态码表示服务器成功执行了这个请求。</p>
+<h2 id="collection-resource">Collection Resource</h2>
+<p>既然已经有了单个资源的接口，接下来我们来定义一个集合(<em>Gists Collection</em>)接口：</p>
+<pre><code>## Gists Collection [/gists{?since}]
+Collection of all Gists.
+
+The Gist Collection resource has the following attribute:
+
+- total
+
+In addition it **embeds** *Gist Resources* in the Gist Fox API.
+
+
++ Model (application/hal+json)
+
+    HAL+JSON representation of Gist Collection Resource. The Gist resources in collections are embedded. Note the embedded Gists resource are incomplete representations of the Gist in question. Use the respective Gist link to retrieve its full representation.
+
+    + Headers
+
+            Link: &lt;http:/api.gistfox.com/gists&gt;;rel=&quot;self&quot;
+
+    + Body
+
+            {
+                &quot;_links&quot;: {
+                    &quot;self&quot;: { &quot;href&quot;: &quot;/gists&quot; }
+                },
+                &quot;_embedded&quot;: {
+                    &quot;gists&quot;: [
+                        {
+                            &quot;_links&quot; : {
+                                &quot;self&quot;: { &quot;href&quot;: &quot;/gists/42&quot; }
+                            },
+                            &quot;id&quot;: &quot;42&quot;,
+                            &quot;created_at&quot;: &quot;2014-04-14T02:15:15Z&quot;,
+                            &quot;description&quot;: &quot;Description of Gist&quot;
+                        }
+                    ]
+                },
+                &quot;total&quot;: 1
+            }
+
+### List All Gists [GET]
++ Parameters
+    + since (optional, string) ... Timestamp in ISO 8601 format: `YYYY-MM-DDTHH:MM:SSZ` Only Gists updated at or after this time are returned.
+
++ Response 200
+
+    [Gists Collection][]
+
+### Create a Gist [POST]
+To create a new Gist simply provide a JSON hash of the *description* and *content* attributes for the new Gist.
+
++ Request (application/json)
+
+        {
+            &quot;description&quot;: &quot;Description of Gist&quot;,
+            &quot;content&quot;: &quot;String content&quot;
+        }
+
++ Response 201 (application/hal+json)
+
+    [Gist][]
+</code></pre>
+<p>在这里你应该基本都熟悉这些接口了，除了其中的一个查询的参数：<em>since</em>。</p>
+<ul>
+<li>查询参数<em>Query Parameters</em></li>
+</ul>
+<pre><code>## Gists Collection [/gists{?since}]
+</code></pre>
+<p>作为<em>URI</em>的参数，查询参数的定义必须符合<a href="https://github.com/apiaryio/api-blueprint/blob/master/Glossary%20of%20Terms.md#uri-template"><em>URI</em>模板格式</a>，而这里有所不同的是，查询参数里有一个问号，并且它总在<em>URI</em>的结尾处。</p>
+<ul>
+<li><em>Action-specific Query Parameters</em></li>
+</ul>
+<pre><code>### List All Gists [GET]
++ Parameters
+    + since (optional, string) ... Timestamp in ISO 8601 format: `YYYY-MM-DDTHH:MM:SSZ` Only Gists updated at or after this time are returned.
+</code></pre>
+<p>通常查询的参数是针对诸多行为(<em>action</em>)中的某一个，所以我们只需要考虑和这个<em>action</em>相关的内容.</p>
+<h2 id="subsequent-resource">Subsequent Resource</h2>
+<p>最后一个缺失的部分就是星标资源的功能了，利用前面所学的知识，我们可以这样定义：</p>
+<pre><code>## Star [/gists/{id}/star]
+Star resource represents a Gist starred status.
+
+The Star resource has the following attribute:
+
+- starred
+
+
++ Parameters
+
+    + id (string) ... ID of the gist in the form of a hash
+
++ Model (application/hal+json)
+
+    HAL+JSON representation of Star Resource.
+
+    + Headers
+
+            Link: &lt;http:/api.gistfox.com/gists/42/star&gt;;rel=&quot;self&quot;
+
+    + Body
+
+            {
+                &quot;_links&quot;: {
+                    &quot;self&quot;: { &quot;href&quot;: &quot;/gists/42/star&quot; },
+                },
+                &quot;starred&quot;: true
+            }
+
+### Star a Gist [PUT]
++ Response 204
+
+### Unstar a Gist [DELETE]
++ Response 204
+
+### Check if a Gist is Starred [GET]
++ Response 200
+
+    [Star][]
+</code></pre>
+<h2 id="complete-blueprint">Complete Blueprint</h2>
+<p>你可以在<em>API Blueprint</em>的<a href="https://github.com/apiaryio/api-blueprint/tree/master/examples">示例源码库</a>，找到完整的<a href="https://raw.githubusercontent.com/apiaryio/api-blueprint/master/examples/Gist%20Fox%20API.md"><em>Gist Fox API</em></a>。</p>
+<h2 id="api-blueprint-tools">API Blueprint Tools</h2>
+<p>随着<em>Gist Fox Blueprint</em>接口文档的完工，接下来就应该让它发挥作用了。可以在<em>Github</em>中查看<a href="https://github.com/apiaryio/api-blueprint/blob/master/examples/Gist%20Fox%20API.md">渲染结果</a>或者在<em>Apiary</em>中查看<a href="http://docs.gistfoxapi.apiary.io/">渲染结果</a>。可以前往<a href="http://apiblueprint.org/"><em>apiblueprint.org</em></a>的<a href="http://apiblueprint.org/#tooling"><em>Tooling Section</em></a>寻找更多的相关工具包。</p>
+<h2 id="thanks">Thanks</h2>
+<p>感谢董花花的勘误工作<sup>_</sup></p>
+<hr>
+<p>附录：</p>
+<ul>
+<li><a href="http://apiary.io/blueprint">英文原版</a></li>
+<li><a href="http://app.apiary.io/">Apiary官网地址</a></li>
+<li><a href="http://apiblueprint.org/">Blueprint官网地址</a></li>
+<li><a href="https://raw.githubusercontent.com/apiaryio/api-blueprint/master/examples/Gist%20Fox%20API.md">案例<em>Gist Fox API</em>的源码</a></li>
+<li><a href="http://docs.gistfoxapi.apiary.io/">案例<em>Gist Fox API</em>的文档</a></li>
+<li><a href="https://github.com/apiaryio/api-blueprint/tree/master/examples">其他<em>API Blueprint的案例</em></a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#gist-fox-api">Gist Fox API</a></li>
+<li><a href="#markdown">Markdown</a></li>
+<li><a href="#first-resource">First Resource</a></li>
+<li><a href="#complex-resource">Complex Resource</a></li>
+<li><a href="#modifying-a-resource">Modifying a Resource</a></li>
+<li><a href="#collection-resource">Collection Resource</a></li>
+<li><a href="#subsequent-resource">Subsequent Resource</a></li>
+<li><a href="#complete-blueprint">Complete Blueprint</a></li>
+<li><a href="#api-blueprint-tools">API Blueprint Tools</a></li>
+<li><a href="#thanks">Thanks</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

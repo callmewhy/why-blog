@@ -1,0 +1,342 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CALayers 教程：初步认识 CALayer | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              CALayers 教程：初步认识 CALayer
+            </h2>
+            <div class="post-info">
+              <span>
+                2014-10-15
+              </span>
+              <span>
+                9 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/datMGg0r-6V/" class="post-tag">
+                  # iOS
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>如果你是一个 iOS 开发者，对于 <code>UIView</code> 肯定不会陌生 – <code>UIButton</code>、<code>UITextArea</code>、<code>UIWebView</code>，这些都是 UIView 的子类。</p>
+<p>但是你可能还不知道 <code>UIView</code> 是基于 <code>CALayer</code> 构建的！至少在很长的一段时间里我并不知道。</p>
+<p>懂点 <code>CALayer</code> 的内容还是很不错的，因为你可以用它来实现一些不错的视觉效果，而且他们对于理解 <code>Core Animation</code> 很有帮助。</p>
+<p>在这篇 <code>CALayer</code> 的教程中，我们将创建一个简单的应用，新建一个 layer 并对它的外观进行各种改动，学习 <code>CALayer</code> 的基本使用方法。</p>
+<p>友情提示， <code>CALayer</code> 的系列教程是针对有一定 iOS 开发基础的同学们的，如果你是一个完全的新手，可以先看看<a href="http://www.raywenderlich.com/?p=1797">这个系列</a>的基础教程。</p>
+<p>好的，让我们开始吧！</p>
+<h2 id="calayer-是什么">CALayer 是什么</h2>
+<p>简单来说，<code>CALayer</code> 代表的就是屏幕上的一片矩形区域。</p>
+<p>“嗨哥们儿等下，”你可能要说，“那不是 <code>UIView</code> 干的事情吗！”啊哈是的没错，但是真相是：每个 <code>UIView</code> 都包含了一个 <code>Root Layer</code> 。你可以用下面这段代码获取到这个根图层：</p>
+<pre><code class="language-objc">    CALayer *myLayer = myView.layer;
+</code></pre>
+<p><code>CALayer</code> 有很多很多的属性，想必是极好的，你可以通过设置它的属性实现各种视觉效果，比如：</p>
+<ul>
+<li>调整图层的大小和位置</li>
+<li>调整图层的背景颜色</li>
+<li>修改图层的内容 (一个图片，或者是用 <a href="http://www.raywenderlich.com/tag/core-graphics"><code>CoreGraphics</code></a> 绘制的东西)</li>
+<li>图层是否圆角</li>
+<li>添加黑色投影</li>
+<li>添加描边的边框</li>
+<li>还有其他各种玩法！</li>
+</ul>
+<p>你可以用这些属性创建一些视觉效果。比如，你想要把一张图片放在一个白色的边框里，然后再加上个黑色的阴影。不用 PS ，也不用一大串 <a href="http://www.raywenderlich.com/tag/core-graphics"><code>CoreImage</code></a> 的代码，只需要这么一小段代码，你就可以用 <a href="http://tumbljack.com/post/506095243/subtle-effects-with-calayer"><code>CALayer</code></a> 实现！</p>
+<p>啊哈补充一点， <code>CALayer</code> 的属性绝大多数都是可以做成动画效果的。举个例子，你可以让你的图像显示圆角，然后点击一个按钮，圆角又会恢复到原来方角的样子。好好利用这个特性可以做出很多精致的效果！</p>
+<p>你可以直接使用 <code>CALayer</code> ，你也可以用它的子类：CAGradientLayer、CATextLayer、CAShapeLayer等等。 <code>UIView</code> 默认的图层类是原始的 <code>CALayer</code> 类。</p>
+<h2 id="开始动手">开始动手</h2>
+<p>没什么比自己动手更好的学习方法了！打开你的 Xcode ，新建一个名为 LayerFun 的项目，项目类型是 Single View Application，这样一开始我们就有了一个空白的 <code>UIView</code> 。</p>
+<p>现在你可以自己动手改一改这个 UIView 中 layer 的属性了：</p>
+<pre><code class="language-swift">    override func viewWillAppear() {
+        self.view.layer.backgroundColor = UIColor.orangeColor().CGColor
+        self.view.layer.cornerRadius = 20.0
+        self.view.layer.frame = CGRectInset(self.view.layer.frame, 20, 20)
+    }
+</code></pre>
+<p>让我们一点一点分析一下上面的代码：</p>
+<ul>
+<li>你可以用 <code>self.view.layer</code> 获取到 <code>UIView</code> 的图层的指针。你可以通过 <code>self.view</code> 获取到当前 ViewController  的根视图，你可以通过 <code>view.layer</code> 获取到视图的默认图层。默认情况下这个图层的类型是 <code>CALayer</code> (不是子类)。</li>
+<li>接下来我们把背景颜色设置成了橘黄色。注意， <code>backgroundColor</code> 这个属性实际上是一个 <code>CGColor</code> 的类型，不过把 <code>UIColor</code> 转 <code>CGColor</code> 很容易。</li>
+<li>然后我们通过设置 <code>cornerRadius</code> 给图层加了圆角效果。这个值是圆角效果的圆的半径，在这里我们把它设置成了20。</li>
+<li>最后我们通过 <code>CGRectInset</code> 稍稍缩放一下图层的边框，这样可以更方便的展示效果。<code>CGRectInset</code> 函数有两个参数，一个是边框，另一个是缩放的值 (x方向 和 y方向) ，并且返回一个新的边框。</li>
+</ul>
+<p>运行一下会发现屏幕中间出现一个橘黄色的长方形：</p>
+<figure data-type="image" tabindex="1"><img src="http://cdn1.raywenderlich.com/wp-content/uploads/2010/12/Simple-CALayer.jpg" alt="" loading="lazy"></figure>
+<h2 id="calayers-和-sublayers">CALayers 和 Sublayers</h2>
+<p>就像 UIView 有很多 subview 一样， CALayer 也有 sublayer 。你可以很容易的创建一个新的 CALayer ：</p>
+<pre><code class="language-swift">    var sublayer = CALayer()
+</code></pre>
+<p>创建了一个新的 CALayer 之后，你可以设置它的任何属性，不过有一个是必须设置的，那就是它的 frame (或者 bounds/position) 。毕竟，所有的图层都要知道自己该有多大 (或者自己该在哪里) 。当你设置了这些基本的属性之后，你可以通过下面的代码把它加到另一个 layer 里：</p>
+<pre><code class="language-swift">    self.view.layer.addSublayer(sublayer)
+</code></pre>
+<p>你可以给我们的视图的图层添加一个图层，添加如下代码：</p>
+<pre><code class="language-swift">    override func viewWillAppear(animated: Bool) {
+
+        self.view.layer.backgroundColor = UIColor.orangeColor().CGColor
+        self.view.layer.cornerRadius = 20.0
+        self.view.layer.frame = CGRectInset(self.view.layer.frame, 20, 20)
+
+        var sublayer = CALayer()
+        sublayer.backgroundColor = UIColor.blueColor().CGColor;
+        sublayer.shadowOffset = CGSizeMake(0, 3);
+        sublayer.shadowRadius = 5.0;
+        sublayer.shadowColor = UIColor.blackColor().CGColor;
+        sublayer.shadowOpacity = 0.8;
+        sublayer.frame = CGRectMake(30, 30, 128, 192);
+        self.view.layer.addSublayer(sublayer)
+    }
+</code></pre>
+<p>上面的代码创建了一个新的图层，并且设置了一些属性 - 包括一些设置阴影的代码，你以前可能没见过。可以看到这几行代码就添加了阴影效果，十分简单。</p>
+<p>运行的效果是这个样子的：</p>
+<figure data-type="image" tabindex="2"><img src="http://cdn3.raywenderlich.com/wp-content/uploads/2010/12/CALayer-Sublayer-with-Shadow.jpg" alt="" loading="lazy"></figure>
+<h2 id="设置-calayer-的图片内容">设置 CALayer 的图片内容</h2>
+<p><code>CALayer</code> 最酷的事情之一就是它可以包含除了纯色之外的东西，比如它里面可以放上一张图片。</p>
+<p>那么接下来让我们给这个图层换上图片，你可以在<a href="http://d1xzuxjlafny7l.cloudfront.net/downloads/BattleMapSplashScreen.jpg">这里</a> 下载一个示例图片，当然也可以自己弄一张图片做测试。</p>
+<p>把图片加到项目中，然后在把 sublayer 加到图层之前加上如下代码：</p>
+<pre><code class="language-swift">    sublayer.contents = UIImage(named: &quot;BattleMapSplashScreen&quot;)?.CGImage
+    sublayer.borderColor = UIColor.blackColor().CGColor
+    sublayer.borderWidth = 2.0
+</code></pre>
+<p>上面的代码将图层的 <code>contents</code> 设置成了一张图片 (代码写的十分清晰) ，然后又设置了 <code>borderColor</code> 和 <code>borderWidth</code> ，添加了一个黑色的边框。</p>
+<p>运行一下，你可以看到原本蓝色的背景以及不复存在，取而代之的是我们设置的图片的内容：</p>
+<figure data-type="image" tabindex="3"><img src="http://cdn4.raywenderlich.com/wp-content/uploads/2010/12/CALayer-with-Image-Content.jpg" alt="" loading="lazy"></figure>
+<h2 id="关于设置圆角和图片">关于设置圆角和图片</h2>
+<p>设置圆角看起来非常的酷，但是如果你设置了 contents 为图片，那么图片会绘制在圆角的外面，导致圆角的设置失败。解决的方案是设置 <code>.masksToBounds</code> 属性为 <code>true</code> 。不过你如果这样设置的话，投影又不显示了，因为他们都被遮盖了！</p>
+<p>我发现了一种折中的解决方案：创建两个图层。外围的图层是一个纯色的 <code>CALayer</code> 用来展示投影，里面的图层则是有圆角的图片图层：</p>
+<pre><code class="language-swift">    var sublayer = CALayer()
+    sublayer.backgroundColor = UIColor.blueColor().CGColor
+    sublayer.shadowOffset = CGSizeMake(0, 3)
+    sublayer.shadowRadius = 5.0
+    sublayer.shadowColor = UIColor.blackColor().CGColor
+    sublayer.shadowOpacity = 0.8
+    sublayer.frame = CGRectMake(30, 30, 128, 192)
+    sublayer.borderColor = UIColor.blackColor().CGColor
+    sublayer.borderWidth = 2.0
+    sublayer.cornerRadius = 10.0
+    self.view.layer.addSublayer(sublayer)
+
+    var imageLayer = CALayer()
+    imageLayer.frame = sublayer.bounds
+    imageLayer.cornerRadius = 10.0
+    imageLayer.contents = UIImage(named:&quot;BattleMapSplashScreen.jpg&quot;)?.CGImage
+    imageLayer.masksToBounds = true
+    sublayer.addSublayer(imageLayer)
+</code></pre>
+<p>运行的效果是这样的，既有投影，又有图片：</p>
+<figure data-type="image" tabindex="4"><img src="http://cdn3.raywenderlich.com/wp-content/uploads/2010/12/CALayer-with-Image-Content-and-Corner-Radius.jpg" alt="" loading="lazy"></figure>
+<h2 id="关于自定义填充内容">关于自定义填充内容</h2>
+<p>如果你希望通过 <code>Core Graphics</code> 画一些自定义的内容而不是用现成的图片的话，这也很简单。</p>
+<p>解决的方案是给这个图层设置一个委托，需要实现一个 <code>drawLayer:inContext</code> 的方法。这样可以把 <code>Core Graphics</code> 绘制的内容显示出来。</p>
+<p>让我们试着加一个新的图层，并且在上面绘制一些纹理式样。你可以把 <code>ViewController</code> 设置为图层的委托。至于怎么使用 <code>Core Graphs</code> ，可以参考<a href="http://www.raywenderlich.com/?p=2167">Core Graphics 101: Patterns</a>这篇文章。</p>
+<p>在方法的最后加上下面这段代码：</p>
+<pre><code class="language-swift">    var customDrawn = CALayer()
+    customDrawn.delegate = self
+    customDrawn.backgroundColor = UIColor.greenColor().CGColor
+    customDrawn.frame = CGRectMake(30, 250, 128, 40)
+    customDrawn.shadowOffset = CGSizeMake(0, 3)
+    customDrawn.shadowRadius = 5.0
+    customDrawn.shadowColor = UIColor.blackColor().CGColor
+    customDrawn.shadowOpacity = 0.8
+    customDrawn.cornerRadius = 10.0
+    customDrawn.borderColor = UIColor.blackColor().CGColor
+    customDrawn.borderWidth = 2.0
+    customDrawn.masksToBounds = true
+    self.view.layer.addSublayer(customDrawn)
+    customDrawn.setNeedsDisplay()
+</code></pre>
+<p>上面的大部分代码你都是见过的 (比如：创建一个图层，设置一些属性等等) 。有两个地方可能还不太熟悉：</p>
+<ul>
+<li>首先，它把 self 设置成了这个图层的 delegate 。这意味着 self 需要实现 <code>drawLayer:inContext</code> 这个方法来绘制图案。</li>
+<li>其次，在添加了图层之后，需要通过 <code>setNeedsDisplay</code> 方法告诉图层刷新内容 (调用 <code>drawLayer:inContext</code> 方法)，如果你忘了调用，内容永远都不会显示。</li>
+</ul>
+<p>时间有限，最后一部分自定义纹理的还没有翻译，<s>其实是 Swift 水平不够不会写了</s>，可以参考原文学习。</p>
+<hr>
+<p>原文地址 (Objective-C) ：</p>
+<ul>
+<li><a href="http://www.raywenderlich.com/2502/calayers-tutorial-for-ios-introduction-to-calayers-tutorial">CALayers Tutorial for iOS: Introduction to CALayers</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#calayer-%E6%98%AF%E4%BB%80%E4%B9%88">CALayer 是什么</a></li>
+<li><a href="#%E5%BC%80%E5%A7%8B%E5%8A%A8%E6%89%8B">开始动手</a></li>
+<li><a href="#calayers-%E5%92%8C-sublayers">CALayers 和 Sublayers</a></li>
+<li><a href="#%E8%AE%BE%E7%BD%AE-calayer-%E7%9A%84%E5%9B%BE%E7%89%87%E5%86%85%E5%AE%B9">设置 CALayer 的图片内容</a></li>
+<li><a href="#%E5%85%B3%E4%BA%8E%E8%AE%BE%E7%BD%AE%E5%9C%86%E8%A7%92%E5%92%8C%E5%9B%BE%E7%89%87">关于设置圆角和图片</a></li>
+<li><a href="#%E5%85%B3%E4%BA%8E%E8%87%AA%E5%AE%9A%E4%B9%89%E5%A1%AB%E5%85%85%E5%86%85%E5%AE%B9">关于自定义填充内容</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/a-hamburger-button-transition/">
+              <h3 class="post-title">
+                如何用 Swift 做一个不错的按钮变换动画
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

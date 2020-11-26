@@ -1,0 +1,355 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>数据库常见问题 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              数据库常见问题
+            </h2>
+            <div class="post-info">
+              <span>
+                2019-12-12
+              </span>
+              <span>
+                9 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/3F4kkWUwBX/" class="post-tag">
+                  # Database
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="float-和-decimal">float 和 decimal</h2>
+<p>float 存储的是近似值，decimal 是存储的精确值。<br>
+当数据是整数的时候，float 会以整数处理。<br>
+float 容易出现误差，所以不会用 = 做比较，更多是做 range 比较。</p>
+<h2 id="如何分析语句的性能">如何分析语句的性能</h2>
+<p>通过 EXPLAIN 关键字模拟优化器执行 SQL 语句，从而知道 MySQL 是如何处理 SQL 语句的。</p>
+<h2 id="慢查询分析">慢查询分析</h2>
+<p>当 MySQL 性能下降时，通过开启慢查询来获得哪条SQL语句造成的响应过慢，进行分析处理。当然开启慢查询会带来CPU损耗与日志记录的IO开销，所以我们要间断性的打开慢查询日志来查看 MySQL运行状态。<br>
+慢查询能记录下所有执行超过 long_query_time 时间的SQL语句, 用于找到执行慢的SQL, 方便我们对这些SQL进行优化</p>
+<p>show variables like &quot;%slow%&quot;;-- 是否开启慢查询;<br>
+show status like &quot;%slow%&quot;; -- 查询慢查询SQL状况;<br>
+show variables like &quot;long_query_time&quot;; -- 慢查询时间</p>
+<p>通过 mysqldumpslow 工具分析慢查询 slow_query_log</p>
+<h2 id="如何优化-mysql-配置">如何优化 MySQL 配置</h2>
+<ul>
+<li>innodb_buffer_pool_size 缓冲池大小，越大越好，尽量用内存</li>
+<li>innodb_log_file_size：redo 日志大小，用于写操作快速可靠，崩溃恢复</li>
+<li>max_connections：最大连接数</li>
+<li>查询缓存、线程缓存、排序缓存</li>
+<li>设置 buffer size 和 tmp_table_size</li>
+<li>最大连接数、允许打开的文件数</li>
+<li>线程池</li>
+<li>慢查询日志</li>
+</ul>
+<h2 id="建表主键怎么决定">建表主键怎么决定</h2>
+<p>业务主键：在数据库表中把具有业务逻辑含义的字段作为主键</p>
+<ul>
+<li>减少一个业务无关字段</li>
+<li>避免表关联关系丢失，比如银行系统使用身份证号，出于安全性考虑，但是也会出现身份证号码重复的问题</li>
+</ul>
+<p>代理主键：在数据库表中使用业务逻辑无关的字段作为主键</p>
+<ul>
+<li>不受业务变更影响</li>
+<li>InnoDB 是按照主键聚合的，数据在物理上按照主键大小顺序排序，可以确保顺序插入，提高插入效率</li>
+<li>存储占用空间小，比如 InnoDB 的辅助索引叶子节点 data 都是主键</li>
+<li>联表查询效率高</li>
+<li>缺点：需要等待插入完成才有主键，或者等待主键生成器返回才会有主键。不利于分布式的设计</li>
+</ul>
+<p>推荐做法：</p>
+<ul>
+<li>直接使用与业务无关的自增 id 作为主键</li>
+<li>添加业务字段索引</li>
+</ul>
+<h2 id="事务的-acid-特性">事务的 ACID 特性</h2>
+<ul>
+<li>原子性(Atomic): 事务中的多个操作，不可分割，要么都成功，要么都失败； All or Nothing.</li>
+<li>一致性(Consistency): 事务操作之后, 数据库所处的状态和业务规则是一致的; 比如a,b账户相互转账之后，总金额不变；</li>
+<li>隔离性(Isolation): 多个事务之间就像是串行执行一样，不相互影响;</li>
+<li>持久性(Durability): 事务提交后被持久化到永久存储.</li>
+</ul>
+<h2 id="四大事务隔离级别">四大事务隔离级别</h2>
+<ul>
+<li>RU，read uncommitted：读取未提交数据，即没有 commit 仍然能读取到未提交的数据</li>
+<li>RC，read committed：可以读取其他事务提交的数据，大多数数据库默认隔离级别，同一个事务中读取到两次不同的结果，不可重复读，会出现脏读现象</li>
+<li>RR，repeatable read：可重读，同一个事务中多次执行同一个select, 读取到的数据没有发生改变(一般使用MVCC实现)。会出现幻读现象，两次读取出来的记录数不一样。MySQL 默认的隔离级别，通过 GAP 解决了幻读</li>
+<li>serializable：串行化，最高级别，会挂起其他会话的写操作，对性能会造成影响</li>
+</ul>
+<h2 id="幻读的概念">幻读的概念</h2>
+<p>幻读指的是在同一事务下，连续执行两次同样的SQL语句第二次的SQL语句可能返回之前不存在的行<br>
+事务A读取与搜索条件相匹配的若干行。事务B以插入或删除行等方式来修改事务A的结果集，然后再提交。</p>
+<p>一般解决幻读的方法是增加范围锁RangeS，select for update，select in share mode，锁定检索范围为只读，这样就避免了幻读。<br>
+最高隔离级别 SERIALIZABLE_READ 可以保证不出现幻读的问题。</p>
+<h2 id="幻读和不可重复读区别">幻读和不可重复读区别</h2>
+<ul>
+<li>不可重复读的重点是修改：同样的条件的select, 你读取过的数据, 再次读取出来发现值不一样了</li>
+<li>幻读的重点在于新增或者删除：同样的条件的select，第1次和第2次读出来的记录数不一样</li>
+</ul>
+<h2 id="mvcc-的概念实现的原理解决的问题">MVCC 的概念，实现的原理，解决的问题</h2>
+<p>MVCC（Multi-Version Concurrent Control）是一种多版本并发控制机制。<br>
+锁机制可以控制并发操作，但是其系统开销较大，而 MVCC 可以在大多数情况下代替行级锁，使用 MVCC 能降低其系统开销。<br>
+MVCC是通过保存数据在某个时间点的快照来实现的。因此每一个事务无论执行多长时间看到的数据，都是一样的。所以 MVCC 实现可重复读。<br>
+Innodb 的 MVCC 是通过在每行记录后面保存两个隐藏的列来实现的。这两个列，一个保存了这个行的创建时间，另一个保存的是行的删除时间。这里存储的并不是实际的时间值，而是系统版本号，每开始一个新的事务，系统版本号就会自动递增，事务开始时刻的系统版本号会作为事务的 ID。</p>
+<h2 id="聚集索引和非聚集索引的区别">聚集索引和非聚集索引的区别</h2>
+<p>聚集索引 Clustered Index</p>
+<ul>
+<li>键值的逻辑顺序决定了表中相应行的物理顺序</li>
+<li>由于聚集索引规定数据在表中的物理存储顺序，因此一个表只能包含一个聚集索引。但该索引可以包含多个列（组合索引）</li>
+<li>聚集索引对于那些经常要搜索范围值的列特别有效</li>
+<li>当索引值唯一时，使用聚集索引查找特定的行也很有效率</li>
+</ul>
+<p>非聚集索引 NonClustered Index</p>
+<ul>
+<li>索引的逻辑顺序与磁盘上的物理存储顺序不同</li>
+</ul>
+<p>Clustered Index 的叶节点就是数据节点。而 NonClustered Index 的叶节点仍然是索引节点，只不过有一个指针指向对应的数据块。</p>
+<h2 id="innodb-索引的数据结构">Innodb 索引的数据结构</h2>
+<p>innodb 用 B+Tree 实现索引结构。<br>
+与 B-Tree 相比，B+Tree 有以下不同点：</p>
+<ul>
+<li>非叶子结点的子树指针与关键字个数相同</li>
+<li>非叶子结点的子树指针P[i]，指向关键字值属于[K[i], K[i+1])的子树（B-树是开区间）</li>
+<li>为所有叶子结点增加一个链指针</li>
+<li>所有关键字都在叶子结点出现</li>
+<li>内节点不存储 data，只存储 key</li>
+</ul>
+<h2 id="b-树的优点">b+ 树的优点</h2>
+<ul>
+<li>非叶子节点不会带上 data，这样一个块中可以容纳更多的索引项，一是可以降低树的高度，二是一个内部节点可以定位更多的叶子节点</li>
+<li>叶子节点之间通过指针来连接，范围扫描将十分简单，而对于B树来说，则需要在叶子节点和内部节点不停的往返做中序遍历</li>
+</ul>
+<h2 id="两种存储引擎的索引实现">两种存储引擎的索引实现</h2>
+<p>MyISAM索引实现：</p>
+<ul>
+<li>使用B+Tree作为索引结构，叶节点的data域存放的是数据记录的地址</li>
+</ul>
+<p>InnoDB 索引实现：</p>
+<ul>
+<li>InnoDB的数据文件本身就是索引文件，叶节点 data 域保存了完整的数据记录。这个索引的key是数据表的主键，因此InnoDB表数据文件本身就是主索引</li>
+<li>辅助索引使用B+Tree作为索引结构，叶节点的 data 域存放的是数据记录的主键的值</li>
+</ul>
+<h2 id="数据库索引有哪些">数据库索引有哪些</h2>
+<p>主键索引：   Primary Key<br>
+数据库表经常有一列或列组合，其值唯一标识表中的每一行。该列称为表的主键。   在数据库关系图中为表定义主键将自动创建主键索引，主键索引是唯一索引的特定类型。该索引要求主键中的每个值都唯一。当在查询中使用主键索引时，它还允许对数据的快速访问。</p>
+<p>普通索引：Index<br>
+允许出现相同的索引内容</p>
+<p>唯一索引：   UNIQUE<br>
+表明此索引的每一个索引值只对应唯一的数据记录，对于单列惟一性索引，这保证单列不包含重复的值。对于多列惟一性索引，保证多个值的组合不重复。</p>
+<h2 id="如何创建合理的索引">如何创建合理的索引</h2>
+<ul>
+<li>维度高的列创建索引，维度高指不重复值出现的个数多，比如年龄维度高于性别</li>
+<li>对 where、on、group by、order by 中出现的列使用索引</li>
+<li>对较小的数据列使用索引，这样会使索引文件更小，同时内存中也可以装载更多的索引键</li>
+<li>为较长的字符串使用前缀索引，比如姓名这种，维度已经够了，长度过长占用空间且效率低</li>
+<li>不要过多创建索引，除了增加额外的磁盘空间外，对于DML操作的速度影响很大，因为其每增删改一次就得从新建立索引</li>
+<li>使用组合索引，可以减少文件索引大小，在使用时速度要优于多个单列索引</li>
+</ul>
+<h2 id="哪些情况下索引会失效">哪些情况下索引会失效</h2>
+<ul>
+<li>索引列参与了计算</li>
+<li>使用了函数运算</li>
+<li>正则表达式</li>
+<li>条件中用 or</li>
+<li>多列索引，不是最左侧</li>
+<li>like 模糊搜索以 % 开头</li>
+<li>字符串与数字比较不使用索引，所以字符串要用引号</li>
+<li>预计全表扫描比索引快</li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#float-%E5%92%8C-decimal">float 和 decimal</a></li>
+<li><a href="#%E5%A6%82%E4%BD%95%E5%88%86%E6%9E%90%E8%AF%AD%E5%8F%A5%E7%9A%84%E6%80%A7%E8%83%BD">如何分析语句的性能</a></li>
+<li><a href="#%E6%85%A2%E6%9F%A5%E8%AF%A2%E5%88%86%E6%9E%90">慢查询分析</a></li>
+<li><a href="#%E5%A6%82%E4%BD%95%E4%BC%98%E5%8C%96-mysql-%E9%85%8D%E7%BD%AE">如何优化 MySQL 配置</a></li>
+<li><a href="#%E5%BB%BA%E8%A1%A8%E4%B8%BB%E9%94%AE%E6%80%8E%E4%B9%88%E5%86%B3%E5%AE%9A">建表主键怎么决定</a></li>
+<li><a href="#%E4%BA%8B%E5%8A%A1%E7%9A%84-acid-%E7%89%B9%E6%80%A7">事务的 ACID 特性</a></li>
+<li><a href="#%E5%9B%9B%E5%A4%A7%E4%BA%8B%E5%8A%A1%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB">四大事务隔离级别</a></li>
+<li><a href="#%E5%B9%BB%E8%AF%BB%E7%9A%84%E6%A6%82%E5%BF%B5">幻读的概念</a></li>
+<li><a href="#%E5%B9%BB%E8%AF%BB%E5%92%8C%E4%B8%8D%E5%8F%AF%E9%87%8D%E5%A4%8D%E8%AF%BB%E5%8C%BA%E5%88%AB">幻读和不可重复读区别</a></li>
+<li><a href="#mvcc-%E7%9A%84%E6%A6%82%E5%BF%B5%E5%AE%9E%E7%8E%B0%E7%9A%84%E5%8E%9F%E7%90%86%E8%A7%A3%E5%86%B3%E7%9A%84%E9%97%AE%E9%A2%98">MVCC 的概念，实现的原理，解决的问题</a></li>
+<li><a href="#%E8%81%9A%E9%9B%86%E7%B4%A2%E5%BC%95%E5%92%8C%E9%9D%9E%E8%81%9A%E9%9B%86%E7%B4%A2%E5%BC%95%E7%9A%84%E5%8C%BA%E5%88%AB">聚集索引和非聚集索引的区别</a></li>
+<li><a href="#innodb-%E7%B4%A2%E5%BC%95%E7%9A%84%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84">Innodb 索引的数据结构</a></li>
+<li><a href="#b-%E6%A0%91%E7%9A%84%E4%BC%98%E7%82%B9">b+ 树的优点</a></li>
+<li><a href="#%E4%B8%A4%E7%A7%8D%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E%E7%9A%84%E7%B4%A2%E5%BC%95%E5%AE%9E%E7%8E%B0">两种存储引擎的索引实现</a></li>
+<li><a href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B4%A2%E5%BC%95%E6%9C%89%E5%93%AA%E4%BA%9B">数据库索引有哪些</a></li>
+<li><a href="#%E5%A6%82%E4%BD%95%E5%88%9B%E5%BB%BA%E5%90%88%E7%90%86%E7%9A%84%E7%B4%A2%E5%BC%95">如何创建合理的索引</a></li>
+<li><a href="#%E5%93%AA%E4%BA%9B%E6%83%85%E5%86%B5%E4%B8%8B%E7%B4%A2%E5%BC%95%E4%BC%9A%E5%A4%B1%E6%95%88">哪些情况下索引会失效</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/ji-suan-ji-wang-luo-chang-jian-wen-ti/">
+              <h3 class="post-title">
+                计算机网络常见问题
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

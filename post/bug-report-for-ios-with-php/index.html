@@ -1,0 +1,387 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>分分钟给你的应用做一个 Bug 上报小工具 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              分分钟给你的应用做一个 Bug 上报小工具
+            </h2>
+            <div class="post-info">
+              <span>
+                2015-01-15
+              </span>
+              <span>
+                8 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/datMGg0r-6V/" class="post-tag">
+                  # iOS
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="提示">提示</h2>
+<p>发现其实上报的文件压缩一下再上传可以省掉很多事情，各位可以直接跳转到最后一段：<a href="#%E6%9B%B4%E6%96%B0">更新</a>。</p>
+<h2 id="简介">简介</h2>
+<p>前阵子在 Github 上看到一个挺有趣的小项目：<a href="https://github.com/etsy/BugHunt-iOS">BugHunt-iOS</a>，可以在屏幕上召唤一个小 Bug 按钮，双击截屏，单击开始上传 Bug。动图如下：</p>
+<figure data-type="image" tabindex="1"><img src="https://github.com/etsy/BugHunt-iOS/raw/master/bughunt.gif" alt="" loading="lazy"></figure>
+<p>感觉这是个挺有趣的功能，而且放在内部测试的时候可以让同事方便的上传 Bug ，便于进一步改进。</p>
+<p>于是今天就试着用 PHP 搭建个本地服务器，试一下 Bug 上传功能。</p>
+<h2 id="客户端">客户端</h2>
+<p>具体的 BugHunt 的使用方法可以看 README 说明，看完之后我们知道，需要一个实现了 <code>EBHNetworkCommunicator</code> 协议的网络连接类来进行网络管理。示例代码中给了我们一个简单的例子：</p>
+<pre><code class="language-objc">    #import &quot;MyNetworkCommunicator.h&quot;
+
+    // Models
+    #import &quot;EBHBugReport.h&quot;
+    #import &quot;EBHTask.h&quot;
+    #import &quot;EBHLeaderboardUser.h&quot;
+
+    @implementation MyNetworkCommunicator
+
+    - (BOOL)createBugHuntIssue:(EBHBugReport *)bugReport
+                      completion:(EBHCreateNewIssueCompletionBlock)completionBlock
+    {
+        ...
+    }
+
+    - (BOOL)fetchBugHuntTasks:(EBHFetchTasksCompletionBlock)completionBlock
+    {
+       ...
+    }
+
+    - (BOOL)fetchBugHuntLeaderboard:(EBHFetchLeaderboardCompletionBlock)completionBlock
+    {
+        ...
+    }
+
+    @end
+</code></pre>
+<p>在使用的时候我们只需要给 BugHunt 指定对应的 <code>NetworkCommunicator</code> 即可：</p>
+<pre><code class="language-objc">    MyNetworkCommunicator *networkCommunicator = [[MyNetworkCommunicator alloc] init];
+    [BugHunt setNetworkCommunicator:networkCommunicator];
+</code></pre>
+<p>在 <code>- (BOOL)createBugHuntIssue: completion:</code> 这个方法里，我们可以进行 Bug 的具体上传设置。</p>
+<p>根据我的需求，先生成了一个文件名用来存储在服务器端，首先它要好认！</p>
+<p>所以文件名的格式是：用户名+三位随机数+当前日期的时间戳+索引值</p>
+<p>示例：nouser292-2015-01-15-20-36-18-0</p>
+<p>嗯，这个示例中没有用户名，随机数是292，日期是2015年01月15日20时36分18秒，是上传的第0份文件，很好！</p>
+<p>这样我在上传的时候只需要统一安排这样的参数名，不管有多少文件都可以上传，顺便再把文件名和文件数目传过去，这样服务器就可以根据这两个值生成文件列表，从而获取 POST 请求中的所有文件。</p>
+<p>先看下 iOS 端的上传代码：</p>
+<pre><code class="language-objc">    - (BOOL)createBugHuntIssue:(EBHBugReport *)bugReport
+                    completion:(EBHCreateNewIssueCompletionBlock)completionBlock
+    {
+        // 生成用户名
+        NSString *username = bugReport.username;
+        if (!username) {
+            username = [NSString stringWithFormat:@&quot;nouser%d&quot;,arc4random() % 1000];
+        }
+
+        // 生成一个临时的文件名
+        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+        [dateFormatter setDateFormat:@&quot;yyyy-MM-dd-HH-mm-ss&quot;];
+        NSString *strDate = [dateFormatter stringFromDate:[NSDate date]];
+        NSString *fileName = [NSString stringWithFormat:@&quot;%@-%@-&quot;, username, strDate];
+
+
+        NSArray *screenshots = bugReport.screenshots;
+
+        [_manager POST:@&quot;http://192.168.31.97:8888/index.php/bug/do_upload&quot; parameters:@{@&quot;count&quot;:@(screenshots.count),@&quot;filename&quot;:fileName} constructingBodyWithBlock:^(id&lt;AFMultipartFormData&gt; formData) {
+            for (int i = 0; i &lt; screenshots.count; i ++) {
+                UIImage *shot1 = screenshots[i];
+                NSData *imageData = UIImageJPEGRepresentation(shot1, 0.5);
+                NSString *imageName = [NSString stringWithFormat:@&quot;%@%d&quot;,fileName,i];
+                [formData appendPartWithFileData:imageData name:imageName fileName:imageName mimeType:@&quot;image/jpeg&quot;];
+            }
+        }
+               success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                   NSLog(@&quot;%@&quot;,responseObject);
+                   completionBlock(nil);
+               }
+               failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                   completionBlock(error);
+               }];
+        return YES;
+    }
+</code></pre>
+<p>确实挺简单的，主要就是把截屏的 <code>UIImage</code> 转换成 <code>NSData</code> 然后上传就 OK 了。接下来看下服务器端的实现。</p>
+<h2 id="服务器端">服务器端</h2>
+<p>由于只是个简单的小功能，所以 PHP 端我选择了轻量级的 CodeIgniter 框架 (其实选择 CI 的原因是其他几个好久不玩基本都忘了，但是 CI 只要看着文档就能搞，基本没有学习成本)。</p>
+<p>简单的部署好了之后，我们先添加一个 <code>bug_controller</code> 作为 Bug 上报事件的控制器。</p>
+<p>关键的代码就这么几行：</p>
+<pre><code class="language-php">    function do_upload()
+    {
+        // 获取上传的文件数目
+        $count = $this-&gt;input-&gt;post('count');
+
+        // 获取上传的文件名称
+        $filename = $this-&gt;input-&gt;post('filename');
+
+        // 初始化上传工具类
+        $config['upload_path'] = './uploads/';
+        $config['allowed_types'] = '*';
+        $this-&gt;load-&gt;library('upload', $config);
+        $this-&gt;upload-&gt;initialize($config);
+
+        for ($x = 0; $x &lt; $count; $x++) {
+            $this-&gt;upload-&gt;do_upload($filename.strval($x));
+        }
+
+        $arr = array ('count' =&gt; $count, 'filename' =&gt; $filename.strval(1), 'error' =&gt; $this-&gt;upload-&gt;display_errors());
+        $this-&gt;output-&gt;set_content_type('application/json')-&gt;set_output(json_encode($arr));
+
+        return;
+    }
+</code></pre>
+<p>不到十行的代码就完成了上传文件的处理，由于有 CodeIgniter 的工具类，所以上传只需要 <code>$this-&gt;upload-&gt;do_upload($filename);</code> 这么一行代码就可以了。</p>
+<p>我们的主要工作就是对文件名的解析，因为上传的文件都在 <code>$_FILES</code> 这个变量里。其实也可以遍历所有的 key 值然后挨个上传，但是我当时就是秀逗了然后用了个比较简单粗暴的方法实现了 (其实根本原因就是对 PHP 不熟悉嗯)。</p>
+<h2 id="小结">小结</h2>
+<p>目前只是完成了文件的上传，其实还剩下了一些工作要做，比如搞个数据库存储用户名、存储问题描述，再拿 BootStrap 或者 Foundation 搭个好看的页面用来展示数据等等。</p>
+<p>不过由于当初的目的只是为了上传 Log 文件，所以就先做到这里了。等完善了 Web 端的展示再来更新。</p>
+<h2 id="更新">更新</h2>
+<p>首先对于前面的种种繁琐，原因在于服务器不知道客户端上传了多少文件 (其实感觉用 <code>$_FILE</code> 这个字典应该能获取的但是就是懒)。其实有个更简单的处理方案：压缩之后再上传。</p>
+<p>我们首先需要一个压缩工具对数据进行压缩，于是找到了 <a href="https://github.com/flyingdolphinstudio/Objective-Zip">Objective-Zip</a> 。接下来就是修改一下我们的代码，把本来放在 <code>Form</code> 表单里的内容放到 <code>ZIP</code> 文件中，然后把压缩之后的 <code>ZIP</code> 文件上传服务器。</p>
+<p>既然一起打包，那我们可以把问题描述写到一个文件里然后一起上传。修改之后的部分代码如下：</p>
+<pre><code class="language-objc">    - (BOOL)createBugHuntIssue:(EBHBugReport *)bugReport
+                    completion:(EBHCreateNewIssueCompletionBlock)completionBlock
+    {
+        // 生成用户名
+        NSString *username = bugReport.username;
+        if (!username) {
+            username = [NSString stringWithFormat:@&quot;nouser%d&quot;,arc4random() % 1000];
+        }
+
+        // 生成一个临时的文件名
+        NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+        [dateFormatter setDateFormat:@&quot;yyyy-MM-dd-HH-mm-ss&quot;];
+        NSString *strDate = [dateFormatter stringFromDate:[NSDate date]];
+        NSString *fileName = [NSString stringWithFormat:@&quot;%@_%@&quot;, username, strDate];
+        NSArray *screenshots = bugReport.screenshots;
+
+        // 设置超时
+        [_manager.requestSerializer setTimeoutInterval:10];
+
+        [_manager POST:@&quot;http://xxx.xxx/xxx&quot; parameters:nil constructingBodyWithBlock:^(id&lt;AFMultipartFormData&gt; formData) {
+
+            NSString *documentsDir= [NSHomeDirectory() stringByAppendingPathComponent:@&quot;Documents&quot;];
+            NSString *filePath= [documentsDir stringByAppendingPathComponent:fileName];
+
+            ZipFile *zipFile= [[ZipFile alloc] initWithFileName:filePath mode:ZipFileModeCreate];
+
+            // 把问题描述写到文件里一起压缩
+            ZipWriteStream *stream= [zipFile writeFileInZipWithName:@&quot;debug_description.log&quot; compressionLevel:ZipCompressionLevelBest];
+            [stream writeData:[bugReport.bugDescription dataUsingEncoding:NSUTF8StringEncoding]];
+            [stream finishedWriting];
+
+            // 把缩略图放进压缩文件
+            for (int i = 0; i &lt; screenshots.count; i ++) {
+                UIImage *shot1 = screenshots[i];
+                NSData *imageData = UIImageJPEGRepresentation(shot1, 0.5);
+                NSString *imageName = [NSString stringWithFormat:@&quot;%@_%d.jpg&quot;,fileName,i];
+                ZipWriteStream *stream= [zipFile writeFileInZipWithName:imageName compressionLevel:ZipCompressionLevelBest];
+                [stream writeData:imageData];
+                [stream finishedWriting];
+            }
+            [zipFile close];
+
+            // 取出压缩文件加到表单中
+            NSData *reader = [NSData dataWithContentsOfFile:filePath];
+            NSString *upFileName = [NSString stringWithFormat:@&quot;iOS_%@.zip&quot;, fileName];
+            [formData appendPartWithFileData:reader name:@&quot;bugfile&quot; fileName:upFileName mimeType:@&quot;application/zip&quot;];
+        }
+               success:^(AFHTTPRequestOperation *operation, id responseObject) {
+                   NSLog(@&quot;%@&quot;,responseObject);
+                   completionBlock(nil);
+               }
+               failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+                   completionBlock(error);
+               }];
+        return YES;
+    }
+</code></pre>
+<p>压缩之后，上传的文件大小只有平时的十分之一，效率提升十分可观。解压的时候需要使用 <a href="https://itunes.apple.com/cn/app/the-unarchiver/id425424353?mt=12"><code>Unarchiver</code></a> 进行解压，系统自带的解压会有问题。</p>
+<p>时间仓促，先这样啦，过年会去咯~</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E6%8F%90%E7%A4%BA">提示</a></li>
+<li><a href="#%E7%AE%80%E4%BB%8B">简介</a></li>
+<li><a href="#%E5%AE%A2%E6%88%B7%E7%AB%AF">客户端</a></li>
+<li><a href="#%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%AB%AF">服务器端</a></li>
+<li><a href="#%E5%B0%8F%E7%BB%93">小结</a></li>
+<li><a href="#%E6%9B%B4%E6%96%B0">更新</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/arc-best-practice/">
+              <h3 class="post-title">
+                ARC 最佳实践
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

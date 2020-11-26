@@ -1,0 +1,347 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Clojure 每日练习 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Clojure 每日练习
+            </h2>
+            <div class="post-info">
+              <span>
+                2015-06-29
+              </span>
+              <span>
+                4 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/6wSbL3VKyUv/" class="post-tag">
+                  # Clojure
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>最近公司的 iOS 项目进入 Debug 阶段，有些沉闷。于是乎从今天开始，尝试每天做一些 Clojure 的练习，找找刺激。<a href="http://www.4clojure.com/">4clojure</a> 是个不错的网站，上面有很多 Clojure 的小题目，可以学习并巩固 Clojure 的知识。在每一题后面都附上了一段代码，包含：注释了的题目、我的答案和其他人的参考答案，欢迎一起讨论~</p>
+<h3 id="001-nothing-but-the-truth"><a href="http://www.4clojure.com/problem/1">#001: Nothing but the Truth</a></h3>
+<pre><code class="language-clojure">    ;; This is a clojure form.
+    ;; Enter a value which will make the form evaluate to true.
+    ;; Don't over think it!
+    ;; Hint: true is equal to true.
+    ;; (= __ true)
+
+    (= (+ 1 1) 2)
+
+    (not false)
+</code></pre>
+<h3 id="002-simple-math"><a href="http://www.4clojure.com/problem/2">#002: Simple Math</a></h3>
+<pre><code class="language-clojure">    ;; If you are not familiar with polish notation
+    ;; , simple arithmetic might seem confusing.
+    ;; Note: Enter only enough to fill in the blank
+    ;; In this case, a single number.
+    ;; (= (- 10 (* 2 3)) __)
+
+    4
+</code></pre>
+<h3 id="003-intro-to-strings"><a href="http://www.4clojure.com/problem/3">#003: Intro to Strings</a></h3>
+<pre><code class="language-clojure">
+    ;; Clojure strings are Java strings.  
+    ;; This means that you can use any of the Java string methods on Clojure strings.
+    ;; (= __ (.toUpperCase &quot;hello world&quot;))
+
+    &quot;HELLO WORLD&quot;
+
+    (reify Object (equals [_ _] (= _))) ;; 花样炫技
+</code></pre>
+<h3 id="004-intro-to-lists"><a href="http://www.4clojure.com/problem/4">#004: Intro to Lists</a></h3>
+<pre><code class="language-clojure">    ;; Lists can be constructed with either a function or a quoted form.
+    ;; (= (list __) '(:a :b :c))
+
+    :a :b :c
+</code></pre>
+<h3 id="005-lists-conj"><a href="http://www.4clojure.com/problem/5">#005: Lists: conj</a></h3>
+<pre><code class="language-clojure">    ;; When operating on a list, the conj function will return
+    ;; a new list with one or more items &quot;added&quot; to the front.
+    ;; (= __ (conj '(2 3 4) 1))
+
+    '(1 2 3 4)
+</code></pre>
+<h3 id="006-intro-to-vectors"><a href="http://www.4clojure.com/problem/6">#006: Intro to Vectors</a></h3>
+<pre><code class="language-clojure">    ;; Vectors can be constructed several ways.  You can compare them with lists.
+    ;; (= [__] (list :a :b :c) (vec '(:a :b :c)) (vector :a :b :c))
+
+    :a :b :c
+</code></pre>
+<h3 id="007-vectors-conj"><a href="http://www.4clojure.com/problem/7">#007: Vectors: conj</a></h3>
+<pre><code class="language-clojure">    ;; When operating on a Vector, the conj function will return a new vector with one or
+    ;; more items &quot;added&quot; to the end.
+    ;; (= __ (conj [1 2 3] 4))
+
+    [1 2 3 4]
+</code></pre>
+<h3 id="008-intro-to-sets"><a href="http://www.4clojure.com/problem/8">#008: Intro to Sets</a></h3>
+<pre><code class="language-clojure">    ;; Sets are collections of unique values.
+    ;; (= __ (set '(:a :a :b :c :c :c :c :d :d)))
+
+    #{:a :b :c :d}
+</code></pre>
+<h3 id="009-sets-conj"><a href="http://www.4clojure.com/problem/9">#009: Sets: conj</a></h3>
+<pre><code class="language-clojure">    ;; When operating on a set, the conj function returns a new set with one or more keys
+    ;; &quot;added&quot;.
+    ;; (= #{1 2 3 4} (conj #{1 4 3} __))
+
+    2
+</code></pre>
+<h3 id="010-intro-to-maps"><a href="http://www.4clojure.com/problem/10">#010: Intro to Maps</a></h3>
+<pre><code class="language-clojure">    ;; Maps store key-value pairs.  Both maps and keywords can be used as lookup functions.
+    ;; Commas can be used to make maps more readable, but they are not required.
+    ;; (= __ ((hash-map :a 10, :b 20, :c 30) :b))
+
+    20
+</code></pre>
+<h3 id="011-maps-conj"><a href="http://www.4clojure.com/problem/11">#011: Maps: conj</a></h3>
+<pre><code class="language-clojure">    ;; When operating on a map, the conj function returns a new map with one or more
+    ;; key-value pairs &quot;added&quot;.
+    ;; (= {:a 1, :b 2, :c 3} (conj {:a 1} __ [:c 3]))
+
+    {:b 2}
+
+    [:b 2]
+</code></pre>
+<h3 id="012-intro-to-sequences"><a href="http://www.4clojure.com/problem/12">#012: Intro to Sequences</a></h3>
+<pre><code class="language-clojure">    ;; All Clojure collections support sequencing.  You can operate on sequences with
+    ;; functions like first, second, and last.
+    ;; (= __ (first '(3 2 1)))
+
+    3
+</code></pre>
+<h3 id="013-intro-to-sequences"><a href="http://www.4clojure.com/problem/13">#013: Intro to Sequences</a></h3>
+<pre><code class="language-clojure">    ;; The rest function will return all the items of a sequence except the first.
+    ;; (= __ (rest [10 20 30 40]))
+    (= [20 30 40] (rest [10 20 30 40]))
+
+    [20 30 40]
+</code></pre>
+<h3 id="014-intro-to-functions"><a href="http://www.4clojure.com/problem/14">#014: Intro to Functions</a></h3>
+<pre><code class="language-clojure">    ;; Clojure has many different ways to create functions.
+    ;; (= __ ((fn add-five [x] (+ x 5)) 3))
+
+    8
+</code></pre>
+<h3 id="015-double-down"><a href="http://www.4clojure.com/problem/15">#015: Double Down</a></h3>
+<pre><code class="language-clojure">    ;; Write a function which doubles a number.
+    ;; (= (__ 2) 4)
+
+    #(* 2 %)
+
+    * 2
+    (fn [x] (* x 2))
+    (partial * 2)
+    #(+ % %)
+</code></pre>
+<h3 id="016-hello-world"><a href="http://www.4clojure.com/problem/16">#016: Hello World</a></h3>
+<pre><code class="language-clojure">    ;; Write a function which returns a personalized greeting.
+    ;; (= (__ &quot;Dave&quot;) &quot;Hello, Dave!&quot;)
+
+    #(str &quot;Hello, &quot; % &quot;!&quot;)
+
+    (fn [n] (str &quot;Hello, &quot; n &quot;!&quot;))
+    #(str &quot;Hello, &quot; % \!)
+</code></pre>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li>
+<ul>
+<li><a href="#001-nothing-but-the-truth">#001: Nothing but the Truth</a></li>
+<li><a href="#002-simple-math">#002: Simple Math</a></li>
+<li><a href="#003-intro-to-strings">#003: Intro to Strings</a></li>
+<li><a href="#004-intro-to-lists">#004: Intro to Lists</a></li>
+<li><a href="#005-lists-conj">#005: Lists: conj</a></li>
+<li><a href="#006-intro-to-vectors">#006: Intro to Vectors</a></li>
+<li><a href="#007-vectors-conj">#007: Vectors: conj</a></li>
+<li><a href="#008-intro-to-sets">#008: Intro to Sets</a></li>
+<li><a href="#009-sets-conj">#009: Sets: conj</a></li>
+<li><a href="#010-intro-to-maps">#010: Intro to Maps</a></li>
+<li><a href="#011-maps-conj">#011: Maps: conj</a></li>
+<li><a href="#012-intro-to-sequences">#012: Intro to Sequences</a></li>
+<li><a href="#013-intro-to-sequences">#013: Intro to Sequences</a></li>
+<li><a href="#014-intro-to-functions">#014: Intro to Functions</a></li>
+<li><a href="#015-double-down">#015: Double Down</a></li>
+<li><a href="#016-hello-world">#016: Hello World</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/creating-ascii-art-in-functional-swift/">
+              <h3 class="post-title">
+                用函数式的 Swift 实现图片转字符画的功能
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,269 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>关于 RESTful 和 Blueprint | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              关于 RESTful 和 Blueprint
+            </h2>
+            <div class="post-info">
+              <span>
+                2014-06-07
+              </span>
+              <span>
+                3 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/5AHHXIh4qj/" class="post-tag">
+                  # Web
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>##<em>RESTful API</em></p>
+<p>最近在做<em>WLAN</em>精灵的<em>API</em>设计，因为前面一直断断续续的接触<em>RESTful API</em>，在这里系统的整理一下。</p>
+<p><em>RESTful API</em>是指符合<em>REST</em>原则的API设计。</p>
+<blockquote>
+<p><a href="http://en.wikipedia.org/wiki/Representational_state_transfer"><em>REST</em></a> : Representational state transfer, introduced and defined in 2000 by <a href="http://en.wikipedia.org/wiki/Roy_Fielding">Roy Fielding</a> in his <a href="http://www.ics.uci.edu/~fielding/pubs/dissertation/top.htm">doctoral dissertation</a>.</p>
+</blockquote>
+<p>对于<em>Representational state transfer</em>，<a href="http://zh.wikipedia.org/wiki/REST"><em>Wiki</em></a>上翻译为“含状态传输”，阮一峰老师在<a href="http://www.ruanyifeng.com/blog/2011/09/restful.html">理解RESTful架构</a>中翻译为“表现层状态转化”，并且还解释了一下<em>Representational state transfer</em>中的<em>representational</em>：</p>
+<blockquote>
+<p>其中，“表现层状态转化”一句省略了主语，表现层其实指的是“资源”(Resources)的表现层。</p>
+</blockquote>
+<p>简单来说，就是把数据信息当做资源(<em>resource</em>)，通过不同的方法动词(<em>action</em>)来执行不同的操作。<br>
+下面是四种<em>action</em>的解释和举例：</p>
+<ul>
+<li>
+<p><em>GET</em> ： 获取以及检索数据</p>
+<ul>
+<li><code>/api/robots</code> 获得所有<em>robot</em>的数据</li>
+<li><code>/api/robots/search/Astro</code> 搜索一个名为<em>Astro</em>的<em>robot</em></li>
+<li><code>/api/robots/2</code> 根据编号获取<em>robot</em></li>
+</ul>
+</li>
+<li>
+<p><em>POST</em> ： 添加数据</p>
+<ul>
+<li><code>/api/robots</code> 添加一条新的数据</li>
+</ul>
+</li>
+<li>
+<p><em>PUT</em> ： 更新数据</p>
+<ul>
+<li><code>/api/robots/2</code> 通过<em>id</em>修改数据</li>
+</ul>
+</li>
+<li>
+<p><em>DELETE</em> ： 删除数据</p>
+<ul>
+<li><code>/api/robots/2</code> 通过<em>id</em>删除数据</li>
+</ul>
+</li>
+</ul>
+<p>推荐一些关于<em>RESTful API</em>的网站：</p>
+<ul>
+<li><a href="http://codeplanet.io/principles-good-restful-api-design/">Principles of good RESTful API Design</a></li>
+<li><a href="http://www.restapitutorial.com/">RESTful Tutorial</a></li>
+<li><a href="http://www.ruanyifeng.com/blog/2011/09/restful.html">理解RESTful架构</a></li>
+<li><a href="http://www.ruanyifeng.com/blog/2014/05/restful_api.html">RESTful API 设计指南</a></li>
+</ul>
+<hr>
+<p>##<em>Blueprint</em></p>
+<p>那么什么是<em>Blueprint</em>呢？<em>Blueprint</em>是<em>apiary</em>公司开源的一个<em>API</em>文档编辑工具包，它可以把一些约定的标记转换成非常漂亮的文档，就像是<em>Markdown</em>一样。</p>
+<p>在<em>Blueprint</em>中，基本遵循<em>RESTful API</em>的设计，<em>API</em>可以想象成是对一个资源(<em>resource</em>)的操作。<br>
+一级标签<code>*</code>是分组(<em>Group</em>)，表示某种对象资源(<em>resource</em>)，比如<em>Gist</em>这种。<br>
+二级标签<code>**</code>是某个路径(<em>URI</em>)，指一种属性，比如星标<em>star</em>、集合<em>collection</em>、等等<br>
+三级标签<code>***</code>是操作action，指针对这种属性的操作，比如获取、删除、编辑、星标。</p>
+<p>比如官网案例中的<em>Gist</em>：</p>
+<pre><code>- Gist             # Group Gist
+    - Gist              ## Gist [/gists/{id}]
+        - Retrieve         ### Retrieve a Single Gist [GET]
+        - Edit             ### Edit a Gist [PATCH]
+        - Delete           ### Delete a Gist [DELETE]
+    - Gists Collection  ## Gists Collection [/gists{?since}]
+        - List             ### List All Gists [GET]
+        - Create           ### Create a Gist [POST]
+    - Star              ## Star [/gists/{id}/star]
+        - Star             ### Star a Gist [PUT]
+        - Unstar           ### Unstar a Gist [DELETE]
+        - Check            ### Check if a Gist is Starred [GET]
+</code></pre>
+<p>推荐一些<em>Blueprint</em>的网站：</p>
+<ul>
+<li><a href="http://apiary.io/">apiary官网</a></li>
+<li><a href="http://apiary.io/blueprint">API Blueprint Tutorial</a></li>
+<li><a href="http://apiblueprint.org/">apiblueprint官网</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/blueprint-tutorial/">
+              <h3 class="post-title">
+                API Blueprint 指导手册
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,314 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Vue 相关原理学习笔记 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Vue 相关原理学习笔记
+            </h2>
+            <div class="post-info">
+              <span>
+                2019-08-24
+              </span>
+              <span>
+                4 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/WZhN7vCZ4R/" class="post-tag">
+                  # Frontend
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="响应式原理">响应式原理</h2>
+<h3 id="方案一objectdefineproperty">方案一：Object.defineProperty</h3>
+<p>基于 Object.defineProperty 通过 setter/getter 方法来监听数据的变化。 getter 进行依赖收集，setter 在数据变更的时候通知订阅者，递归调用监听对象的所有属性。</p>
+<p>缺点：</p>
+<ul>
+<li>无法检测到对象属性的添加或删除</li>
+<li>不能监听数组的变化，需要重写数组方法</li>
+</ul>
+<pre><code class="language-js">function defineReactive(obj, key, value) {
+    Object.defineProperty(obj, key, {
+        enumerable: true,
+        configurable: true,
+        get() {
+            console.log('get', obj, key, value)
+            return value
+        },
+        set(newVal) {
+            observe(newVal)
+            if (newVal !== value) {
+                console.log('set', obj, key, newVal)
+                value = newVal
+            }
+        }
+    })
+}
+
+function observe(obj) {
+    if (!obj || typeof obj !== 'object') {
+        return
+    }
+    Object.keys(obj).forEach(key =&gt; {
+        const value = obj[key]
+        observe(value)
+        defineReactive(obj, key, obj[key])
+    })
+}
+
+const data = { a: { b: 1 } }
+observe(data)
+data.a.b = 2
+</code></pre>
+<h3 id="方案二es6-proxy">方案二：ES6 Proxy</h3>
+<p>优点：</p>
+<ul>
+<li>针对整个对象，而不是某个属性，所以不需要遍历，但是仍需要递归</li>
+<li>支持数组变化监听</li>
+</ul>
+<pre><code class="language-js">const handler = {
+    get(target, key) {
+        if (typeof target[key] == 'object' &amp;&amp; target[key] !== null) {
+            return new Proxy(target[key], handler)
+        }
+        console.log('set', key)
+        return Reflect.get(target, key)
+    },
+    set(target, key, value) {
+        if (key === 'length') return true
+        console.log('set', value)
+        return Reflect.set(target, key, value)
+    }
+}
+
+const data = { a: { b: 1 } }
+const proxy = new Proxy(data, handler)
+proxy.a.b = 2
+</code></pre>
+<h2 id="如何收集依赖">如何收集依赖</h2>
+<p>两个关键类：</p>
+<ul>
+<li>Watcher：封装一个观察订阅的依赖，触发 getter 事件</li>
+<li>Dep：存放 Watcher 数组，需要通知变更的时候遍历 Watcher 发送通知</li>
+</ul>
+<p>流程：</p>
+<ul>
+<li>对于某个属性，先声明一个 Dep 对象，用来存放依赖</li>
+<li>Watcher 初始化的时候，会临时将 Dep.target 指向 this ，然后调用 getter 方法</li>
+<li>在 getter 中，将 Dep.target 指向的 Water 存入依赖数组</li>
+<li>在 setter 中，通过 dp.notify() 通知所有依赖对象</li>
+</ul>
+<h2 id="computed-原理">Computed 原理</h2>
+<h2 id="mvvm-原理">MVVM 原理</h2>
+<h2 id="vue-router-原理">Vue Router 原理</h2>
+<ul>
+<li>hash mode：根据不同 hash 值渲染不同的组件和数据，通过在 window.onhashchange 监听 hash 改变实现路由切换</li>
+<li>history mode：利用了 HTML5 History API 中的 pushState() 和 replaceState() 方法，虽然改变了当前的 URL ，但浏览器不会向后端发送请求。后台需要配置一个解析规则，避免 404 出现。这个模式下的跳转监听通过 window.onpopstate 实现，push 需要手动触发。</li>
+</ul>
+<h2 id="vuex-原理">Vuex 原理</h2>
+<p>vuex 中的 store 本质就是没有 template 的 vue 组件</p>
+<h2 id="nuxt-原理">Nuxt 原理</h2>
+<p>在打包之前，有两者的入口文件：</p>
+<ul>
+<li>Server entry：服务端入口文件主要是返回新创建的 Vue 实例。为了避免在一个单例对象中的多次请求对状态的污染，所以每次渲染都会重复创建 Vue 实例。在这个地方，也会进行组件状态数据的预获取，路由处理等。</li>
+<li>Client entry：客户端入口文件就是将 Vue 实例挂载到指定的 DOM 元素上。</li>
+</ul>
+<p>在打包之后，有两个 bundle 文件：</p>
+<ul>
+<li>Server bundle：服务器按照请求通过 Node 去生成预渲染的 HTML 字符串返回到请求的客户端，完成初始的渲染。</li>
+<li>Client bundle：客户端拿到 HTML 之后，会使用这个 bundle 进行混合，使其变为由 Vue 管理的动态 DOM，为之后能够响应后续的数据变化。</li>
+</ul>
+<figure data-type="image" tabindex="1"><img src="https://blog.callmewhy.com/post-images/1578487453810.jpg" alt="" loading="lazy"></figure>
+<p>同构渲染：同一份代码，服务端先渲染生成 HTML（Dehydrate），客户端拿到代码后运行 JS ，进行客户端激活（Client-Side Hydration，CSH）的过程。</p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E5%93%8D%E5%BA%94%E5%BC%8F%E5%8E%9F%E7%90%86">响应式原理</a>
+<ul>
+<li><a href="#%E6%96%B9%E6%A1%88%E4%B8%80objectdefineproperty">方案一：Object.defineProperty</a></li>
+<li><a href="#%E6%96%B9%E6%A1%88%E4%BA%8Ces6-proxy">方案二：ES6 Proxy</a></li>
+</ul>
+</li>
+<li><a href="#%E5%A6%82%E4%BD%95%E6%94%B6%E9%9B%86%E4%BE%9D%E8%B5%96">如何收集依赖</a></li>
+<li><a href="#computed-%E5%8E%9F%E7%90%86">Computed 原理</a></li>
+<li><a href="#mvvm-%E5%8E%9F%E7%90%86">MVVM 原理</a></li>
+<li><a href="#vue-router-%E5%8E%9F%E7%90%86">Vue Router 原理</a></li>
+<li><a href="#vuex-%E5%8E%9F%E7%90%86">Vuex 原理</a></li>
+<li><a href="#nuxt-%E5%8E%9F%E7%90%86">Nuxt 原理</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/qian-duan-ji-chu-zhi-shi-shu-li/">
+              <h3 class="post-title">
+                前端基础知识梳理
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

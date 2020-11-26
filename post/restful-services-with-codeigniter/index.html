@@ -1,0 +1,604 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>使用 CodeIgniter 搭建 RESTful API | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              使用 CodeIgniter 搭建 RESTful API
+            </h2>
+            <div class="post-info">
+              <span>
+                2014-07-12
+              </span>
+              <span>
+                17 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/5AHHXIh4qj/" class="post-tag">
+                  # Web
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>在2011年8月的时候，我写了一篇博客<a href="http://outergalactic.org/blog/building-a-restful-service-using-codeigniter/">《使用CodeIgniter框架搭建RESTful API服务》</a>，介绍了RESTful的设计概念，以及使用CodeIgniter框架实现RESTful API的方法。转眼两年过去了，REST在这两年里有了很大的改进。我对于前一篇博客中的某些方面不是很满意，所以希望能利用这次机会写一个更加完善的版本。</p>
+<p>我的项目基于<a href="https://github.com/philsturgeon/">Phil Sturgeon</a>的<a href="http://github.com/philsturgeon/codeigniter-restserver">CodeIgniter REST Server</a>，遵循他自己的<a href="http://www.dbad-license.org/">DBAD协议</a>。Phil的这个项目很棒，干净利落，简单实用，并且极具特色，解决了我自己项目中两个问题：在请求中查询语句的使用，以及复杂的身份验证方法。正如我前面所说，我的项目基于Phil的项目开发，并且只有一个方面不同：我给每个资源分别分配一个控制器，而不是用一个独立庞大的控制器进行统一管理。使用多个独立控制器的好处是维护起来更加简单方便。</p>
+<p>完整的项目源码可以在<a href="https://github.com/awhitney42/codeigniter-restserver-resources">awhitney42/codeigniter-restserver-resources</a>下载。</p>
+<h2 id="restful">RESTful</h2>
+<p>在深入探讨之前，我们先来回顾一下TESTful的概念。REST全名Representational State Transfer，中文可以译为：表现层状态转化，是一种网络服务的架构工具，而不仅仅是一套接口规范。</p>
+<h3 id="使用名词而不是动词">使用名词而不是动词</h3>
+<p>你的RESTful接口应该提供访问而不是方法。<br>
+所以，这样是不可取的：</p>
+<pre><code>/createCustomer
+/getCustomer?id=666
+</code></pre>
+<p>应该这样：</p>
+<pre><code>POST /customers
+GET  /customers/666
+</code></pre>
+<h3 id="所有东西都应该有id">所有东西都应该有ID</h3>
+<p>REST的优点之一就是简洁，一定程度上来讲，REST只是一个URI的集合，每个资源都需要一个独一无二的ID作为一个标识。</p>
+<pre><code>GET /customers/666
+GET /products/4234
+</code></pre>
+<h3 id="使用动词进行操作">使用动词进行操作</h3>
+<p>在REST里，使用不同的HTTP动词进行增删改查的操作：</p>
+<table>
+<thead>
+<tr>
+<th>动词</th>
+<th>操作</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>POST</td>
+<td>新建一个资源</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>读取一个资源</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td>更新一个资源</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td>删除一个资源</td>
+</tr>
+</tbody>
+</table>
+<p>使用这个REST服务的映射表来设计接口，在开发客户端的时候可以轻松上手，不用深入理解接口的含义。这套标准十分适用于REST，符合面向服务架构(SOA)的核心设计思想：服务抽离、松耦合、可复用、可发现、健全性。</p>
+<p>通过这个一致的映射关系，客户端也知道哪个动词是幂等（Idempotent）的。幂等是指这个操作可以重复多次，并且每次都会得到相同的结果。参照HTTP规范，GET、PUT和DELETE操作是幂等的，POST操作不是幂等的。这也就是为什么在REST中使用POST来进行添加操作，而使用PUT来进行更新操作。</p>
+<h3 id="把东西链接起来">把东西链接起来</h3>
+<p>REST中的一个核心概念是HATEOAS（Hypermedia As The Engine Of Application State），即“超媒体即应用状态引擎”。这意味着应该始终使用链接（超媒体）来获取资源信息，然后客户端通过这个链接就可以获取到不同的资源。</p>
+<p>所以，相关的资源应当返回一条链接，而不是返回整个资源的内容。<br>
+也就是，该这样：</p>
+<pre><code>&lt;officer id=&quot;1&quot;&gt;
+   &lt;name&gt;James T. Kirk&lt;/name&gt;
+   &lt;rank&gt;Captain&lt;/rank&gt;
+   &lt;subordinates&gt;
+      &lt;link ref=&quot;http://ncc1701/api/officers/2&quot;&gt;
+      &lt;link ref=&quot;http://ncc1701/api/officers/3&quot;&gt;
+   &lt;/subordinates&gt;
+&lt;/officer&gt;
+</code></pre>
+<p>而不该这样：</p>
+<pre><code>&lt;officer id=&quot;1&quot;&gt;
+   &lt;name&gt;James T. Kirk&lt;/name&gt;
+   &lt;rank&gt;Captain&lt;/rank&gt;
+   &lt;subordinates&gt;
+      &lt;officer id=&quot;2&quot;&gt;
+         &lt;name&gt;Spock&lt;/name&gt;
+         &lt;rank&gt;Commander&lt;/rank&gt;
+      &lt;/officer&gt;
+      &lt;officer id=&quot;3&quot;&gt;
+         &lt;name&gt;Doctor Leonard McCoy&lt;/name&gt;
+         &lt;rank&gt;Commander&lt;/rank&gt;
+      &lt;/officer&gt;
+   &lt;/subordinates&gt;
+&lt;/officer&gt;
+</code></pre>
+<p>返回资源的链接应该用完整的URI地址而不是相对路径，这要求客户端请求这些资源的当前状态，维持HATEOAS原则。使用完整的URI地址的好处是客户端不需要额外的了解API相关的内容，只需要简单的访问这些链接就可以了。</p>
+<h3 id="提供多种资源表现方式">提供多种资源表现方式</h3>
+<p>REST中的R代表Representational，即表现层，这意味着REST服务应该提供不同的表现方式，以全面支持不同的客户端请求。在一次HTTP请求中，服务器可以通过指定的表现方式返回资源，REST服务应该使用标准的表现方式，以便客户端之间的信息互通。</p>
+<p>比如可以通过如下请求XML格式的数据：</p>
+<pre><code>GET /customers/666
+Accept: application/xml
+</code></pre>
+<p>或者vcard格式：</p>
+<pre><code>GET /customers/666
+Accept: application/vcard
+</code></pre>
+<p>或者pdf格式：</p>
+<pre><code>GET /customers/666
+Accept: application/pdf
+</code></pre>
+<p>或者自定义格式：</p>
+<pre><code>GET /customers/666
+Accept: application/vnd.mycompany.customer-v1+json
+</code></pre>
+<h3 id="使用状态码作为回复">使用状态码作为回复</h3>
+<p>HTTP的状态码提供了一套标准化方案，用来反馈请求的状态。</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>含义</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>OK</td>
+<td>确认GET、PUT和DELETE操作成功</td>
+</tr>
+<tr>
+<td>201</td>
+<td>Created</td>
+<td>确认POST操作成功</td>
+</tr>
+<tr>
+<td>304</td>
+<td>Not Modified</td>
+<td>用于条件GET访问，告诉客户端资源没有被修改</td>
+</tr>
+<tr>
+<td>400</td>
+<td>Bad Request</td>
+<td>通常用于POST或者PUT请求，表明请求的内容是非法的</td>
+</tr>
+<tr>
+<td>401</td>
+<td>Unauthorized</td>
+<td>需要授权</td>
+</tr>
+<tr>
+<td>403</td>
+<td>Forbidden</td>
+<td>没有访问权限</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Not Found</td>
+<td>服务器上没有资源</td>
+</tr>
+<tr>
+<td>405</td>
+<td>Method Not Allowed</td>
+<td>请求方法不能被用于请求相应的资源</td>
+</tr>
+<tr>
+<td>409</td>
+<td>Conflict</td>
+<td>访问和当前状态存在冲突</td>
+</tr>
+</tbody>
+</table>
+<h2 id="codeigniter">CodeIgniter</h2>
+<p><a href="http://ellislab.com/codeigniter">CodeIgniter</a>是一个流行的MVC框架，很适合用来进行RESTful API开发。控制器（Controller）处理客户端的请求并返回内容，模型（Model）进行增删改查（CRUD）的操作，视图（View）用来处理资源的表现格式。不过在这个例子里，我们没有用模型，而是直接用控制器进行格式处理，这样整个项目更干净更简单。</p>
+<p>代码可以直接在Github中获取：<a href="https://github.com/awhitney42/codeigniter-restserver-resources">codeigniter-restserver-resources</a>。</p>
+<p>在接下来的例子里，我们用到了<code>REST_Controller</code>这个库，继承自原生的<code>CI_Controller</code>。它可以完成绝大部分繁杂的工作：处理请求、调用模块、格式化内容、返回数据。你的每个资源控制器都应该继承自<code>REST_Controller</code>这个类。</p>
+<p>下面我们来看一个例子，我们假设要提供一个<code>Widgets</code>资源的RESTful接口：</p>
+<pre><code>class Widgets extends REST_Controller
+</code></pre>
+<h3 id="get">get()</h3>
+<p><code>Widgets</code>类中的第一个函数是<code>get()</code>，用来响应HTTP的GET请求。这个函数调用了父类的protected函数<code>_get()</code>，用来获取请求中的参数ID。然后这个函数根据是否有参数ID使用<code>widgets_model</code>调用<code>getWidgets()</code>或者<code>getWidget($id)</code>方法，模型的返回值将会通过父类的<code>response()</code>函数返回，返回的内容包含对应的状态码和符合格式的数据。</p>
+<pre><code>function get()
+{    
+    $id = $this-&gt;_get('id');
+    if(!$id)
+    {
+        $widgets = $this-&gt;widgets_model-&gt;getWidgets();                        
+        if($widgets)
+            $this-&gt;response($widgets, 200); // 200 being the HTTP response code
+        else
+            $this-&gt;response(array('error' =&gt; 'Couldn\'t find any widgets!'), 404);
+    }
+    $widget = $this-&gt;widgets_model-&gt;getWidget($id);
+    if($widget)
+        $this-&gt;response($widget, 200); // 200 being the HTTP response code
+    else
+        $this-&gt;response(array('error' =&gt; 'Widget could not be found'), 404);
+}
+</code></pre>
+<p><code>cURL</code>是一个很好的命令行工具，我们可以用来测试REST服务，返回一个JSON格式的数据：</p>
+<pre><code>$ curl -i -H &quot;Accept: application/json&quot; -X GET http://foo.com/index.php/api/widgets
+</code></pre>
+<p>则会返回如下内容：</p>
+<pre><code>HTTP/1.1 200 OK
+Status: 200
+Content-Type: application/json
+
+{&quot;1&quot;:{&quot;id&quot;:1,&quot;name&quot;:&quot;sprocket&quot;},&quot;2&quot;:{&quot;id&quot;:2,&quot;name&quot;:&quot;gear&quot;}}
+</code></pre>
+<p>请求特定的资源也很简单，这次我们去请求ID为2的<code>widget</code>并且通过XML格式返回：</p>
+<pre><code>$ curl -i -H &quot;Accept: application/xml&quot; -X GET http://foo.com/index.php/api/widgets/id/2
+</code></pre>
+<p>返回如下内容：</p>
+<pre><code>HTTP/1.1 200 OK
+Status: 200
+Content-Type: application/xml
+
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+&lt;xml&gt;&lt;id&gt;2&lt;/id&gt;&lt;name&gt;gear&lt;/name&gt;&lt;/xml&gt;
+</code></pre>
+<p>如果请求一个不存在的资源就会返回404的错误码：</p>
+<pre><code>HTTP/1.1 404 Not Found
+Status: 404
+Content-Type: application/xml
+
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+&lt;xml&gt;&lt;error&gt;Widget could not be found&lt;/error&gt;&lt;/xml&gt;
+</code></pre>
+<h3 id="post">post()</h3>
+<p>接下来的函数是<code>post()</code>，用来处理创建widget的POST请求。可以通过<code>$this-&gt;_post_args</code>获取请求的数据。父类通过<code>Format.php</code>对请求的数据进行处理并把它们放到了<code>$this-&gt;_post_args</code>里。接下来<code>post()</code>方法使用<code>widgets_model</code>模型调用<code>createWidgets($data)</code>函数，如果数据非法或者请求冲突，<code>widgets_model</code>模型会抛出异常并且返回异常的内容。如果调用成功，则会调用<code>getWidget($id)</code>函数获取最新的<code>widget</code>，在返回的时候会将返回值和<code>201 (Created)</code>的状态码一起返回。</p>
+<pre><code>function post()
+{
+    $data = $this-&gt;_post_args;
+    try {
+        $id = $this-&gt;widgets_model-&gt;createWidget($data);
+    } catch (Exception $e) {
+        // Here the model can throw exceptions like the following:
+        // * Invalid input data:
+                    //   throw new Exception('Invalid request data', 400);
+        // * Conflict when attempting to create, like a resubmit:
+                    //   throw new Exception('Widget already exists', 409)
+        $this-&gt;response(array('error' =&gt; $e-&gt;getMessage()),
+                                    $e-&gt;getCode());
+    }
+    if ($id) {
+        $widget = $this-&gt;widgets_model-&gt;getWidget($id);
+        $this-&gt;response($widget, 201); // 201 is the HTTP response code
+    } else
+        $this-&gt;response(array('error' =&gt; 'Widget could not be created'),
+                                    404);
+}   
+</code></pre>
+<p>为了测试通过POST请求新建资源的操作，我们需要把我们的cURL包裹在PHP代码里，创建一个<code>rest_client.php</code>文件：</p>
+<pre><code>print &quot;\n-----TESTING REST POST-----\n&quot;;
+test_post();
+function test_post() {
+   $data = array(&quot;name&quot; =&gt; &quot;bolt&quot;);
+   $data_string = json_encode($data);
+   $ch = curl_init('http://foo.com/index.php/api/widgets');
+   curl_setopt($ch, CURLOPT_CUSTOMREQUEST, &quot;POST&quot;);
+   curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
+   curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+   curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+       'Content-Type: application/json',
+       'Content-Length: ' . strlen($data_string))
+   );
+   $result = curl_exec($ch);
+   $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+   $contenttype = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+   print &quot;Status: $httpcode&quot; . &quot;\n&quot;;
+   print &quot;Content-Type: $contenttype&quot; . &quot;\n&quot;;
+   print &quot;\n&quot; . $result . &quot;\n&quot;;
+}
+</code></pre>
+<p>在命令行中通过PHP命令执行：</p>
+<pre><code>$ php rest_client.php
+</code></pre>
+<p>返回内容如下：</p>
+<pre><code>-----TESTING REST POST-----
+Status: 201
+Content-Type: application/xml
+
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+&lt;xml&gt;&lt;id&gt;3&lt;/id&gt;&lt;name&gt;bolt&lt;/name&gt;&lt;/xml&gt;
+</code></pre>
+<h3 id="put">put()</h3>
+<p>接下来的方法是<code>put()</code>，用来处理PUT请求，更新已经存在的资源数据。处理过程和POST的处理十分相似，最大的区别就在于使用<code>$this-&gt;_put_args</code>而不是<code>$this-&gt;_post_args</code>，以及返回200而不是201。</p>
+<pre><code>public function put()
+{
+    $data = $this-&gt;_put_args;
+    try {
+        //$id = $this-&gt;widgets_model-&gt;updateWidget($data);
+        $id = $data['id']; // test code
+        //throw new Exception('Invalid request data', 400); // test code
+    } catch (Exception $e) {
+        // Here the model can throw exceptions like the following:
+        // * For invalid input data: new Exception('Invalid request data', 400)
+        // * For a conflict when attempting to create, like a resubmit: new Exception('Widget already exists', 409)
+        $this-&gt;response(array('error' =&gt; $e-&gt;getMessage()), $e-&gt;getCode());
+    }
+    if ($id) {
+        $widget = array('id' =&gt; $data['id'], 'name' =&gt; $data['name']); // test code
+        //$widget = $this-&gt;widgets_model-&gt;getWidget($id);
+        $this-&gt;response($widget, 200); // 200 being the HTTP response code
+    } else
+        $this-&gt;response(array('error' =&gt; 'Widget could not be found'), 404);
+}
+</code></pre>
+<p>为了测试UPDATE更新资源的功能，我们依旧使用PHP进行cURL的操作，大多数的网络服务器默认没有开启PUT和DELETE，我们可以在header中使用<code>X-HTTP-Method-Override</code>，通过POST来发送PUT请求。这样的话，服务器会把它当做一个POST请求，而REST服务器会把它作为PUT操作处理。</p>
+<pre><code>print &quot;\n-----TESTING REST PUT-----\n&quot;;
+test_put();
+
+function test_put() {
+   $data = array(&quot;id&quot; =&gt; &quot;3&quot;, &quot;name&quot; =&gt; &quot;nut&quot;);
+   $data_string = json_encode($data);
+   $ch = curl_init('http://foo.com/index.php/api/widgets');
+   curl_setopt($ch, CURLOPT_CUSTOMREQUEST, &quot;POST&quot;);
+   curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
+   curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+   curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+       'X-HTTP-Method-Override: PUT',
+       'Content-Type: application/json',
+       'Content-Length: ' . strlen($data_string))
+   );
+   $result = curl_exec($ch);
+   $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+   $contenttype = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+   print &quot;Status: $httpcode&quot; . &quot;\n&quot;;
+   print &quot;Content-Type: $contenttype&quot; . &quot;\n&quot;;
+   print &quot;\n&quot; . $result . &quot;\n&quot;;
+}
+</code></pre>
+<p>同样使用PHP命令测试：</p>
+<pre><code>$ php rest_client.php
+</code></pre>
+<p>返回结果：</p>
+<pre><code>-----TESTING REST PUT-----
+Status: 200
+Content-Type: application/xml
+
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+&lt;xml&gt;&lt;id&gt;3&lt;/id&gt;&lt;name&gt;nut&lt;/name&gt;&lt;/xml&gt;
+</code></pre>
+<h3 id="delete">delete()</h3>
+<p>最后的函数就是delete了，请求中必须包含ID的参数否则就会返回400(Bad Request)的状态码，因为我们不希望用户删除所有的资源内容。如果ID没有对应的资源则会返回404(Not Found) 错误码。如果对应的<code>widget</code>存在，则会尝试调用<code>deleteWidget($id)</code>删除对应资源。操作中的所有异常都会被捕获到并且返回。如果删除成功，返回200(Success)状态码。</p>
+<pre><code>function delete()
+{
+    $id = $this-&gt;_get('id');
+    if(!$id)
+    {
+        $this-&gt;response(array('error' =&gt;
+                            'An ID must be supplied to delete a widget'), 400);
+    }
+    //$widget = $this-&gt;widgets_model-&gt;getWidget($id);
+    $widget = @$widgets[$id]; // test code
+    if($widget) {
+        try {
+            $this-&gt;widgets_model-&gt;deleteWidget($id);
+        } catch (Exception $e) {
+            // Here the model can throw exceptions like the following:
+            // * Client is not authorized: new Exception('Forbidden', 403)
+            $this-&gt;response(array('error' =&gt; $e-&gt;getMessage()),
+                                    $e-&gt;getCode());
+        }
+            $this-&gt;response($widget, 200); // 200 being the HTTP response code
+    } else
+        $this-&gt;response(array('error' =&gt; 'Widget could not be found'), 404);
+}
+</code></pre>
+<p>我们可以用命令行工具<code>cURL</code>进行测试，参数ID像GET一样放在URL地址中，和PUT相同，我们通过<code>X-HTTP-Method-Override</code>使服务器把请求当做POST处理，REST服务则会把这次请求当做DELETE操作处理。</p>
+<pre><code>$ curl -i -H &quot;Accept: application/xml&quot; -H &quot;X-HTTP-Method-Override: DELETE&quot; -X POST http://foo.com/index.php/api/widgets/id/1
+</code></pre>
+<p>返回200 (Success)说明id为1的资源已经被成功删除：</p>
+<pre><code>HTTP/1.1 200 OK
+Status: 200
+Content-Type: application/xml
+
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+&lt;xml&gt;&lt;id&gt;1&lt;/id&gt;&lt;name&gt;sprocket&lt;/name&gt;&lt;/xml&gt;
+</code></pre>
+<p>如果ID非法，则会返回404(Not Found)错误码，如果没有删除的权限，则会返回403 (Forbidden) 状态码。</p>
+<h3 id="authentication">Authentication</h3>
+<p>正如前面提到的，Phil的REST框架和我的原来的设计相比，在用户权限认证上有了很大的改进， 提供<a href="http://en.wikipedia.org/wiki/Basic_access_authentication">basic</a>和<a href="http://en.wikipedia.org/wiki/Digest_access_authentication">digest</a>两种认证方式。还有很多其他特性，比如可以用LDAP字典将授权融为一体，具体可以在<code>config/rest.php</code>中设置。</p>
+<p>除了传统的认证方式，你还可以使用API keys或者IP地址的白名单进行用户权限管理。</p>
+<h3 id="dto">DTO</h3>
+<p>在原先的设计中，我使用DTO(Data Transfer Object)在不同格式之间传输数据，Phil使用Format类来解决这个问题，从<code>Widget</code>的例子中我们可以看到，使用数据是多么的方便，只需要<code>$this-&gt;_post_args</code>或者<code>$this-&gt;response()</code>就可以解决问题。当然，这并不意味着DTO不好用，但是在很多场合下它会显得十分复杂和庞大。<br>
+在我原来的项目里，我对客户端需要使用和服务器端同样的DTO库来传输数据很不满意，因为它违反了KISS的原则。</p>
+<h2 id="总结">总结</h2>
+<p>REST目前已经是比较成熟的网络服务的框架模型方案，是API产品目录网站<a href="http://www.programmableweb.com/">programmableweb</a>的基石，是各式各样应用和服务器的数据传输的基础，同时对于<a href="http://en.wikipedia.org/wiki/Service-oriented_architecture">SOA</a>来说也是十分重要，促进网络端和移动端的接口技术日趋成熟。</p>
+<p>正如前面所看到的，用CodeIgniter框架实现RESTful接口十分简单，可以下载我的项目源码<a href="https://github.com/awhitney42/codeigniter-restserver-resources">awhitney42/codeigniter-restserver-resources</a>，从现在就开始开发吧！</p>
+<h2 id="后记">后记</h2>
+<p>REST是一种遵从传统设计模式的架构风格，在过去的几年中一直都在改进，并且会一直坚持下去。所以如果对于REST或者是本文有什么意见，或者对于其中的概念有什么困惑，请在文章后面留言。</p>
+<hr>
+<p>原文地址：</p>
+<ul>
+<li><a href="http://outergalactic.org/blog/restful-services-with-codeigniter/">RESTful Services with CodeIgniter</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#restful">RESTful</a>
+<ul>
+<li><a href="#%E4%BD%BF%E7%94%A8%E5%90%8D%E8%AF%8D%E8%80%8C%E4%B8%8D%E6%98%AF%E5%8A%A8%E8%AF%8D">使用名词而不是动词</a></li>
+<li><a href="#%E6%89%80%E6%9C%89%E4%B8%9C%E8%A5%BF%E9%83%BD%E5%BA%94%E8%AF%A5%E6%9C%89id">所有东西都应该有ID</a></li>
+<li><a href="#%E4%BD%BF%E7%94%A8%E5%8A%A8%E8%AF%8D%E8%BF%9B%E8%A1%8C%E6%93%8D%E4%BD%9C">使用动词进行操作</a></li>
+<li><a href="#%E6%8A%8A%E4%B8%9C%E8%A5%BF%E9%93%BE%E6%8E%A5%E8%B5%B7%E6%9D%A5">把东西链接起来</a></li>
+<li><a href="#%E6%8F%90%E4%BE%9B%E5%A4%9A%E7%A7%8D%E8%B5%84%E6%BA%90%E8%A1%A8%E7%8E%B0%E6%96%B9%E5%BC%8F">提供多种资源表现方式</a></li>
+<li><a href="#%E4%BD%BF%E7%94%A8%E7%8A%B6%E6%80%81%E7%A0%81%E4%BD%9C%E4%B8%BA%E5%9B%9E%E5%A4%8D">使用状态码作为回复</a></li>
+</ul>
+</li>
+<li><a href="#codeigniter">CodeIgniter</a>
+<ul>
+<li><a href="#get">get()</a></li>
+<li><a href="#post">post()</a></li>
+<li><a href="#put">put()</a></li>
+<li><a href="#delete">delete()</a></li>
+<li><a href="#authentication">Authentication</a></li>
+<li><a href="#dto">DTO</a></li>
+</ul>
+</li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+<li><a href="#%E5%90%8E%E8%AE%B0">后记</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/three-open-source-tools-to-make-your-presentations-pop/">
+              <h3 class="post-title">
+                三款开源工具让你的演示脱颖而出
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

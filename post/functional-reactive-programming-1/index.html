@@ -1,0 +1,517 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Functional Reactive Programming in Swift - Part 1 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Functional Reactive Programming in Swift - Part 1
+            </h2>
+            <div class="post-info">
+              <span>
+                2015-05-11
+              </span>
+              <span>
+                12 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/fthQHH2l27/" class="post-tag">
+                  # Swift
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="简介">简介</h2>
+<p>大四狗在毕业前夕终于撸完了毕业论文。把论文内容整理之后拆分成了三篇博客，希望和大家一起探索函数式反应型编程 (Functional Reactive Programming ， 缩写为 FRP) 的乐趣。</p>
+<p>在第一章里，我们先了解一下，什么是 FRP 。</p>
+<h2 id="函数式-functional">函数式 - Functional</h2>
+<p>函数式编程是一种编程范型，也就是指导如何编写程序的方法论。它强调函数必须被当成第一等公民对待，将电脑运算视为数学上的函数计算，并且避免使用程序状态以及易变对象。</p>
+<p>例如 +1 这样一个简单的操作，传统的做法是这样的：</p>
+<pre><code class="language-swift">var foo = 0
+func increment() {
+  foo++
+}
+</code></pre>
+<p>函数式的写法是这样的：</p>
+<pre><code class="language-swift">func increment(foo: Int) -&gt; Int {
+  return foo + 1
+}
+</code></pre>
+<p>从这个例子中可以看到，函数式编程不依赖于外部的数据，而且也不修改外部数据的值，而是返回一个运算之后的新值。</p>
+<h3 id="函数式的特性">函数式的特性</h3>
+<p>函数式编程具有以下几个特性：</p>
+<h4 id="特性1函数是第一等公民">特性1：函数是第一等公民</h4>
+<p>所谓 第一等公民 (first class) ，指的是函数与其他数据类型一样，处于平等地位。既可以赋值给其他变量，也可以作为参数传入另一个函数，或者作为别的函数的返回值。</p>
+<p>比如我们可以用 map 将数组通过指定的函数映射成另一个数组：</p>
+<pre><code class="language-swift">let increment = { return $0 + 1 }
+[1,2,3].map(increment)  // [2,3,4]
+</code></pre>
+<p>这里的 increment 便是作为一个函数传入的。这个技术可以让你的函数就像变量一样来使用。也就是说，你的函数可以像变量一样被创建、修改、传递，返回或是在函数中嵌套其他函数。</p>
+<h4 id="特性2数据是不可变的">特性2：数据是不可变的</h4>
+<p>函数式语言里面的数据是不可修改的，只会返回新的值。这使得多个线程可以在不用锁的情况下并发地访问数据，因为数据本身并不会发生变化。</p>
+<p>在 Clojure 这样的纯函数式语言中，变量默认是不可变的。如果想改变变量的值，可以通过 binding 进行动态绑定：</p>
+<pre><code class="language-clojure">user=&gt; (def ^:dynamic x 1)
+#’user/x
+
+user=&gt; (def ^:dynamic y 2)
+#’user/y
+
+user=&gt; (+ x y)
+3
+
+user=&gt; (binding [x 4 y 5]   ; 使用动态绑定覆盖原来绑定的值
+         (+ x y))
+9
+
+user=&gt; (+ x y)
+3
+</code></pre>
+<h4 id="特性3函数没有副作用">特性3：函数没有副作用</h4>
+<p>副作用指的是函数内部与外部互动，产生了函数运算以外的其他结果。最典型的情况，就是修改全局变量的值：</p>
+<pre><code class="language-swift">var foo = 0
+func increment() {
+  foo++
+}
+</code></pre>
+<p>函数式编程强调函数运算没有副作用，意味着函数要保持独立。函数的所有功能就是返回一个新值，没有其他行为，尤其是不得修改外部变量的值。</p>
+<h4 id="特性4函数具有确定性">特性4：函数具有确定性</h4>
+<p>函数的运行不依赖于外部变量和系统状态，只依赖于输入的参数。任何时候只要输入的参数相同，函数返回的新值总是相同的。</p>
+<p>不确定性的函数示例：</p>
+<pre><code class="language-swift">let foo = 3
+var i = 0
+func increment(value: Int) -&gt; Int {
+  return value + i
+}
+
+i = 1
+increment(foo)    // 4
+i = 2
+increment(foo)    // 5
+</code></pre>
+<p>可以看到，不确定性函数的运行结果往往与系统状态有关，不同的状态之下，返回值是不一样的。</p>
+<p>确定性的函数示例：</p>
+<pre><code class="language-swift">var foo = 3
+func increment(value: Int, step: Int) -&gt; Int{
+  return value + step
+}
+
+increment(foo, 1)   // 4
+increment(foo, 2)   // 5
+</code></pre>
+<p>函数的确定性有利于我们观察和理解程序的行为，因为它所依赖的东西只有参数本身。</p>
+<h3 id="函数式的函数">函数式的函数</h3>
+<p>在函数式编程中，有些函数是抬头不见低头见的常客。在合适的时机利用合适的函数，可以有效地缩短代码，并且让代码更可读。在这里我们提前了解一下他们。</p>
+<h4 id="map">map</h4>
+<p><code>map</code> 可以把一个数组按照一定的规则转换成另一个数组，定义如下：</p>
+<pre><code>func map&lt;U&gt;(transform: (T) -&gt; U) -&gt; U[]
+</code></pre>
+<p>也就是说它接受一个函数叫做 <code>transform</code> ，然后这个函数可以把 T 类型的转换成 U 类型的并返回 (也就是 <code>(T) -&gt; U</code>)，最终 <code>map</code> 返回的是 U 类型的集合。</p>
+<p>下面的表达式更有助于理解：</p>
+<pre><code>[ x1, x2, ... , xn].map(f) -&gt; [f(x1), f(x2), ... , f(xn)]
+</code></pre>
+<p>如果用 <code>for in</code> 来实现，则需要这样：</p>
+<pre><code class="language-swift">var newArray : Array&lt;T&gt; = []
+for item in oldArray {
+  newArray += f(item)
+}
+</code></pre>
+<p>举个例子，我们可以这样把价格数组中的数字前面都加上 ￥ 符号：</p>
+<pre><code class="language-swift">var oldArray = [10,20,45,32]
+var newArray = oldArray.map({money in &quot;￥\(money)&quot;})
+
+println(newArray) // [￥10, ￥20, ￥45, ￥32]
+</code></pre>
+<p>如果你觉得 <code>money in</code> 也有点多余的话可以用 <code>$0</code> ：</p>
+<pre><code class="language-swift">newArray = oldArray.map({&quot;\($0)€&quot;})
+</code></pre>
+<h4 id="filter">filter</h4>
+<p>方法如其名， <code>filter</code> 起到的就是筛选的功能，参数是一个用来判断是否筛除的筛选闭包，定义如下：</p>
+<pre><code class="language-swift">func filter(includeElement: (T) -&gt; Bool) -&gt; [T]
+</code></pre>
+<p>还是举个例子说明一下。首先先看下传统的 <code>for in</code> 实现的方法：</p>
+<pre><code class="language-swift">var oldArray = [10,20,45,32]
+var filteredArray : Array&lt;Int&gt; = []
+for money in oldArray {
+  if (money &gt; 30) {
+    filteredArray += money
+  }
+}
+println(filteredArray)
+</code></pre>
+<p>奇怪的是这里的代码编译不通过：</p>
+<pre><code>Playground execution failed: &lt;EXPR&gt;:15:9: error: 'Array&lt;Int&gt;' is not identical to 'UInt8' filteredArray += money
+</code></pre>
+<p>发现原来是 <code>+=</code> 符号不能用于 <code>append</code> ，只能用于 <code>combine</code> ，在外面包个 <code>[]</code> 即可：</p>
+<pre><code class="language-swift">var oldArray = [10,20,45,32]
+var filteredArray : Array&lt;Int&gt; = []
+for money in oldArray {
+  if (money &gt; 30) {
+    filteredArray += [money]
+  }
+}
+println(filteredArray) // [45, 32]
+</code></pre>
+<p>用 <code>filter</code> 可以这样实现：</p>
+<pre><code class="language-swift">  var oldArray = [10,20,45,32]
+  var filteredArray  = oldArray.filter({
+    return $0 &gt; 30
+  })
+
+  println(filteredArray) // [45, 32]
+</code></pre>
+<p>少了很多代码。（你真的好短啊！</p>
+<h4 id="reduce">reduce</h4>
+<p><code>reduce</code> 函数解决了把数组中的值整合到某个独立对象的问题。定义如下：</p>
+<pre><code>func reduce&lt;U&gt;(initial: U, combine: (U, T) -&gt; U) -&gt; U
+</code></pre>
+<p>好吧看起来略抽象。我们还是从 <code>for in</code> 开始。比如我们要把数组中的值都加起来放到 <code>sum</code> 里，那么传统做法是：</p>
+<pre><code class="language-swift">var oldArray = [10,20,45,32]
+var sum = 0
+for money in oldArray {
+  sum = sum + money
+}
+println(sum) // 107
+</code></pre>
+<p><code>reduce</code> 有两个参数，一个是初始化的值，另一个是一个闭包，闭包有两个输入的参数，一个是原始值，一个是新进来的值，返回的新值也就是下一轮循环中的旧值。写几个小例子试一下：</p>
+<pre><code class="language-swift">var oldArray = [10,20,45,32]
+var sum = 0
+sum = oldArray.reduce(0,{$0 + $1}) // 0+10+20+45+32 = 107
+sum = oldArray.reduce(1,{$0 + $1}) // 1+10+20+45+32 = 108
+sum = oldArray.reduce(5,{$0 * $1}) // 5*10*20*45*32 = 1440000
+sum = oldArray.reduce(0,+) // 0+10+20+45+32 = 107
+println(sum)
+</code></pre>
+<h3 id="函数式和指令式的比较">函数式和指令式的比较</h3>
+<p>对于开发者们来说，大家最熟悉的编程范例之一应该是指令式编程。指令式编程是一种描述计算机所需作出的行为的编程范型。</p>
+<p>我们通过一个简单的例子来演示两者的区别。比如我们需要将数组中的元素乘以2，然后取出大于10的结果。</p>
+<p>指令式编程的写法如下：</p>
+<pre><code class="language-swift">  var source = [1, 3, 5, 7, 9]
+  var result = [Int]()
+  for i in source {
+    let timesTwo = i * 2
+    if timesTwo &gt; 10 {
+      result.append(timesTwo)
+    }
+  }
+  result  // [14, 18]
+</code></pre>
+<p>函数式编程的写法如下：</p>
+<pre><code class="language-swift">var source = [1, 3, 5, 7, 9]
+let result = source
+                .map { $0 * 2 }
+                .filter { $0 &gt; 10 }
+result  // [14, 18]
+</code></pre>
+<p>这个简单的例子并不是争论哪种范例更清晰，而是为了演示二者之间的区别。</p>
+<p>在指令式编程里，我们给计算机下发了如下指令：</p>
+<ul>
+<li>遍历数组中的所有元素</li>
+<li>在遍历中取出元素并乘以2</li>
+<li>比较一下看看是否大于10</li>
+<li>如果大于10则将它存到 result 数组中</li>
+</ul>
+<p>在函数式编程中，我们则是这样解决问题：</p>
+<ul>
+<li>将数组元素中的每个元素乘以2</li>
+<li>在结果中选出大于10的元素</li>
+</ul>
+<p>指令式编程通过下达指令完成任务，侧重于具体流程以及状态变化；而函数式编程则专注于结果，以及为了得到结果需要做哪些转换。</p>
+<h2 id="反应型-reactive">反应型 - Reactive</h2>
+<p>在日常开发中，我们经常需要监听某个属性，并且针对该属性的变化做一些处理。比如以下几个场景：</p>
+<ul>
+<li>用户在输入邮箱的时候，监测输入的内容并在界面上提示是否符合邮箱规范。</li>
+<li>用户在修改用户名之后，所有显示用户名的界面都要改为新的用户名。</li>
+</ul>
+<p>外部输入信号的变化、事件的发生，这些都是典型的外部环境变化。根据外部环境的变化进行响应处理，直观上来讲像是一种自然地反应。我们可以将这种自动对变化作出响应的能力称为反应能力 (Reactive) 。</p>
+<p>那么什么是反应型编程呢？</p>
+<blockquote>
+<p>Reactive programming is programming with asynchronous data streams.<br>
+反应型编程是异步数据流的编程。</p>
+</blockquote>
+<p>对于移动端来说，异步数据流的概念并不陌生，变量、点击事件、属性、缓存，这些就可以成为数据流。</p>
+<p>我们可以通过一些简单的 ASCII 字符来演示如何将事件转换成数据流：</p>
+<pre><code>    --a---b-c---d---X---|--&gt;
+
+    a, b, c, d 是具体的值，代表了某个事件
+    X 表示发生了一个错误
+    | 是这个流已经结束了的标记
+    ----------&gt; 是时间轴
+</code></pre>
+<p>比如我们要统计用户点击鼠标的次数，那么可以这样：</p>
+<pre><code>      clickStream: ---c----c--c----c------c--&gt;
+                   vvvvv map(c becomes 1) vvvv
+                   ---1----1--1----1------1--&gt;
+                   vvvvvvvvv scan(+) vvvvvvvvv
+    counterStream: ---1----2--3----4------5--&gt;
+</code></pre>
+<p>反应型编程就是基于这些数据流的编程。而函数式编程则相当于提供了一个工具箱，可以方便的对数据流进行合并、创建和过滤等操作。</p>
+<h2 id="swift">Swift</h2>
+<p>Swift 是苹果公司在 2014 年推出的编程语言，用于编写 iOS 和 OS X 应用程序。它吸收了很多其它语言的语法特性，例如闭包、元组、泛型、结构体等等，这使得它的语法简洁而灵活。</p>
+<p>Swift 本身并不是一门函数式语言，不过它有一些函数式的方法和特性，这让人不禁产生了使用 Swift 进行函数式编程的遐想。</p>
+<p>和 Objective-C 相比， Swift 更接近于函数式，它支持以下特性：</p>
+<ul>
+<li><code>map</code> <code>reduce</code> 等函数式函数</li>
+<li>函数是一等公民</li>
+<li>模式匹配</li>
+<li>...</li>
+</ul>
+<p>但是和真正的函数式语言相比， Swift 还差很多：</p>
+<ul>
+<li><s>没有 <code>flatmap</code></s>（现在有了）</li>
+<li>无法迅速取出 <code>head</code> 和 <code>tail</code></li>
+<li>没有 <code>foldLeft</code></li>
+<li>...</li>
+</ul>
+<p>我们并不能因为 Swift 中的一些函数式特性就把它归为函数式语言，但是我们可以利用这些特性进行函数式 Style 的编程。</p>
+<h2 id="小结">小结</h2>
+<p>终于花时间把前阵子炒得火热的函数式编程简单的了解了一圈，最大的感想便是：“原来代码可以这样写”。</p>
+<p>在下一章中，我们将结合 Swift 和 RAC 写一写代码，一起体验 FRP 的魅力。</p>
+<hr>
+<p>参考文献：</p>
+<ul>
+<li>
+<p>Wiki</p>
+<ul>
+<li><a href="http://en.wikipedia.org/wiki/Programming_paradigm">Programming paradigm</a></li>
+<li><a href="http://en.wikipedia.org/wiki/Functional_reactive_programming">Functional reactive programming</a></li>
+</ul>
+</li>
+<li>
+<p>Functional</p>
+<ul>
+<li><a href="http://blog.maybeapps.com/post/42894317939/input-and-output">Input and Output</a></li>
+<li><a href="http://stackoverflow.com/questions/13341937/whats-the-status-of-current-functional-reactive-programming-implementations">What's the status of current FRP implementations?</a></li>
+<li><a href="http://learnxinyminutes.com/docs/clojure/">Learn X in Y minutes - Where X=clojure</a></li>
+<li><a href="https://msdn.microsoft.com/en-us/library/bb669144.aspx">Functional Programming vs. Imperative Programming</a></li>
+<li><a href="http://jamesonquave.com/blog/functional-programming-in-swift/">Functional Programming in Swift</a></li>
+<li><a href="http://robnapier.net/swift-is-not-functional">Swift Is Not Functional</a></li>
+<li><a href="http://code.martinrue.com/posts/functions-and-closures-in-swift">Functions and Closures in Swift</a></li>
+</ul>
+</li>
+<li>
+<p>Reactive</p>
+<ul>
+<li><a href="https://leanpub.com/iosfrp/">Functional Reactive Programming on iOS</a></li>
+<li><a href="https://medium.com/swift-programming/reactive-swift-3b6050375534">Reactive Swift</a></li>
+<li><a href="https://gist.github.com/staltz/868e7e9bc2a7b8c1f754">The introduction to Reactive Programming you've been missing</a></li>
+<li><a href="http://napora.org/a-swift-reaction/">A Swift Reaction</a></li>
+<li><a href="http://rasic.info/from-mvc-to-mvvm-in-swift/">From MVC to MVVM in Swift</a></li>
+<li><a href="http://rasic.info/bindings-generics-swift-and-mvvm/">Bindings, Generics, Swift and MVVM</a></li>
+<li><a href="http://www.teehanlax.com/blog/model-view-viewmodel-for-ios/">Model-View-ViewModel for iOS</a></li>
+<li><a href="https://speakerdeck.com/ashfurrow/functional-reactive-programming-in-swift">Functional Reactive Programming in Swift</a></li>
+</ul>
+</li>
+<li>
+<p>中文博客</p>
+<ul>
+<li><a href="http://www.infoq.com/cn/articles/functional-reactive-programming">函数式反应型编程(FRP) - 实时互动应用开发的新思路</a></li>
+<li><a href="http://www.ruanyifeng.com/blog/2012/04/functional_programming.html">函数式编程初探</a></li>
+<li><a href="http://coolshell.cn/articles/10822.html">函数式编程</a></li>
+<li><a href="http://xumingming.sinaapp.com/302/clojure-functional-programming-for-the-jvm-clojure-tutorial/">Clojure入门教程: Clojure – Functional Programming for the JVM中文版</a></li>
+<li><a href="http://blog.leezhong.com/ios/2013/06/19/frp-reactivecocoa.html">ReactiveCocoa 与 Functional Reactive Programming</a></li>
+<li><a href="http://blog.zhaojie.me/2010/09/async-programming-and-reactive-framework.html">异步编程与响应式框架</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E7%AE%80%E4%BB%8B">简介</a></li>
+<li><a href="#%E5%87%BD%E6%95%B0%E5%BC%8F-functional">函数式 - Functional</a>
+<ul>
+<li><a href="#%E5%87%BD%E6%95%B0%E5%BC%8F%E7%9A%84%E7%89%B9%E6%80%A7">函数式的特性</a>
+<ul>
+<li><a href="#%E7%89%B9%E6%80%A71%E5%87%BD%E6%95%B0%E6%98%AF%E7%AC%AC%E4%B8%80%E7%AD%89%E5%85%AC%E6%B0%91">特性1：函数是第一等公民</a></li>
+<li><a href="#%E7%89%B9%E6%80%A72%E6%95%B0%E6%8D%AE%E6%98%AF%E4%B8%8D%E5%8F%AF%E5%8F%98%E7%9A%84">特性2：数据是不可变的</a></li>
+<li><a href="#%E7%89%B9%E6%80%A73%E5%87%BD%E6%95%B0%E6%B2%A1%E6%9C%89%E5%89%AF%E4%BD%9C%E7%94%A8">特性3：函数没有副作用</a></li>
+<li><a href="#%E7%89%B9%E6%80%A74%E5%87%BD%E6%95%B0%E5%85%B7%E6%9C%89%E7%A1%AE%E5%AE%9A%E6%80%A7">特性4：函数具有确定性</a></li>
+</ul>
+</li>
+<li><a href="#%E5%87%BD%E6%95%B0%E5%BC%8F%E7%9A%84%E5%87%BD%E6%95%B0">函数式的函数</a>
+<ul>
+<li><a href="#map">map</a></li>
+<li><a href="#filter">filter</a></li>
+<li><a href="#reduce">reduce</a></li>
+</ul>
+</li>
+<li><a href="#%E5%87%BD%E6%95%B0%E5%BC%8F%E5%92%8C%E6%8C%87%E4%BB%A4%E5%BC%8F%E7%9A%84%E6%AF%94%E8%BE%83">函数式和指令式的比较</a></li>
+</ul>
+</li>
+<li><a href="#%E5%8F%8D%E5%BA%94%E5%9E%8B-reactive">反应型 - Reactive</a></li>
+<li><a href="#swift">Swift</a></li>
+<li><a href="#%E5%B0%8F%E7%BB%93">小结</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/error-handling-in-swift/">
+              <h3 class="post-title">
+                面向轨道编程 - Swift 中的异常处理
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

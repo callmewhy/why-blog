@@ -1,0 +1,579 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>使用 NodeJS 和 AngularJS 创建一个TODO的单页网站 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              使用 NodeJS 和 AngularJS 创建一个TODO的单页网站
+            </h2>
+            <div class="post-info">
+              <span>
+                2014-07-17
+              </span>
+              <span>
+                15 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/WZhN7vCZ4R/" class="post-tag">
+                  # Frontend
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>今天我们来用MEAN(Mongo,Express,Angular,Node)来搭建一个简单的TODO列表的网站应用。</p>
+<p>首先简单的列一下任务列表：</p>
+<ul>
+<li>创建和完成TODO列表的主页面</li>
+<li>通过Mongoose把TODO列表存到MongoDB数据库</li>
+<li>使用Express框架</li>
+<li>创建RESTful的接口</li>
+<li>使用Angular作为前端框架并连接API</li>
+</ul>
+<p>这个项目本身很简单，是为新手准备的中级进阶教程，其中的很多概念可以应用到其他项目中。通过这个项目我们可以学习到如何使用NodeJS作为接口然后使用Angular作为前端。如何把各个部分整合起来是一件比较头疼的事情，希望这个教程可以给你答案。</p>
+<p>准备好了吗少年们，我们要起航了！</p>
+<figure data-type="image" tabindex="1"><img src="http://callmewhy.qiniudn.com/todoaholic.png" alt="" loading="lazy"></figure>
+<h2 id="基础安装">基础安装</h2>
+<h3 id="文件结构">文件结构</h3>
+<p>我们让文件结构尽量简单，把大多数的代码放在NodeJS项目中的server.js文件中。在大型项目里，我们可以把代码按照功能细分，让各个部分各司其职。比如<a href="http://mean.io/">Mean.io</a>就是这样一个样例项目，很好的演示了按照功能分工的文件结构。接下来我们创建一个简单的项目，文件结构如下：</p>
+<pre><code>- public        &lt;!-- holds all our files for our frontend angular application --&gt;
+    - core.js       &lt;!-- all angular code for our app --&gt;
+    - index.html    &lt;!-- main view --&gt;
+- package.json  &lt;!-- npm configuration to install dependencies/modules --&gt;
+- server.js     &lt;!-- Node configuration --&gt;
+</code></pre>
+<h3 id="安装模块">安装模块</h3>
+<p>在NodeJS里，<code>package.json</code>文件包含了应用相关的设置，NodeJS的包管理工具会根据这个文件安装我们需要使用的依赖模块。在我们的项目里，我们将使用<a href="http://expressjs.com/">Express</a>和<a href="http://mongoosejs.com/">Mongoose</a>这两个依赖项。</p>
+<p><code>package.json</code> 如下：</p>
+<pre><code class="language-json">{
+    &quot;name&quot;         : &quot;node-todo&quot;,
+    &quot;version&quot;      : &quot;0.0.0&quot;,
+    &quot;description&quot;  : &quot;Simple todo application.&quot;,
+    &quot;main&quot;         : &quot;server.js&quot;,
+    &quot;author&quot;       : &quot;Scotch&quot;,
+    &quot;dependencies&quot; :
+    {
+        &quot;express&quot;    : &quot;~3.4.4&quot;,
+        &quot;mongoose&quot;   : &quot;~3.6.2&quot;
+    }
+}
+</code></pre>
+<p>现在运行<code>npm install</code>，npm会自动安装依赖项目。</p>
+<h3 id="nodejs设置">NodeJS设置</h3>
+<p>在我们的<code>package.json</code>中，我们设置项目主文件为<code>server.js</code>，也就是说整个项目通过这个js文件启动。</p>
+<p>在这个文件里我们可以完成如下工作：</p>
+<ul>
+<li>设置项目</li>
+<li>连接数据库</li>
+<li>创建Mongoose模型</li>
+<li>定义RESTful API的路径</li>
+<li>定义Angular前端应用的路径</li>
+<li>设置监听的端口号</li>
+</ul>
+<p>现在，我们只需要初始化其中的Express和MongoDB数据库并且监听端口：</p>
+<pre><code class="language-js">var express  = require('express');
+var app      = express();
+var mongoose = require('mongoose');
+
+mongoose.connect('mongodb://node:node@mongo.onmodulus.net:27017/uwO3mypu');
+
+app.configure(function() {
+    // set the static files location /public/img will be /img for users
+    app.use(express.static(__dirname + '/public'));
+    // log every request to the console
+    app.use(express.logger('dev'));
+    // pull information from html in POST
+    app.use(express.bodyParser());                  
+});
+
+app.listen(8080);
+console.log(&quot;App listening on port 8080&quot;);
+</code></pre>
+<p>这样，我们现在就有了一个HTTP的服务器，在<code>app.configure</code>里，我们使用express模块来添加功能模块。</p>
+<h3 id="数据库安装">数据库安装</h3>
+<p>我们在<a href="https://modulus.io/">Modulus.io</a>建立远程数据库，Modulus为新注册的用户提供15美元的试用资金，方便我们在云服务器上测试项目。</p>
+<p>Modulu也提供了一个数据库的URL地址，你只需要使用<code>mongoose.connet</code>连接数据库。就是这么简单。</p>
+<h3 id="运行应用">运行应用</h3>
+<p>现在我们设置好了<code>package.json</code>和<code>server.js</code>文件，接下来我们可以通过如下命令运行服务器，看看效果如何：</p>
+<pre><code>node sercer.js
+</code></pre>
+<p>现在我们的服务器就启动了，并且监听8080端口。现在打开浏览器你什么都看不见，但是它确实成功启动了！</p>
+<p>注意，运行会提示如下警告：</p>
+<pre><code>connect.multipart() will be removed in connect 3.0
+visit https://github.com/senchalabs/connect/wiki/Connect-3.0 for alternatives
+</code></pre>
+<p>如果在3.0中使用<code>connect.bodyParser()</code>会在程序启动时收到弃用警告,但并不影响程序的正常工作。由于Express使用了connect中间件，参照官网给的解决方案,用<code>json</code>和<code>urlencoded</code>替换<code>bodyParser</code>即可。</p>
+<p>找到如下的内容：</p>
+<pre><code class="language-js">app.use(express.bodyParser());
+</code></pre>
+<p>替换为：</p>
+<pre><code class="language-js">app.use(express.urlencoded());
+app.use(express.json());
+</code></pre>
+<p>这样再运行就没有警告了。</p>
+<p>另外，默认情况下NodeJS在服务器启动之后不会检测到文件修改，所以当你改了文件之后必须重启服务器。你可以装一个nodemon的模块：</p>
+<pre><code class="language-js">nom install -g nodemon
+</code></pre>
+<p>这样使用nodemon的命令就可以启动服务器了：</p>
+<pre><code class="language-js">nodemon server.js
+</code></pre>
+<h2 id="应用流程">应用流程</h2>
+<p>现在整个项目的概要基本有了个雏形，接下来我们来看看各个部分是如何协同工作的。在这个项目里有很多不同的想法和技术，我们很容易把它们结合在一起。在下面的流程图中，可以看出任务的划分以及各部分是如何合作的：</p>
+<figure data-type="image" tabindex="2"><img src="http://callmewhy.qiniudn.com/mean.jpg" alt="" loading="lazy"></figure>
+<p>Angular在前端独当一面，它通过NodeJS的API获取所有它想要的数据。NodeJS访问数据库并且基于RESTful给Angular返回JSON格式的数据。</p>
+<p>这样我们就可以把前端应用和真实API分离。如果你想要扩展API只需要添加更多的路由和函数即可，不影响前端AngularJS的正常使用。这样我们可以基于不同平台开发不同应用，只需要访问API就可以了。</p>
+<h2 id="创建接口">创建接口</h2>
+<p>我们的目标是完成一个TODO的网站，在写前端应用之前，我们需要先创建RESTful接口，提供获取TODO、创建TODO、完成TODO和删除TOTO的功能，并且会返回JSON格式的数据。</p>
+<h3 id="todo模型">TODO模型</h3>
+<p>我们尽量简单的建立TODO模型，在config和listen之间，我们添加模型相关代码：</p>
+<pre><code class="language-js">// ----- define model
+var Todo = mongoose.model('Todo', {
+    text : String
+});
+</code></pre>
+<p>没错就是这么简单，只需要TODO的任务内容就够了。MongoDB将会自动为每个TODO对象生成<code>_id</code>属性。</p>
+<h3 id="restful路由">RESTful路由</h3>
+<p>我们用Express来实现API访问：</p>
+<pre><code class="language-js">// ----- define routes
+// get all todos
+app.get('/api/todos', function(req, res) {
+    // use mongoose to get all todos in the database
+    Todo.find(function(err, todos) {
+        // if there is an error retrieving, send the error. nothing after res.send(err) will execute
+        if (err) {
+            res.send(err);
+        }
+        res.json(todos); // return all todos in JSON format
+    });
+});
+
+// create Todo and send back all todos after creation
+app.post('/api/todos', function(req, res) {
+    // create a Todo, information comes from AJAX request from Angular
+    Todo.create({
+        text : req.body.text,
+        done : false
+    }, function(err, todo) {
+        if (err) {
+            res.send(err);
+        }
+        // get and return all the todos after you create another
+        Todo.find(function(err, todos) {
+            if (err) {
+                res.send(err);
+            }
+            res.json(todos);
+        });
+    });
+
+});
+
+// delete a todo
+app.delete('/api/todos/:todo_id', function(req, res) {
+    Todo.remove({
+        _id : req.params.todo_id
+    }, function(err, todo) {
+        if (err)
+            res.send(err);
+        // get and return all the todos after you create another
+        Todo.find(function(err, todos) {
+            if (err) {
+                res.send(err);
+            }
+            res.json(todos);
+        });
+    });
+});
+</code></pre>
+<p>基于上面的路由，我们可以通过这个简单的表格来展示一下前端应用如何向服务器端请求数据：</p>
+<table>
+<thead>
+<tr>
+<th>HTTP动词</th>
+<th>URL地址</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td>/api/todos</td>
+<td>Get all of the todos</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/api/todos</td>
+<td>Create a single todo</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td>/api/todos/:todo_id</td>
+<td>Delete a single todo</td>
+</tr>
+</tbody>
+</table>
+<p>在每个API里，我们使用Mongoose来帮助我们和数据库交互。在前面的代码中，我们使用<code>var Todo = mongoose.model</code>创建了模型，并且可以通过它来实现<code>find</code>、<code>create</code>和<code>remove</code>功能。当然还有很多其他功能，建议查看<a href="http://mongoosejs.com/docs/guide.html">官方文档</a>进一步学习。</p>
+<p>OK，那么我们的API就搞定了！如果你开启项目，你可以在<code>localhost:8080/api/todos/</code>里获取所有的todos，不过现在里面什么也没有因为我们还没有往里添加数据。</p>
+<h2 id="前端框架">前端框架</h2>
+<p>现在我们搭建了NodeJS应用，设置了数据库，生成了API路径，并且还开了服务器，已经做了不少工作，目前完成的工作可以当做一个单独的项目，为应用提供API接口。</p>
+<p>接下来我们看看如何使用AngularJS搭建前端框架。</p>
+<p>我们先调用一下刚刚创建的API接口，用一个我这个月刚学会的谚语来说：<a href="http://zh.wikipedia.org/wiki/Eating_your_own_dog_food">吃自家的狗粮</a>，中文译为自产自销可能比较合适。我们把自己当做自己的首批用户，调用我们自己开发的API。为了让项目尽量简单，我们只需要<code>index.html</code>和<code>core.js</code>这两个文件。</p>
+<h3 id="定义前端路由">定义前端路由</h3>
+<p>我们刚刚定义了API的URL路径：<code>/api/todos</code>，但是前端呢？如何让服务器在首页显示index.html页面？</p>
+<p>我们在<code>server.js</code>中加一条路径：</p>
+<pre><code class="language-js">// get the index.html
+app.get('*', function(req, res) {
+    res.sendfile('./public/index.html'); // load the single view file (angular will handle the page changes on the front-end)
+});
+</code></pre>
+<p>现在再访问<code>localhost:8080</code>就可以访问index.html了。</p>
+<h3 id="设置angularjs">设置AngularJS</h3>
+<p>我们先来看一看AngularJS的安装，我们需要创建一个模块，一个控制器，然后定义处理TODO的函数。修改后的<code>core.js</code>如下：</p>
+<pre><code class="language-js">var scotchTodo = angular.module('scotchTodo', []);
+
+function mainController($scope, $http) {
+    $scope.formData = {};
+    // when landing on the page, get all todos and show them
+    $http.get('/api/todos')
+        .success(function (data) {
+            $scope.todos = data;
+            console.log(data);
+        })
+        .error(function (data) {
+            console.log('Error: ' + data);
+        });
+    // when submitting the add form, send the text to the node API
+    $scope.createTodo = function () {
+        $http.post('/api/todos', $scope.formData)
+            .success(function (data) {
+                $scope.formData = {};
+                $scope.todos = data;
+                console.log(data);
+            })
+            .error(function (data) {
+                console.log('Error: ' + data);
+            });
+    };
+    // delete a todo after checking it
+    $scope.deleteTodo = function (id) {
+        $http.delete('/api/todos/' + id)
+            .success(function (data) {
+                $scope.todos = data;
+                console.log(data);
+            })
+            .error(function (data) {
+                console.log('Error: ' + data);
+            });
+    };
+}
+</code></pre>
+<p>我们创建了一个模块（scotchApp）和一个控制器（mainController）。</p>
+<p>我们也创建了获取TODO、创建TODO、删除TODO的函数，这些都会访问我们前面创建的API接口。在页面加载的时候，我们通过GET访问了<code>/api/todos</code>并且将从服务器获取到的JSON数据绑定到了<code>$scope.todos</code>上，接下来就可以在视图中遍历生成TODO列表。</p>
+<h3 id="网站页面开发">网站页面开发</h3>
+<p>我们依旧采用尽量简单的方法开发网站页面。主要分为以下几个步骤：</p>
+<ul>
+<li>注册Angular的模块和控制器</li>
+<li>获取所有的TODO列表并且初始化</li>
+<li>遍历所有的TODO列表</li>
+<li>有一个表单创建TODO</li>
+<li>当TODO被选中时执行删除操作</li>
+</ul>
+<p><code>index.html</code>中源码如下：</p>
+<pre><code class="language-html">&lt;!-- index.html --&gt;
+&lt;!doctype html&gt;
+&lt;!-- ASSIGN OUR ANGULAR MODULE --&gt;
+&lt;html ng-app=&quot;scotchTodo&quot;&gt;
+&lt;head&gt;
+    &lt;!-- META --&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;!-- Optimize mobile viewport --&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+    &lt;title&gt;Node/Angular Todo App&lt;/title&gt;
+    &lt;!-- SCROLLS --&gt;
+    &lt;link rel=&quot;stylesheet&quot; href=&quot;//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css&quot;&gt;&lt;!-- load bootstrap --&gt;
+    &lt;style&gt;
+        html                    { overflow-y:scroll; }
+        body                    { padding-top:50px; }
+        #todo-list              { margin-bottom:30px; }
+    &lt;/style&gt;
+    &lt;!-- SPELLS --&gt;
+    &lt;script src=&quot;//cdn.staticfile.org/jquery/2.1.1/jquery.min.js&quot;&gt;&lt;/script&gt;&lt;!-- load jquery --&gt;
+    &lt;script src=&quot;//lib.sinaapp.com/js/angular.js/angular-1.2.19/angular.min.js&quot;&gt;&lt;/script&gt;&lt;!-- load angular --&gt;
+    &lt;script src=&quot;core.js&quot;&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;!-- SET THE CONTROLLER AND GET ALL TODOS --&gt;
+&lt;body ng-controller=&quot;mainController&quot;&gt;
+&lt;div class=&quot;container&quot;&gt;
+    &lt;!-- HEADER AND TODO COUNT --&gt;
+    &lt;div class=&quot;jumbotron text-center&quot;&gt;
+        &lt;h1&gt;I'm a Todo-aholic &lt;span class=&quot;label label-info&quot;&gt;{{ todos.length }}&lt;/span&gt;&lt;/h1&gt;
+    &lt;/div&gt;
+    &lt;!-- TODO LIST --&gt;
+    &lt;div id=&quot;todo-list&quot; class=&quot;row&quot;&gt;
+        &lt;div class=&quot;col-sm-4 col-sm-offset-4&quot;&gt;
+            &lt;!-- LOOP OVER THE TODOS IN $scope.todos --&gt;
+            &lt;div class=&quot;checkbox&quot; ng-repeat=&quot;todo in todos&quot;&gt;
+                &lt;label&gt;
+                    &lt;input type=&quot;checkbox&quot; ng-click=&quot;deleteTodo(todo._id)&quot;&gt; {{ todo.text }}
+                &lt;/label&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;!-- FORM TO CREATE TODOS --&gt;
+    &lt;div id=&quot;todo-form&quot; class=&quot;row&quot;&gt;
+        &lt;div class=&quot;col-sm-8 col-sm-offset-2 text-center&quot;&gt;
+            &lt;form&gt;
+                &lt;div class=&quot;form-group&quot;&gt;
+                    &lt;!-- BIND THIS VALUE TO formData.text IN ANGULAR --&gt;
+                    &lt;input type=&quot;text&quot; class=&quot;form-control input-lg text-center&quot; placeholder=&quot;I want to buy a puppy that will love me forever&quot; ng-model=&quot;formData.text&quot;&gt;
+                &lt;/div&gt;
+                &lt;!-- createToDo() WILL CREATE NEW TODOS --&gt;
+                &lt;button type=&quot;submit&quot; class=&quot;btn btn-primary btn-lg&quot; ng-click=&quot;createTodo()&quot;&gt;Add&lt;/button&gt;
+            &lt;/form&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<h2 id="开发总结">开发总结</h2>
+<p>现在我们完整的开发了一个应用，实现了通过API创建、展示和删除TODO列表的功能。简单的回顾一下我们完成的工作：</p>
+<ul>
+<li>使用Express搭建RESTful接口</li>
+<li>使用mongoose连接MongoDB接口</li>
+<li>Angular中的AJAX调用<code>$http</code></li>
+<li>没有刷新的单页项目</li>
+<li>吃自家狗粮(抱歉我真是太爱这个词了)</li>
+</ul>
+<h3 id="测试应用细节">测试应用细节</h3>
+<p>可以前往<a href="https://github.com/scotch-io/node-todo">Github</a>下载完整的项目源码。为了保证它能运行需要：</p>
+<ul>
+<li>确定安装了Node和NPM</li>
+<li>复制仓库<code>git clone git@github.com:scotch-io/node-todo</code></li>
+<li>安装依赖<code>npm install</code></li>
+<li>启动服务<code>node server.js</code></li>
+<li>在浏览器中打开<code>http://localhost:8080</code></li>
+</ul>
+<p>希望这个教程能够帮助你理解如何将多个部分协同工作。在将来的教程中我们将会学习如何将<code>server.js</code>分解成多个文件。</p>
+<h3 id="后期学习">后期学习</h3>
+<p>如果你对MEAN(Mongo,Express,Angular,Node)集成开发很感兴趣，可以看一看这篇关于如何创建属于自己的MEAN项目有的教程：</p>
+<p><a href="http://scotch.io/bar-talk/setting-up-a-mean-stack-single-page-application">Setting Up a MEAN Stack Single Page Application</a></p>
+<p>这篇文章是<a href="http://scotch.io/series/node-and-angular-to-do-app">Node and Angular TODO</a>系列教程中的一篇。</p>
+<p>整个系列如下：</p>
+<ul>
+<li><a href="http://scotch.io/tutorials/javascript/creating-a-single-page-todo-app-with-node-and-angular">Creating a Single Page To-do App with Node and Angular</a></li>
+<li><a href="http://scotch.io/tutorials/javascript/node-and-angular-to-do-app-application-organization-and-structure">Node Application Organization and Structure</a></li>
+<li><a href="http://scotch.io/tutorials/javascript/node-and-angular-to-do-app-application-organization-and-structure">Angular Modules: Controllers and Services</a></li>
+</ul>
+<hr>
+<p>原文地址：</p>
+<ul>
+<li><a href="http://scotch.io/tutorials/javascript/creating-a-single-page-todo-app-with-node-and-angular">Creating a Single Page Todo App with Node and Angular</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E5%9F%BA%E7%A1%80%E5%AE%89%E8%A3%85">基础安装</a>
+<ul>
+<li><a href="#%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84">文件结构</a></li>
+<li><a href="#%E5%AE%89%E8%A3%85%E6%A8%A1%E5%9D%97">安装模块</a></li>
+<li><a href="#nodejs%E8%AE%BE%E7%BD%AE">NodeJS设置</a></li>
+<li><a href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AE%89%E8%A3%85">数据库安装</a></li>
+<li><a href="#%E8%BF%90%E8%A1%8C%E5%BA%94%E7%94%A8">运行应用</a></li>
+</ul>
+</li>
+<li><a href="#%E5%BA%94%E7%94%A8%E6%B5%81%E7%A8%8B">应用流程</a></li>
+<li><a href="#%E5%88%9B%E5%BB%BA%E6%8E%A5%E5%8F%A3">创建接口</a>
+<ul>
+<li><a href="#todo%E6%A8%A1%E5%9E%8B">TODO模型</a></li>
+<li><a href="#restful%E8%B7%AF%E7%94%B1">RESTful路由</a></li>
+</ul>
+</li>
+<li><a href="#%E5%89%8D%E7%AB%AF%E6%A1%86%E6%9E%B6">前端框架</a>
+<ul>
+<li><a href="#%E5%AE%9A%E4%B9%89%E5%89%8D%E7%AB%AF%E8%B7%AF%E7%94%B1">定义前端路由</a></li>
+<li><a href="#%E8%AE%BE%E7%BD%AEangularjs">设置AngularJS</a></li>
+<li><a href="#%E7%BD%91%E7%AB%99%E9%A1%B5%E9%9D%A2%E5%BC%80%E5%8F%91">网站页面开发</a></li>
+</ul>
+</li>
+<li><a href="#%E5%BC%80%E5%8F%91%E6%80%BB%E7%BB%93">开发总结</a>
+<ul>
+<li><a href="#%E6%B5%8B%E8%AF%95%E5%BA%94%E7%94%A8%E7%BB%86%E8%8A%82">测试应用细节</a></li>
+<li><a href="#%E5%90%8E%E6%9C%9F%E5%AD%A6%E4%B9%A0">后期学习</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/a-ted-a-day/">
+              <h3 class="post-title">
+                A TED A DAY
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

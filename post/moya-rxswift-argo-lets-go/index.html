@@ -1,0 +1,402 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>通过 Moya+RxSwift+Argo 完成网络请求 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              通过 Moya+RxSwift+Argo 完成网络请求
+            </h2>
+            <div class="post-info">
+              <span>
+                2015-11-01
+              </span>
+              <span>
+                6 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/fthQHH2l27/" class="post-tag">
+                  # Swift
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>最近在新项目中尝试使用 Moya+RxSwift+Argo 进行网络请求和解析，感觉还阔以，再来给大家安利一波。</p>
+<h2 id="moya"><a href="https://github.com/Moya/Moya">Moya</a></h2>
+<p><code>Moya</code> 是一个基于 <code>Alamofire</code> 的更高层网络请求封装，深入学习请参见官方文档：<a href="https://github.com/Moya/Moya/tree/master/docs">Moya/Docs</a>。</p>
+<p>使用 <code>Moya</code> 之后网络请求一般长了这样：</p>
+<pre><code class="language-swift">provider.request(.UserProfile(&quot;ashfurrow&quot;)) { (data, statusCode, response, error) in
+    if let data = data {
+        // do something with the data
+    }
+}
+</code></pre>
+<p><code>Moya</code> 提供了很多不错的特性，其中我感觉最棒的是 <code>stub</code> ，配合 <code>sampleData</code> 分分钟就完成了单元测试：</p>
+<pre><code class="language-swift">private let provider = MoyaProvider&lt;ItemAPI&gt;(stubClosure: MoyaProvider.ImmediatelyStub)
+</code></pre>
+<p>注意这里的 <code>MoyaProvider.ImmediatelyStub</code> ，我原以为它是个枚举类型，看了 <code>MoyaProvider</code> 定义发现这里应该传个 <code>closure</code> ，看了 <code>ImmediatelyStub</code> 的定义发现原来它是个类方法：</p>
+<pre><code class="language-swift">public typealias StubClosure = Target -&gt; Moya.StubBehavior
+
+override public init(stubClosure: StubClosure = MoyaProvider.NeverStub, ...) {
+
+}
+
+public final class func ImmediatelyStub(_: Target) -&gt; Moya.StubBehavior {
+    return .Immediate
+}
+</code></pre>
+<p>如果想打印每次请求的参数，在组装 <code>endpoint</code> 的时候打印即可：</p>
+<pre><code class="language-swift">private func endpointMapping&lt;Target: MoyaTarget&gt;(target: Target) -&gt; Endpoint&lt;Target&gt; {
+    if let parameters = target.parameters {
+        log.verbose(&quot;\(parameters)&quot;)
+    }
+    return MoyaProvider.DefaultEndpointMapping(target)
+}
+
+private let provider = RxMoyaProvider&lt;ItemAPI&gt;(endpointClosure: endpointMapping)
+</code></pre>
+<h2 id="rxswift"><a href="https://github.com/ReactiveX/RxSwift">RxSwift</a></h2>
+<p><code>RxSwift</code> 前面强行<a href="http://blog.callmewhy.com/tags/RxSwift/">安利</a>过两波，在此不再赘述啦，<code>Moya</code> 本身提供了 <code>RxSwift</code> 扩展，可以无缝衔接 <code>RxSwift</code> 和 <code>ReactiveCocoa</code> ，于是打开方式变成了这样：</p>
+<pre><code class="language-swift"> private let provider = RxMoyaProvider&lt;ItemAPI&gt;()
+ private var disposeBag = DisposeBag()
+ 
+ extension ItemAPI {
+     static func getNewItems(completion: [Item] -&gt; Void) {
+         disposeBag = DisposeBag()
+         provider
+             .request(.GetItems())
+             .subscribe(
+                 onNext: { items in
+                     completion(items)
+                 }
+             )
+             .addDisposableTo(disposeBag)
+     }
+ }
+</code></pre>
+<p><code>Moya</code> 的核心开发者、同时也是 <a href="https://github.com/Artsy/">Artsy</a> 的成员：<a href="https://github.com/ashfurrow">Ash Furrow</a>， 在 AltConf 做过一次 《<a href="https://realm.io/news/altconf-ash-furrow-functional-reactive-swift/">Functional Reactive Awesomeness With Swift</a>》 的分享，推荐大家看一下，很可爱的！</p>
+<h2 id="argo"><a href="https://github.com/thoughtbot/argo">Argo</a></h2>
+<p><code>Argo</code> 是 <code>thoughtbot</code> 开源的函数式 <code>JSON</code> 解析转换库。说到 <code>thoughtbot</code> 就不得不提他司关于 <code>JSON</code> 解析质量很高的一系列文章：</p>
+<ul>
+<li><a href="https://robots.thoughtbot.com/efficient-json-in-swift-with-functional-concepts-and-generics">Efficient JSON in Swift with Functional Concepts and Generics</a></li>
+<li><a href="https://robots.thoughtbot.com/real-world-json-parsing-with-swift">Real World JSON Parsing with Swift</a></li>
+<li><a href="https://robots.thoughtbot.com/parsing-embedded-json-and-arrays-in-swift">Parsing Embedded JSON and Arrays in Swift</a></li>
+<li><a href="https://robots.thoughtbot.com/functional-swift-for-dealing-with-optional-values">Functional Swift for Dealing with Optional Values</a></li>
+</ul>
+<p><code>Argo</code> 基本上就是沿着这些文章的思路写出来的，相关的库还有 <a href="https://github.com/thoughtbot/Runes">Runes</a> 和 <a href="https://github.com/thoughtbot/Curry">Curry</a>。</p>
+<p>使用 <code>Argo</code> 做 <code>JSON</code> 解析很有意思，大致长这样：</p>
+<pre><code class="language-swift">struct Item {
+    let id: String
+    let url: String
+}
+
+extension Item: Decodable {
+    static func decode(j: JSON) -&gt; Decoded&lt;Item&gt; {
+        return curry(Item.init)
+            &lt;^&gt; j &lt;| &quot;id&quot;
+            &lt;*&gt; j &lt;| &quot;url&quot;
+    }
+}
+</code></pre>
+<p>至于这其中各种符号的缘由，在几篇博客中都有讲解，还是挺有意思滴。</p>
+<h2 id="all">All</h2>
+<p>说完这三者，如何把它们串起来呢？<a href="https://github.com/artsy/Emergence">Emergence</a> 中的 <a href="https://github.com/artsy/Emergence/blob/master/Emergence/Contexts/Networking/Observable%2BNetworking.swift">Observable/Networking</a> 给了我们答案。稍微整理后如下：</p>
+<pre><code class="language-swift">enum ORMError : ErrorType {
+    case ORMNoRepresentor
+    case ORMNotSuccessfulHTTP
+    case ORMNoData
+    case ORMCouldNotMakeObjectError
+}
+
+extension Observable {
+    private func resultFromJSON&lt;T: Decodable&gt;(object:[String: AnyObject], classType: T.Type) -&gt; T? {
+        let decoded = classType.decode(JSON.parse(object))
+        switch decoded {
+        case .Success(let result):
+            return result as? T
+        case .Failure(let error):
+            log.error(&quot;\(error)&quot;)
+            return nil
+            
+        }
+    }
+    
+    func mapSuccessfulHTTPToObject&lt;T: Decodable&gt;(type: T.Type) -&gt; Observable&lt;T&gt; {
+        return map { representor in
+            guard let response = representor as? MoyaResponse else {
+                throw ORMError.ORMNoRepresentor
+            }
+            guard ((200...209) ~= response.statusCode) else {
+                if let json = try? NSJSONSerialization.JSONObjectWithData(response.data, options: .AllowFragments) as? [String: AnyObject] {
+                    log.error(&quot;Got error message: \(json)&quot;)
+                }
+                throw ORMError.ORMNotSuccessfulHTTP
+            }
+            do {
+                guard let json = try NSJSONSerialization.JSONObjectWithData(response.data, options: .AllowFragments) as? [String: AnyObject] else {
+                    throw ORMError.ORMCouldNotMakeObjectError
+                }
+                return self.resultFromJSON(json, classType:type)!
+            } catch {
+                throw ORMError.ORMCouldNotMakeObjectError
+            }
+        }
+    }
+
+    func mapSuccessfulHTTPToObjectArray&lt;T: Decodable&gt;(type: T.Type) -&gt; Observable&lt;[T]&gt; {
+        return map { response in
+            guard let response = response as? MoyaResponse else {
+                throw ORMError.ORMNoRepresentor
+            }
+            
+            // Allow successful HTTP codes
+            guard ((200...209) ~= response.statusCode) else {
+                if let json = try? NSJSONSerialization.JSONObjectWithData(response.data, options: .AllowFragments) as? [String: AnyObject] {
+                    log.error(&quot;Got error message: \(json)&quot;)
+                }
+                throw ORMError.ORMNotSuccessfulHTTP
+            }
+            
+            do {
+                guard let json = try NSJSONSerialization.JSONObjectWithData(response.data, options: .AllowFragments) as? [[String : AnyObject]] else {
+                    throw ORMError.ORMCouldNotMakeObjectError
+                }
+                
+                // Objects are not guaranteed, thus cannot directly map.
+                var objects = [T]()
+                for dict in json {
+                    if let obj = self.resultFromJSON(dict, classType:type) {
+                        objects.append(obj)
+                    }
+                }
+                return objects
+                
+            } catch {
+                throw ORMError.ORMCouldNotMakeObjectError
+            }
+        }
+    }
+}
+</code></pre>
+<p>这样在调用的时候就很舒服了，以前面的 <code>Item</code> 为例：</p>
+<pre><code class="language-swift">private let provider = RxMoyaProvider&lt;ItemAPI&gt;()
+private var disposeBag = DisposeBag()
+
+extension ItemAPI {
+    static func getNewItems(records:[Record] = [], needCount: Int, completion: [Item] -&gt; Void) {
+        disposeBag = DisposeBag()
+        provider
+            .request(.AddRecords(records, needCount))
+            .mapSuccessfulHTTPToObjectArray(Item)
+            .subscribe(
+                onNext: { items in
+                    completion(items)
+                }
+            )
+            .addDisposableTo(disposeBag)
+    }
+}
+</code></pre>
+<p>一个 <code>mapSuccessfulHTTPToObjectArray</code> 方法，直接将 <code>JSON</code> 字符串转换成了 <code>Item</code> 对象，并且传入了后面的数据流中，所以在 <code>onNext</code> 订阅的时候传入的就是 <code>[Item]</code> 数据，并且这个转换过程还是可以复用的，且适用于所有网络请求中 <code>JSON</code> 和 <code>Model</code> 的转换。爽就一个字，我只说一次。</p>
+<p>爽！</p>
+<h2 id="next">Next</h2>
+<p>匆匆读了一点 <a href="https://github.com/artsy/Emergence">Emergence</a> 和 <a href="https://github.com/artsy/eidolon">Eidolon</a> 的项目源码，没有深入不过已经受益匪浅。通过 bundle 管理 id 和 key 直接解决了我当初纠结已久的『完整项目开源如何优雅地保留 git 记录且保护项目隐私』的问题，还有 <code>Moya/RxSwift</code> 和 <code>Moya/ReactiveCocoa</code> 这种子模块化处理也在共有模块管理这个问题上给了我一些启发。</p>
+<p>真是很喜欢 Artsy 这样的团队，大家都一起做着自己喜欢的事情，还能站着把钱赚了。</p>
+<p>所幸的是我也可以这样做自己喜欢的事情了，不过不赚钱。具体状况后面单独开一篇闲扯扯。</p>
+<p>碎告。</p>
+<hr>
+<p>参考资料：</p>
+<ul>
+<li><a href="https://github.com/ReactiveX/RxSwift">RxSwift</a></li>
+<li><a href="https://github.com/Moya/Moya">Moya</a></li>
+<li><a href="https://github.com/thoughtbot/argo">Argo</a></li>
+<li><a href="https://github.com/artsy/Emergence">Emergence</a></li>
+<li><a href="https://github.com/artsy/eidolon">Eidolon</a></li>
+<li><a href="https://robots.thoughtbot.com/efficient-json-in-swift-with-functional-concepts-and-generics">Efficient JSON in Swift with Functional Concepts and Generics</a></li>
+<li><a href="https://robots.thoughtbot.com/real-world-json-parsing-with-swift">Real World JSON Parsing with Swift</a></li>
+<li><a href="https://robots.thoughtbot.com/parsing-embedded-json-and-arrays-in-swift">Parsing Embedded JSON and Arrays in Swift</a></li>
+<li><a href="https://robots.thoughtbot.com/functional-swift-for-dealing-with-optional-values">Functional Swift for Dealing with Optional Values</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#moya">Moya</a></li>
+<li><a href="#rxswift">RxSwift</a></li>
+<li><a href="#argo">Argo</a></li>
+<li><a href="#all">All</a></li>
+<li><a href="#next">Next</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/extension-in-yoapp/">
+              <h3 class="post-title">
+                Yoapp 小记 - 简单方便的扩展们
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

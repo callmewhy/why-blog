@@ -1,0 +1,330 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>使用 Tesseract 识别字符 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              使用 Tesseract 识别字符
+            </h2>
+            <div class="post-info">
+              <span>
+                2015-11-16
+              </span>
+              <span>
+                5 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/m-vFQiiMnZ/" class="post-tag">
+                  # OCR
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>最近在做一个微信公众账号，很多地方需要用到字符识别(<a href="https://en.wikipedia.org/wiki/Optical_character_recognition">OCR</a>)。补了补一些基础知识之后，决定基于 <a href="https://github.com/tesseract-ocr/tesseract/">Tesseract</a> 进行开发。</p>
+<h2 id="tesseract"><a href="https://github.com/tesseract-ocr/tesseract">Tesseract</a></h2>
+<h3 id="install">Install</h3>
+<p>训练过程是在 Mac 上完成，然后把训练结果扔到 Docker 上。所以需要安装 Mac 和 Linux 两个环境下的 Tesseract 。</p>
+<p>首先是 Mac 下，<a href="https://github.com/Homebrew/homebrew/blob/master/Library/Formula/tesseract.rb">homebrew</a> 以前需要手动编译，最近终于加上了 <code>--with-training-tools</code> 的选项，各种训练工具都已经打包搞好，只需要：</p>
+<pre><code>brew install tessreact --with-training-tools
+</code></pre>
+<p>然后 Linux 下，通过 Docker 配置了 Ubuntu@14.04 ，安装也很方便：</p>
+<pre><code>sudo apt-get install tesseract-ocr
+</code></pre>
+<h3 id="test">Test</h3>
+<p>安装完成之后，在没有训练之前先先试一下效果如何。比如下面这张：</p>
+<figure data-type="image" tabindex="1"><img src="http://ww4.sinaimg.cn/large/61d238c7jw1ey2y6v8zfzj209q02qglo.jpg" alt="" loading="lazy"></figure>
+<p>通过 Tesseract 识别：</p>
+<pre><code>tesseract input.jpg result
+</code></pre>
+<p>识别结果是：</p>
+<pre><code>08F1916711‘
+</code></pre>
+<p>嗯大体上数字识别还是准确的，但是对于一些相近的字符比较容易出现识别错误，例如图中的 G 被识别成了 0。原因是默认会使用英语进行识别，而英语字体集中并没有我们想要识别的字体。</p>
+<p>这时候我们需要训练自己的字体集，在后面的例子中，我们以 <code>Mourney</code> 字体为例。（并没有这个字体，这只是我们项目的行动代号）</p>
+<h3 id="training">Training</h3>
+<p>准备好用来训练的图片文件和用来测试效果的图片文件：</p>
+<pre><code>├── mon.mourney.exp0.tif
+└── test.jpg
+</code></pre>
+<p>首先，用 <code>tessreact</code> 命令识别原图片，制作 box 文件：</p>
+<pre><code>tesseract mon.mourney.exp0.tif mon.mourney.exp0 batch.nochop makebox
+</code></pre>
+<p>会发现目录中多了 <code>mon.mourney.exp0.box</code> 文件：</p>
+<pre><code>├── mon.mourney.exp0.box
+├── mon.mourney.exp0.tif
+└── input.jpg
+</code></pre>
+<p>box 文件的内容很简单，就是告诉 Tesseract 这张图里有哪些字符，以及它们的位置，相当于标记自定义字体的包围盒。文件内容大概是这样的：</p>
+<pre><code>G 32 1384 49 1411 0
+8 56 1384 74 1412 0
+F 83 1382 103 1413 0
+</code></pre>
+<p>文中数字分别对应图片中文字『左下右上』的坐标。</p>
+<p>然后下载 <a href="http://vietocr.sourceforge.net/training.html">jTessBoxEditor</a> ，这是一个第三方的开源编辑器，可以直接编辑 box 文件。点击 Box Editor ，然后打开原图，就可以在可视化界面里编辑调整 box 的位置。</p>
+<p>编辑完成后，执行以下命令（具体每条命令的含义请参见<a href="https://github.com/tesseract-ocr/tesseract/wiki/TrainingTesseract">官方文档</a>）：</p>
+<pre><code>echo &quot;font 0 0 0 0 0&quot; &gt; font_properties
+tesseract mon.mourney.exp0.tif mon.mourney.exp0 nobatch box.train
+unicharset_extractor mon.mourney.exp0.box
+mftraining -F font_properties -U unicharset -O mon.unicharset mon.mourney.exp0.tr
+cntraining mon.mourney.exp0.tr
+
+mv normproto mon.normproto
+mv inttemp mon.inttemp  
+mv pffmtable mon.pffmtable  
+mv shapetable mon.shapetable  
+
+combine_tessdata mon.
+</code></pre>
+<p>执行后注意一下最后输出的 1、3、4、5、13 行，需要确定 Offset 值不是 -1 。训练完成。</p>
+<p>此时的文件目录：</p>
+<pre><code>├── mon.inttemp
+├── mon.mourney.exp0.box
+├── mon.mourney.exp0.tif
+├── mon.mourney.exp0.tr
+├── mon.mourney.exp0.txt
+├── mon.normproto
+├── mon.pffmtable
+├── mon.shapetable
+├── mon.traineddata
+├── mon.unicharset
+├── font_properties
+├── test.jpg
+└── unicharset
+</code></pre>
+<p>生成的 <code>mon.traineddata</code> 就是我们需要的训练结果，把它移到 Tesseract 的 <code>tessdata</code> 目录下，然后再次用 <code>tesseract</code> 命令识别，不过这次指定语言为我们定义的 <code>mon</code> ：</p>
+<pre><code>tesseract -l mon test.jpg result
+</code></pre>
+<p>这时会发现，已经能够准确的识别出结果了：</p>
+<pre><code>&gt; Test  cat result.txt
+G8F19167111
+</code></pre>
+<p>好吧并没有，多识别了一个 1 。原始图片还是需要做一些简单的处理，比如做一下腐蚀、膨胀、二值化等等。</p>
+<h2 id="nodejs">NodeJS</h2>
+<p>接下来就是写个后端接口来调用这个 <code>tesseract</code> 方法。有了 <a href="https://github.com/expressjs/multer">multer</a> 这个库来处理文件上传，以及 <a href="https://github.com/desmondmorris/node-tesseract">node-tesseract</a> 这个库来封装 <code>tesseract</code> 命令，代码十分简单：</p>
+<pre><code class="language-js">var fs = require('fs');
+var multer = require('multer')
+var upload = multer({
+  dest: 'uploads/'
+})
+var express = require('express');
+var app = express();
+var tesseract = require('node-tesseract');
+
+app.post('/mourney', upload.single('image'), function(req, res, next) {
+  var image = req.file;
+  var options = {
+    l: 'mon',
+    psm: 7
+  };
+  tesseract.process(image.path, options, function(err, text) {
+    console.log(text);
+    if (err) {
+      console.error(err);
+    } else {
+      res.send(text);
+    }
+  });
+});
+
+var server = app.listen(3000, function() {
+  var host = server.address().address;
+  var port = server.address().port;
+
+  console.log('listening at http://%s:%s', host, port);
+});
+</code></pre>
+<p>部署到服务器上，用 <code>Paw</code> 测试一下：</p>
+<figure data-type="image" tabindex="2"><img src="http://ww4.sinaimg.cn/large/61d238c7gw1ey5c36wusej21iw0e0di5.jpg" alt="" loading="lazy"></figure>
+<p>成功，后端初步调试完成。</p>
+<hr>
+<p>参考文献：</p>
+<ul>
+<li><a href="https://github.com/tesseract-ocr/tesseract/wiki/TrainingTesseract">Training Tesseract</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#tesseract">Tesseract</a>
+<ul>
+<li><a href="#install">Install</a></li>
+<li><a href="#test">Test</a></li>
+<li><a href="#training">Training</a></li>
+</ul>
+</li>
+<li><a href="#nodejs">NodeJS</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/use-react-with-babel-and-webpack/">
+              <h3 class="post-title">
+                使用 Babel + React + Webpack 搭建 Web 应用
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

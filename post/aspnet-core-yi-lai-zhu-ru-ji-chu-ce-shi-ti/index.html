@@ -1,0 +1,500 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ASP.NET Core 依赖注入基础测试题 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              ASP.NET Core 依赖注入基础测试题
+            </h2>
+            <div class="post-info">
+              <span>
+                2020-06-20
+              </span>
+              <span>
+                8 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/aspnet/" class="post-tag">
+                  # ASP.NET
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>作为一名 ASP.NET Core 的开发者，依赖注入可以说是居家旅行开发调试的必备技能。<br>
+在这篇文章里，希望通过一些常识性测试题，来巩固学习一下依赖注入的基础知识。</p>
+<h2 id="作用域">作用域</h2>
+<p>请问下面这段代码的执行结果是什么？</p>
+<pre><code class="language-csharp">public interface IServiceA { }
+
+class ServiceA : IServiceA
+{
+    ServiceA()
+    {
+        Console.WriteLine(&quot;New SA&quot;);
+    }
+}
+
+public class Startup
+{
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddTransient&lt;IServiceA, ServiceA&gt;();
+        ...
+    }
+}
+</code></pre>
+<p>结果是报错：</p>
+<pre><code>System.AggregateException: 'Some services are not able to be constructed'
+A suitable constructor for type 'AspNetCore.Services.ServiceA' could not be located.
+Ensure the type is concrete and services are registered for all parameters of a public constructor.
+</code></pre>
+<p>官方文档在 <a href="https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-3.1#constructor-injection-behavior">Constructor injection behavior</a> 有提过，如果通过构造函数注入，构造函数必须是 public 级别。</p>
+<p>为什么 constructor 要 public 呢？因为默认的访问级别是 private。依赖注入是由 ASP.NET Core 实现的，自然是无法访问 private 级别的构造方法的。</p>
+<p>那 class 需不需要是 public 呢？不需要，因为通过方法调用的方式已经让 DI 获取到了 class，如果是 using namespace 的情况下访问 class，才需要 class 也是 public。</p>
+<h2 id="生命周期">生命周期</h2>
+<p>下面这段代码中，singleton 的 IServiceA 被 HelloController 所依赖，在项目启动之后，没有访问网页的情况下，ServiceA 会被初始化吗？</p>
+<pre><code class="language-csharp">public interface IServiceA { }
+
+public class ServiceA : IServiceA
+{
+    public ServiceA()
+    {
+        Console.WriteLine(&quot;New SA&quot;);
+    }
+}
+public class Startup
+{
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddSingleton&lt;IServiceA, ServiceA&gt;();
+        ...
+    }
+}
+public class HelloController : ControllerBase
+{
+    public WeatherForecastController(IServiceA sa)
+    {
+        Console.WriteLine($&quot;Test Controller: {sa.GetType()}&quot;);
+    }
+}
+</code></pre>
+<p>ServiceA 并不会被初始化。DI 虽然会检查是否存在 public constructor ，但是不会立即初始化服务实例，只有在服务被使用的时候才会根据注册时的生命周期做初始化。ServiceA 只被 controller 依赖，而 controller 只有在请求过来的时候才会被初始化：</p>
+<figure data-type="image" tabindex="1"><img src="https://blog.callmewhy.com/post-images/1592646676693.png" alt="" loading="lazy"></figure>
+<p>所以 ServiceA 也只有在请求到达 controller 的时候才会跟着 controller 一起被初始化。</p>
+<p>如果连续访问三次 controller，会看到 singleton 在第一次请求到达时被初始化，后面传入的都还是以前的实例：</p>
+<pre><code>New SA
+Test Controller: AspNetCore.Services.ServiceA
+Test Controller: AspNetCore.Services.ServiceA
+Test Controller: AspNetCore.Services.ServiceA
+</code></pre>
+<p>如果我们用 AddScoped 或者 AddTrancient，每次访问 API 都会看到 ServiceA 被初始化了：</p>
+<pre><code>New SA
+Test Controller: AspNetCore.Services.ServiceA
+New SA
+Test Controller: AspNetCore.Services.ServiceA
+New SA
+Test Controller: AspNetCore.Services.ServiceA
+</code></pre>
+<h2 id="依赖后的生命周期">依赖后的生命周期</h2>
+<p>如果 ServiceA 是 transient 的，ServiceB 是 singleton 的，ServiceB 和 controller 都依赖 ServiceA，请问第一次访问 controller 的路由，ServiceA 会被初始化几次？第二次访问呢？</p>
+<pre><code class="language-csharp">public interface IServiceA { }
+public class ServiceA : IServiceA
+{
+    public ServiceA()
+    {
+        Console.WriteLine(&quot;New SA&quot;);
+    }
+}
+
+public interface IServiceB { }
+public class ServiceB : IServiceB
+{
+    public ServiceB(IServiceA sa)
+    {
+        Console.WriteLine(&quot;New SB&quot;);
+    }
+}
+
+public class Startup
+{
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddTransient&lt;IServiceA, ServiceA&gt;();
+        services.AddSingleton&lt;IServiceB, ServiceBz&gt;();
+        ...
+    }
+}
+public class HelloController : ControllerBase
+{
+    public WeatherForecastController(IServiceA sa, IServiceB sb)
+    {
+        Console.WriteLine($&quot;Test Controller: {sa.GetType()} {sb.GetType()}&quot;);
+    }
+}
+</code></pre>
+<p>第一次访问输出结果：</p>
+<pre><code>New SA
+New SA
+New SB
+Test Controller: AspNetCore.Services.ServiceA AspNetCore.Services.ServiceB
+New SA
+Test Controller: AspNetCore.Services.ServiceA AspNetCore.Services.ServiceB
+</code></pre>
+<p>可以看到，ServiceA 因为是 transient 的，所以每次请求都会被初始化一次。而 ServiceB 是 singleton 的，虽然它依赖一个 transient 的 ServiceA，但是初始化之后就不会再传入新的 ServiceA 了，在 singleton 的 ServiceB 中的 ServiceA 也是 singleton 的。</p>
+<p>如果在 transient 的 ServiceA 中依赖一个 singleton 的 ServiceB 呢？</p>
+<pre><code>New SB
+New SA
+Test Controller: AspNetCore.Services.ServiceA AspNetCore.Services.ServiceB
+New SA
+Test Controller: AspNetCore.Services.ServiceA AspNetCore.Services.ServiceB
+</code></pre>
+<p>singleton 的 ServiceB 不管在哪里取出，都是 singleton 的，虽然 ServiceA 和 controller 在多个请求中做了多次初始化，但是传入的都是同一个 ServiceB 实例。</p>
+<h2 id="多个依赖的初始化顺序">多个依赖的初始化顺序</h2>
+<p>如果注册的时候是先 A 后 B，constructor 里是先 B 后 A，哪个会先被初始化？</p>
+<pre><code class="language-csharp">public interface IServiceA { }
+public class ServiceA : IServiceA
+{
+    public ServiceA()
+    {
+        Console.WriteLine(&quot;New SA&quot;);
+    }
+}
+
+public interface IServiceB { }
+public class ServiceB : IServiceB
+{
+    public ServiceB()
+    {
+        Console.WriteLine(&quot;New SB&quot;);
+    }
+}
+
+public class Startup
+{
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddSingleton&lt;IServiceA, ServiceA&gt;();
+        services.AddSingleton&lt;IServiceB, ServiceB&gt;();
+        ...
+    }
+}
+
+public class HelloController : ControllerBase
+{
+    public WeatherForecastController(IServiceB sb, IServiceA sa)
+    {
+        Console.WriteLine($&quot;Test Controller: {sa.GetType()}&quot;);
+    }
+}
+</code></pre>
+<p>输出结果：</p>
+<pre><code>New SB
+New SA
+Test Controller: AspNetCore.Services.ServiceA AspNetCore.Services.ServiceB
+</code></pre>
+<p>虽然注入依赖的顺序是 AB ，但是因为调用顺序是 BA，所以会先初始化 B 再初始化 A</p>
+<p>如果 B 的构造函数依赖了 A 呢？</p>
+<pre><code class="language-csharp">public class ServiceB : IServiceB
+{
+    public ServiceB(IServiceA sa)
+    {
+        Console.WriteLine($&quot;New SB with sa:{sa.GetType()}&quot;);
+    }
+}
+</code></pre>
+<p>输出结果：</p>
+<pre><code>New SA
+New SB with sa:AspNetCore.Services.ServiceA
+Test Controller: AspNetCore.Services.ServiceA AspNetCore.Services.ServiceB
+</code></pre>
+<p>此时会先把被依赖的 ServiceA 初始化完成再继续初始化 ServiceB。</p>
+<p>如果依赖注入的时候是先注入 B 再注入 A 呢？</p>
+<pre><code class="language-csharp">public void ConfigureServices(IServiceCollection services)
+{
+    services.AddScoped&lt;IServiceB, ServiceB&gt;();
+    services.AddScoped&lt;IServiceA, ServiceA&gt;();
+}
+</code></pre>
+<p>输出结果：</p>
+<pre><code>New SA
+New SB with sa:AspNetCore.Services.ServiceA
+Test Controller: AspNetCore.Services.ServiceA AspNetCore.Services.ServiceB
+</code></pre>
+<p>依赖注入的声明顺序并不重要，DI Container 会存储下 interface 和 class 的映射关系，在初始化的时候会根据依赖关系妥善处理。</p>
+<h2 id="一个接口多种实现">一个接口多种实现</h2>
+<p>如果一个 interface 有多个实现类，并且都进行了注入，在 constructor 取出这个 interface 的时候会取到哪一个？多个实现类是否都会被初始化？</p>
+<pre><code class="language-csharp">public interface IServiceA { }
+public class ServiceA : IServiceA
+{
+    public ServiceA()
+    {
+        Console.WriteLine(&quot;New SA&quot;);
+    }
+}
+public class ServiceB : IServiceA
+{
+    public ServiceB()
+    {
+        Console.WriteLine(&quot;New SB&quot;);
+    }
+}
+
+public class Startup
+{
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddSingleton&lt;IServiceA, ServiceA&gt;();
+        services.AddSingleton&lt;IServiceA, ServiceB&gt;();
+        ...
+    }
+}
+
+public class HelloController : ControllerBase
+{
+    public WeatherForecastController(IServiceA sa)
+    {
+        Console.WriteLine($&quot;Test Controller: {sa.GetType()}&quot;);
+    }
+}
+</code></pre>
+<p>输出结果：</p>
+<pre><code>New SB
+Test Controller: AspNetCore.Services.ServiceB
+</code></pre>
+<p>一个接口多个实现，只会取出最后的一个实现来构造实例。其他实现类的构造方法不会被调用。DI Container 在存好 interface 和 class 的映射关系后，如果有新的实现就会覆盖掉前面的映射。</p>
+<h2 id="多个接口一个实现">多个接口一个实现</h2>
+<p>如果一个接口有多个实现，并且都进行了单例的依赖注入，在取出实例的时候会被初始化几次？</p>
+<pre><code class="language-csharp">public interface IServiceA { }
+public interface IServiceB { }
+public class ServiceB : IServiceA, IServiceB
+{
+    public ServiceB()
+    {
+        Console.WriteLine(&quot;New SB&quot;);
+    }
+}
+
+public class Startup
+{
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddSingleton&lt;IServiceA, ServiceB&gt;();
+        services.AddSingleton&lt;IServiceB, ServiceB&gt;();
+        ...
+    }
+}
+
+public class HelloController : ControllerBase
+{
+    public WeatherForecastController(IServiceA sa, IServiceB sb)
+    {
+        Console.WriteLine($&quot;Test Controller: {sa.GetType()} {sb.GetType()}&quot;);
+    }
+}
+</code></pre>
+<p>输出结果：</p>
+<pre><code>New SB
+New SB
+Test Controller: AspNetCore.Services.ServiceB AspNetCore.Services.ServiceB
+</code></pre>
+<p>可以看到，AddSingleton 是针对 interface 的单例，而不是实现类的单例。对于 DI 来说，ServiceB 是对两种 interface 的实现类，会分别进行初始化。</p>
+<h2 id="后续">后续</h2>
+<p>这些问题都是比较基础的依赖注入问题，希望对于依赖注入的学习起到抛砖引玉的作用。其中的一些理解分析也只是个人观点，如果有错误的地方欢迎指出。</p>
+<p>如果希望深入的学习 ASP.NET Core 的依赖注入，推荐阅读 <a href="https://github.com/dotnet/runtime/tree/master/src/libraries/Microsoft.Extensions.DependencyInjection">Microsoft.Extensions.DependencyInjection 源码</a> ，看完源码之后，很多疑惑和猜想便会自然得到解答。</p>
+<hr>
+<p>参考资料：</p>
+<ul>
+<li><a href="https://github.com/dotnet/runtime/tree/master/src/libraries/Microsoft.Extensions.DependencyInjection">Microsoft.Extensions.DependencyInjection Source Code</a></li>
+<li><a href="https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-3.1">Dependency Injection | ASP.NET Core Docs</a></li>
+<li><a href="https://auth0.com/blog/dependency-injection-in-dotnet-core/">Understanding Dependency Injection in .NET Core</a></li>
+<li><a href="https://joonasw.net/view/aspnet-core-di-deep-dive">ASP.NET Core Dependency Injection Deep Dive</a></li>
+<li><a href="https://volosoft.com/blog/ASP.NET-Core-Dependency-Injection">ASP.NET Core Dependency Injection</a></li>
+<li><a href="https://stackify.com/net-core-dependency-injection/">.Net Core Dependency Injection</a></li>
+<li><a href="https://www.infoworld.com/article/3232636/how-to-use-dependency-injection-in-aspnet-core.html">How to use dependency injection in ASP.Net Core</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E4%BD%9C%E7%94%A8%E5%9F%9F">作用域</a></li>
+<li><a href="#%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F">生命周期</a></li>
+<li><a href="#%E4%BE%9D%E8%B5%96%E5%90%8E%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F">依赖后的生命周期</a></li>
+<li><a href="#%E5%A4%9A%E4%B8%AA%E4%BE%9D%E8%B5%96%E7%9A%84%E5%88%9D%E5%A7%8B%E5%8C%96%E9%A1%BA%E5%BA%8F">多个依赖的初始化顺序</a></li>
+<li><a href="#%E4%B8%80%E4%B8%AA%E6%8E%A5%E5%8F%A3%E5%A4%9A%E7%A7%8D%E5%AE%9E%E7%8E%B0">一个接口多种实现</a></li>
+<li><a href="#%E5%A4%9A%E4%B8%AA%E6%8E%A5%E5%8F%A3%E4%B8%80%E4%B8%AA%E5%AE%9E%E7%8E%B0">多个接口一个实现</a></li>
+<li><a href="#%E5%90%8E%E7%BB%AD">后续</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/ru-can-de-kong-zhi-xiao-yan/">
+              <h3 class="post-title">
+                入参空值校验的原因与方法
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

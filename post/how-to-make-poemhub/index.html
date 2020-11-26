@@ -1,0 +1,430 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PoemHub 小记：如何随机生成唐诗宋词 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              PoemHub 小记：如何随机生成唐诗宋词
+            </h2>
+            <div class="post-info">
+              <span>
+                2016-01-12
+              </span>
+              <span>
+                9 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/CaEyxzaMdr/" class="post-tag">
+                  # JS
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>最近和学生团队一起完成了一款玩票产品：<a href="http://lemur-wechat-fe.leanapp.cn/poetry/index.html?openid=oFzyEv0NTD9kuizJrYNoIUCAVhyE">《生日诗词》</a>。功能很简单：根据你的生日生成一首诗词。</p>
+<p>本以为扔一堆高频词组然后随机组装就行了，然而实际做起来却发现其乐无穷。</p>
+<h2 id="需求分析">需求分析</h2>
+<p>既然是唐诗宋词，那肯定有一定的格式。五言七言、绝句律诗，后面说不定还要支持宋词元曲，如何才能灵活的生成想要的格式呢？</p>
+<p>先来看个五言绝句：</p>
+<pre><code>平平仄仄平（韵）
+仄仄仄平平（韵）
+仄仄平平仄
+平平仄仄平（韵）
+</code></pre>
+<p>可以看到，主要需要关注的是平仄和韵脚。如果能自己定义模板，然后再攒一大堆唐诗宋词通用的词组，最后将数据填充到模板里就好了。</p>
+<h2 id="前期准备">前期准备</h2>
+<h3 id="自定模板">自定模板</h3>
+<p>模板的话大致需要一下几个信息：</p>
+<ul>
+<li>字数：希望用多少字的词组来填充</li>
+<li>平仄：朗朗上口的话平仄是必须的</li>
+<li>押韵：合适的韵脚可以让诗更像诗</li>
+<li>标记：通用的标记可以更好地渲染</li>
+</ul>
+<p>这里补充一下平仄的基础知识：普通话中，第一声、第二声称为阴平、阳平，是由古汉语的平声演变而来。第三声上声、第四声去声，则为仄声。</p>
+<p>于是结果几番折腾，确定了一下模板：</p>
+<ul>
+<li>类型：A/B 区分，A 为不押韵，B 为押韵</li>
+<li>字数：1 是单字，2 是词组</li>
+<li>平仄：- 是平，对应阴平、阳平。+ 是仄，对应上声、去声。</li>
+<li>标记：用 <code>\</code> 将各个单位之间隔开，方便模板引擎解析。</li>
+</ul>
+<p>比如前面的那个五言绝句，对应的模板就是：</p>
+<pre><code>A2-/A2+/B1-/，
+A2+/A2-/B1-/。
+A2+/A2-/A1+/，
+A2-/A2+/B1-/。
+</code></pre>
+<p>比如卜算子的模板：</p>
+<pre><code>'A2+/A2-/A1-/，', 'A2+/A2-/B1+/。', 'A2+/A2-/A2+/A1-/，', 'A2+/A2-/B1-/。',
+'A2+/A2-/A1-/，', 'A2+/A2-/B1+/。', 'A2+/A2-/A2+/A1-/，', 'A2+/A2-/B1-/。',
+</code></pre>
+<p>我们把所有的模板都放在了 <a href="https://github.com/Lemur/poemhub/blob/master/lib/data/templates.js">data/templates.js</a> 里。</p>
+<h3 id="收集词组">收集词组</h3>
+<p>数据主要是一些唐诗宋词中的高频词组，比如什么『明月』『悲秋』这种。初步计划是手动整理，后面想做成导入海量诗词歌赋，然后自动解析，按照词性分类筛选，扩充词库。</p>
+<p>为了和模板对应，数据也需要根据平仄、韵脚、字数进行分类。一开始我是用 <code>-/v\</code> 来区分汉语拼音中的一声二声三声四声的，后来发现没必要区分这么细，只要按照平仄来分组就行。</p>
+<p>所以很快就可以整理出一个 A 组：</p>
+<pre><code class="language-js">// A 组
+'A': {
+  // 一个字
+  '1': {
+    // 平声
+    '-': [
+      '东', '屋', '冬', '江', '支', '微', '佳', '灰', '蒸', '庚',
+    ],
+    // 仄声
+    '+': [
+      '董', '讲', '纸', '尾', '语', '巧', '雪', '感', '送', '宋',
+    ],
+...
+</code></pre>
+<p>在整理 B 组的时候，因为 B 组是需要押韵的，而同一个韵的词应该放在一个组里，然后在随机生成的时候，随机选择一个韵脚。</p>
+<p>所以 B 的结构和 A 稍有些变化，在外面套了个数组，同一个数组里的都是押韵的词组：</p>
+<pre><code class="language-js">// B 组
+'B': [
+  // dong
+  {
+    // 一个字
+    '1': {
+      // 平声
+      '-': [
+        '东', '空', '松', '通', '庸', '宫', '宗', '荣', '同', '浓',
+      ],
+      // 仄声
+      '+': [
+        '涌', '耸', '哄', '拢', '总', '统', '送', '诵', '用', '动',
+      ],
+...
+</code></pre>
+<p>我们把所有的词组都放在了 <a href="https://github.com/Lemur/poemhub/blob/master/lib/data/words.js">data/words.js</a> 里。</p>
+<h3 id="可选配置">可选配置</h3>
+<p>在进行渲染之前，我们还需要考虑一下可供选择的生成配置。</p>
+<p>生成诗歌主要有一下几种模式：</p>
+<ul>
+<li>随机生成诗歌</li>
+<li>根据模板生成诗歌</li>
+<li>根据生日生成诗歌</li>
+</ul>
+<p>在实际的代码中，使用 <code>poem.js</code> 作为统一的入口， <code>options</code> 作为可选配置，然后根据不用的选项，选择不同的 <code>builder</code> 进行生成：</p>
+<pre><code class="language-js">function poem(options) {
+  // 有生日，进入生日模式
+  if (options &amp;&amp; options.birthday) {
+    return birthdayBuilder(options.birthday)
+  }
+  // 有模板，进入模板模式
+  if (options &amp;&amp; options.template) {
+    return randomBuilder(options.template)
+  }
+  // 没有配置信息，随机生成一个
+  return randomBuilder()
+}
+</code></pre>
+<h2 id="模板渲染">模板渲染</h2>
+<p>有了模板有了数据，接下来就是如何渲染模板了。</p>
+<h3 id="选取模板">选取模板</h3>
+<p>如果是随机生成诗词，模板是随机从模板库中选取。我们可以写一个随机函数用于从数组中随机获取其中一个元素：</p>
+<pre><code class="language-js">function getRandomItem(array) {
+  return array[Math.floor(Math.random() * (array.length))]
+}
+</code></pre>
+<p>如果是生日生成诗词，则套用公式： <code>templates[(year+month) % templates.length]</code>。这公式没啥缘由，只是觉得同年同月实属难得，那么共用一个模板也是缘分呐。</p>
+<h3 id="选取数据">选取数据</h3>
+<p>由于各个诗句结构不用，所以不同类型的数据源数目肯定是多余的。如何从大量数据源中选择自己需要的数据供模板渲染呢？</p>
+<p>首先，需要知道当前模板需要哪些类型的数据，以及具体的数量。对原始模板做一次 <code>reduce</code> 将句子的数组合并成单元的数组，然后再用一次 <code>reduce</code> 将单元数组的内容进行统计，生成统计结果：</p>
+<pre><code class="language-js">function countTemplate(template) {
+  return template
+    .reduce((pv, cv) =&gt; {
+      const words = cv.split('/')
+      words.pop()
+      return pv.concat(words)
+    }, [])
+    .reduce((pv, cv) =&gt; {
+      const v = pv[cv] || 0
+      pv[cv] = v + 1
+      return pv
+    }, {})
+}
+</code></pre>
+<p>统计计数的结果是这样的：</p>
+<pre><code class="language-js">// 6个仄声不押韵词组，6个平声不押韵词组，3个平声押韵单字，1个仄声押韵单字
+{ 'A2+': 6, 'A2-': 6, 'B1-': 3, 'A1+': 1 }
+</code></pre>
+<p>统计完了之后再去选择数据就会比较简单了，任务就变成了『从100个仄声不押韵词组中选择6个』这样的。</p>
+<p>然而在随机选取的时候还是会有问题，比如『西风』和『西湖』这种，一般来说出现两个相同的字感觉会比较不顺，所以还需要做一次去重。</p>
+<p>我们通过 <code>buildTemplateArray</code> 这个函数进行去重并生成数据，第一个参数是原始数据，比如所有的 A2+ 词组；第二个参数是需要的数目；第三个参数是当前的统计结果，用于去重。</p>
+<p>函数代码如下：</p>
+<pre><code class="language-js">function buildTemplateArray(array, count, cTempData) {
+  const resultArray = []
+  while (resultArray.length !== count) {
+    // 随机生成汉字词组
+    var r = getRandomItem(array)
+    // 随机选择的词组和现有的词组中有多少字是相同的
+    var sameWords = Object.keys(cTempData)
+      .reduce((pv, cv) =&gt; {
+        return pv.concat(cTempData[cv].join('').split(''))
+      }, [])
+      .concat(resultArray.join('').split(''))
+      .filter((cWord) =&gt; {
+        var same = false
+        r.split('').forEach((w) =&gt; {
+          if (w == cWord) {
+            same = true
+          }
+        })
+        return same
+      })
+    //  如果随机结果和已有数据重复，则弃用本次生成结果
+    if (sameWords.length === 0) {
+      resultArray.push(r)
+    }
+  }
+  return resultArray
+}
+</code></pre>
+<p>选取完成的数据是这样的：</p>
+<pre><code>{ 'A2+': [ '憔悴', '天气', '何事', '桃李', '芳草', '风雨' ],
+  'A2-': [ '西风', '相思', '谁知', '长安', '东君', '而今' ],
+  'A1+': [ '树', '路' ],
+  'B1-': [ '同', '浓' ] }
+</code></pre>
+<h3 id="填充数据">填充数据</h3>
+<p>模板也选好了，数据也选好了，接下来就是把数据填充到模板里。填充的过程通过 <code>render</code> 函数完成：</p>
+<pre><code class="language-js">function render(template, templateData) {
+  const result = template
+    .reduce((pv, cv) =&gt; {
+      // 通过 / 将句子分割成基础单元
+      const words = cv.split('/')
+      // 取出句末的标点符号
+      const punctuation = words.pop()
+      // 对剩下来的诗句部分进行替换，从所属类型的数据源中取出第一个元素
+      const r = words.map((placeholder) =&gt; {
+        const w = templateData[placeholder].pop()
+        return w
+      })
+      // 拼接并返回结果
+      return pv + r.join('') + punctuation + '\n'
+    }, '')
+  return result
+}
+</code></pre>
+<p>随便测试一下生成的结果：</p>
+<pre><code>西湖风月斜阳刚，
+富贵平生憔悴亡。
+桃李而今千里御，
+江南心事无人扬。
+
+今夜艳思乡，
+多少漫疆。
+当时惟有斜阳杭。
+何事风流芳草让。
+不是轻扬。
+</code></pre>
+<p>虽然平仄、字数都是对的，但是，每句话都是生拼硬凑的，没有什么真实的含义。</p>
+<h2 id="进阶">进阶</h2>
+<p>再接下来就是如何让诗句富有含义，因为目前词库还是手动整理的，并不是很丰富，如果后面有时间可以做一个自动导入工具，用爬虫爬取大量唐诗宋词，然后用词法分析工具将内容进行分析归类，然后后面再拼接诗句的时候用一些常见的词法逻辑进行拼接，比如『名词名词形容词』这种。</p>
+<p>刚好在微博上看到清华自然语言处理实验室开源的一个中文词法分析工具包：<a href="http://thulac.thunlp.org/">THULAC</a></p>
+<h2 id="小结">小结</h2>
+<p>毕竟是一款玩票产品，不过没想到还是花了很多精力。主要是通过玩票试一试以前接触的一些知识，比如用 <a href="https://github.com/substack/tape">tape</a> 写测试，比如用 <a href="https://github.com/babel/babel">babel</a> 将 ES6 的语法转换成 ES5 的语法。</p>
+<p>后面如果有时间再试试词法分析工具。</p>
+<p>感觉还是很有意思的～</p>
+<p>完整项目可以点击这里：<a href="https://github.com/Lemur/poemhub">poemhub</a></p>
+<hr>
+<p>参考资料：</p>
+<ul>
+<li><a href="https://zh.wikipedia.org/wiki/%E5%B9%B3%E4%BB%84">维基百科：平仄</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E9%9C%80%E6%B1%82%E5%88%86%E6%9E%90">需求分析</a></li>
+<li><a href="#%E5%89%8D%E6%9C%9F%E5%87%86%E5%A4%87">前期准备</a>
+<ul>
+<li><a href="#%E8%87%AA%E5%AE%9A%E6%A8%A1%E6%9D%BF">自定模板</a></li>
+<li><a href="#%E6%94%B6%E9%9B%86%E8%AF%8D%E7%BB%84">收集词组</a></li>
+<li><a href="#%E5%8F%AF%E9%80%89%E9%85%8D%E7%BD%AE">可选配置</a></li>
+</ul>
+</li>
+<li><a href="#%E6%A8%A1%E6%9D%BF%E6%B8%B2%E6%9F%93">模板渲染</a>
+<ul>
+<li><a href="#%E9%80%89%E5%8F%96%E6%A8%A1%E6%9D%BF">选取模板</a></li>
+<li><a href="#%E9%80%89%E5%8F%96%E6%95%B0%E6%8D%AE">选取数据</a></li>
+<li><a href="#%E5%A1%AB%E5%85%85%E6%95%B0%E6%8D%AE">填充数据</a></li>
+</ul>
+</li>
+<li><a href="#%E8%BF%9B%E9%98%B6">进阶</a></li>
+<li><a href="#%E5%B0%8F%E7%BB%93">小结</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/what-is-wsgi-and-cgi/">
+              <h3 class="post-title">
+                CGI FastCGI WSGI 学习笔记
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

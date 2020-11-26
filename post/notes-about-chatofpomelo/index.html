@@ -1,0 +1,298 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pomelo聊天室项目源码解析 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              Pomelo聊天室项目源码解析
+            </h2>
+            <div class="post-info">
+              <span>
+                2014-07-01
+              </span>
+              <span>
+                3 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/CaEyxzaMdr/" class="post-tag">
+                  # JS
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="背景介绍">背景介绍</h2>
+<p><a href="http://pomelo.netease.com/index.html">Pomelo</a>是一个网易开源的高性能、高可伸缩、分布式多进程的游戏服务器框架。</p>
+<p>官网有一个聊天室的教程：<a href="https://github.com/NetEase/pomelo/wiki/Getting-Source-Code-&amp;-Installation">Getting-Source-Code</a>，十分适合初学者学习。</p>
+<p>花时间深入的了解了一下这个聊天室的项目的<code>tutorial-starter</code>分支，也就是一个最简单的聊天室原型，做一些笔记记录一下学习的过程。</p>
+<p>项目源码：<a href="https://github.com/NetEase/chatofpomelo-websocket/tree/tutorial-starter">点此下载</a>。</p>
+<h2 id="源码解析">源码解析</h2>
+<h3 id="整体了解">整体了解</h3>
+<p>聊天室项目中只有一个index.html页面，基本结构如下：</p>
+<ul>
+<li>app - 聊天主页面
+<ul>
+<li>loginView   - 登陆页面
+<ul>
+<li>loginTitle - 登陆标题</li>
+<li>loginTable - 登陆信息</li>
+<li>loginError - 登陆错误提示</li>
+</ul>
+</li>
+<li>chatHistory - 聊天历史</li>
+<li>toolbar - 聊天工具栏</li>
+</ul>
+</li>
+<li>pop - 弹窗提醒
+<ul>
+<li>popHead - 提醒的标题</li>
+<li>popContent - 提醒的内容</li>
+</ul>
+</li>
+</ul>
+<h3 id="登陆操作">登陆操作</h3>
+<p>用户点击登陆按钮，会触发<code>client.js</code>中定义的<code>$(&quot;#login&quot;).click</code>事件。</p>
+<p>首先是对用户名和频道号的长度判断和正则校验：</p>
+<pre><code>// 获取用户名和密码
+username = $(&quot;#loginUser&quot;).attr(&quot;value&quot;);
+rid = $('#channelList').val();
+
+// 长度判断，必须为0~20的字符串
+if(username.length &gt; 20 || username.length == 0 || rid.length &gt; 20 || rid.length == 0) {
+    showError(LENGTH_ERROR);
+    return false;
+}
+
+// 正则校验
+if(!reg.test(username) || !reg.test(rid)) {
+    showError(NAME_ERROR);
+    return false;
+}      
+
+</code></pre>
+<p>接下来就是登陆的逻辑处理部分，会调用前面定义的<code>queryEntry</code>函数：</p>
+<pre><code>function queryEntry(uid, callback) {
+    var route = 'gate.gateHandler.queryEntry';
+    pomelo.init({
+        host: window.location.hostname,
+        port: 3014,
+        log: true
+    }, function() {
+        pomelo.request(route, {
+            uid: uid
+        }, function(data) {
+            pomelo.disconnect();
+            if(data.code === 500) {
+                showError(LOGIN_ERROR);
+                return;
+            }
+            callback(data.host, data.port);
+        });
+    });
+};
+</code></pre>
+<p>首先定义route为<code>gate.gateHandler.queryEntry</code>，pomelo会访问当前hostname的3014端口，在game-server的<code>servers.json</code>里定义了服务器的地址和端口号：</p>
+<pre><code>&quot;connector&quot;:[
+     {&quot;id&quot;:&quot;connector-server-1&quot;, &quot;host&quot;:&quot;127.0.0.1&quot;, &quot;port&quot;:4050, &quot;clientPort&quot;: 3050, &quot;frontend&quot;: true, &quot;args&quot;:&quot;--debug=32312&quot;}
+ ],
+&quot;chat&quot;:[
+     {&quot;id&quot;:&quot;chat-server-1&quot;, &quot;host&quot;:&quot;127.0.0.1&quot;, &quot;port&quot;:6050, &quot;args&quot;:&quot;--debug=32313&quot;}
+],
+&quot;gate&quot;:[
+   {&quot;id&quot;: &quot;gate-server-1&quot;, &quot;host&quot;: &quot;127.0.0.1&quot;, &quot;clientPort&quot;: 3014, &quot;frontend&quot;: true, &quot;args&quot;:&quot;--debug=32311&quot;}
+]
+</code></pre>
+<p>可以看到，其实也就是访问了gate服务器。</p>
+<p><em><strong>有点忙，更新先停了，SORRY</strong></em></p>
+<hr>
+<p>参考文献：</p>
+<ul>
+<li><a href="https://github.com/NetEase/pomelo">pomelo</a></li>
+<li><a href="http://pomelo.netease.com/api.html">pomelo api</a></li>
+<li><a href="https://github.com/NetEase/chatofpomelo-websocket">chat of pomelo</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E8%83%8C%E6%99%AF%E4%BB%8B%E7%BB%8D">背景介绍</a></li>
+<li><a href="#%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90">源码解析</a>
+<ul>
+<li><a href="#%E6%95%B4%E4%BD%93%E4%BA%86%E8%A7%A3">整体了解</a></li>
+<li><a href="#%E7%99%BB%E9%99%86%E6%93%8D%E4%BD%9C">登陆操作</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/something-about-rest/">
+              <h3 class="post-title">
+                关于 RESTful 和 Blueprint
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

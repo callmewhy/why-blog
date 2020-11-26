@@ -1,0 +1,1670 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://blog.callmewhy.com</id>
+    <title>Why&apos;s Blog</title>
+    <updated>2020-11-26T13:28:32.287Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://blog.callmewhy.com"/>
+    <link rel="self" href="https://blog.callmewhy.com/atom.xml"/>
+    <logo>https://blog.callmewhy.com/images/avatar.png</logo>
+    <icon>https://blog.callmewhy.com/favicon.ico</icon>
+    <rights>All rights reserved 2020, Why&apos;s Blog</rights>
+    <entry>
+        <title type="html"><![CDATA[ASP.NET Core 依赖注入基础测试题]]></title>
+        <id>https://blog.callmewhy.com/post/aspnet-core-yi-lai-zhu-ru-ji-chu-ce-shi-ti/</id>
+        <link href="https://blog.callmewhy.com/post/aspnet-core-yi-lai-zhu-ru-ji-chu-ce-shi-ti/">
+        </link>
+        <updated>2020-06-20T05:01:53.000Z</updated>
+        <content type="html"><![CDATA[<p>作为一名 ASP.NET Core 的开发者，依赖注入可以说是居家旅行开发调试的必备技能。<br>
+在这篇文章里，希望通过一些常识性测试题，来巩固学习一下依赖注入的基础知识。</p>
+<h2 id="作用域">作用域</h2>
+<p>请问下面这段代码的执行结果是什么？</p>
+<pre><code class="language-csharp">public interface IServiceA { }
+
+class ServiceA : IServiceA
+{
+    ServiceA()
+    {
+        Console.WriteLine(&quot;New SA&quot;);
+    }
+}
+
+public class Startup
+{
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddTransient&lt;IServiceA, ServiceA&gt;();
+        ...
+    }
+}
+</code></pre>
+<p>结果是报错：</p>
+<pre><code>System.AggregateException: 'Some services are not able to be constructed'
+A suitable constructor for type 'AspNetCore.Services.ServiceA' could not be located.
+Ensure the type is concrete and services are registered for all parameters of a public constructor.
+</code></pre>
+<p>官方文档在 <a href="https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-3.1#constructor-injection-behavior">Constructor injection behavior</a> 有提过，如果通过构造函数注入，构造函数必须是 public 级别。</p>
+<p>为什么 constructor 要 public 呢？因为默认的访问级别是 private。依赖注入是由 ASP.NET Core 实现的，自然是无法访问 private 级别的构造方法的。</p>
+<p>那 class 需不需要是 public 呢？不需要，因为通过方法调用的方式已经让 DI 获取到了 class，如果是 using namespace 的情况下访问 class，才需要 class 也是 public。</p>
+<h2 id="生命周期">生命周期</h2>
+<p>下面这段代码中，singleton 的 IServiceA 被 HelloController 所依赖，在项目启动之后，没有访问网页的情况下，ServiceA 会被初始化吗？</p>
+<pre><code class="language-csharp">public interface IServiceA { }
+
+public class ServiceA : IServiceA
+{
+    public ServiceA()
+    {
+        Console.WriteLine(&quot;New SA&quot;);
+    }
+}
+public class Startup
+{
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddSingleton&lt;IServiceA, ServiceA&gt;();
+        ...
+    }
+}
+public class HelloController : ControllerBase
+{
+    public WeatherForecastController(IServiceA sa)
+    {
+        Console.WriteLine($&quot;Test Controller: {sa.GetType()}&quot;);
+    }
+}
+</code></pre>
+<p>ServiceA 并不会被初始化。DI 虽然会检查是否存在 public constructor ，但是不会立即初始化服务实例，只有在服务被使用的时候才会根据注册时的生命周期做初始化。ServiceA 只被 controller 依赖，而 controller 只有在请求过来的时候才会被初始化：</p>
+<figure data-type="image" tabindex="1"><img src="https://blog.callmewhy.com/post-images/1592646676693.png" alt="" loading="lazy"></figure>
+<p>所以 ServiceA 也只有在请求到达 controller 的时候才会跟着 controller 一起被初始化。</p>
+<p>如果连续访问三次 controller，会看到 singleton 在第一次请求到达时被初始化，后面传入的都还是以前的实例：</p>
+<pre><code>New SA
+Test Controller: AspNetCore.Services.ServiceA
+Test Controller: AspNetCore.Services.ServiceA
+Test Controller: AspNetCore.Services.ServiceA
+</code></pre>
+<p>如果我们用 AddScoped 或者 AddTrancient，每次访问 API 都会看到 ServiceA 被初始化了：</p>
+<pre><code>New SA
+Test Controller: AspNetCore.Services.ServiceA
+New SA
+Test Controller: AspNetCore.Services.ServiceA
+New SA
+Test Controller: AspNetCore.Services.ServiceA
+</code></pre>
+<h2 id="依赖后的生命周期">依赖后的生命周期</h2>
+<p>如果 ServiceA 是 transient 的，ServiceB 是 singleton 的，ServiceB 和 controller 都依赖 ServiceA，请问第一次访问 controller 的路由，ServiceA 会被初始化几次？第二次访问呢？</p>
+<pre><code class="language-csharp">public interface IServiceA { }
+public class ServiceA : IServiceA
+{
+    public ServiceA()
+    {
+        Console.WriteLine(&quot;New SA&quot;);
+    }
+}
+
+public interface IServiceB { }
+public class ServiceB : IServiceB
+{
+    public ServiceB(IServiceA sa)
+    {
+        Console.WriteLine(&quot;New SB&quot;);
+    }
+}
+
+public class Startup
+{
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddTransient&lt;IServiceA, ServiceA&gt;();
+        services.AddSingleton&lt;IServiceB, ServiceBz&gt;();
+        ...
+    }
+}
+public class HelloController : ControllerBase
+{
+    public WeatherForecastController(IServiceA sa, IServiceB sb)
+    {
+        Console.WriteLine($&quot;Test Controller: {sa.GetType()} {sb.GetType()}&quot;);
+    }
+}
+</code></pre>
+<p>第一次访问输出结果：</p>
+<pre><code>New SA
+New SA
+New SB
+Test Controller: AspNetCore.Services.ServiceA AspNetCore.Services.ServiceB
+New SA
+Test Controller: AspNetCore.Services.ServiceA AspNetCore.Services.ServiceB
+</code></pre>
+<p>可以看到，ServiceA 因为是 transient 的，所以每次请求都会被初始化一次。而 ServiceB 是 singleton 的，虽然它依赖一个 transient 的 ServiceA，但是初始化之后就不会再传入新的 ServiceA 了，在 singleton 的 ServiceB 中的 ServiceA 也是 singleton 的。</p>
+<p>如果在 transient 的 ServiceA 中依赖一个 singleton 的 ServiceB 呢？</p>
+<pre><code>New SB
+New SA
+Test Controller: AspNetCore.Services.ServiceA AspNetCore.Services.ServiceB
+New SA
+Test Controller: AspNetCore.Services.ServiceA AspNetCore.Services.ServiceB
+</code></pre>
+<p>singleton 的 ServiceB 不管在哪里取出，都是 singleton 的，虽然 ServiceA 和 controller 在多个请求中做了多次初始化，但是传入的都是同一个 ServiceB 实例。</p>
+<h2 id="多个依赖的初始化顺序">多个依赖的初始化顺序</h2>
+<p>如果注册的时候是先 A 后 B，constructor 里是先 B 后 A，哪个会先被初始化？</p>
+<pre><code class="language-csharp">public interface IServiceA { }
+public class ServiceA : IServiceA
+{
+    public ServiceA()
+    {
+        Console.WriteLine(&quot;New SA&quot;);
+    }
+}
+
+public interface IServiceB { }
+public class ServiceB : IServiceB
+{
+    public ServiceB()
+    {
+        Console.WriteLine(&quot;New SB&quot;);
+    }
+}
+
+public class Startup
+{
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddSingleton&lt;IServiceA, ServiceA&gt;();
+        services.AddSingleton&lt;IServiceB, ServiceB&gt;();
+        ...
+    }
+}
+
+public class HelloController : ControllerBase
+{
+    public WeatherForecastController(IServiceB sb, IServiceA sa)
+    {
+        Console.WriteLine($&quot;Test Controller: {sa.GetType()}&quot;);
+    }
+}
+</code></pre>
+<p>输出结果：</p>
+<pre><code>New SB
+New SA
+Test Controller: AspNetCore.Services.ServiceA AspNetCore.Services.ServiceB
+</code></pre>
+<p>虽然注入依赖的顺序是 AB ，但是因为调用顺序是 BA，所以会先初始化 B 再初始化 A</p>
+<p>如果 B 的构造函数依赖了 A 呢？</p>
+<pre><code class="language-csharp">public class ServiceB : IServiceB
+{
+    public ServiceB(IServiceA sa)
+    {
+        Console.WriteLine($&quot;New SB with sa:{sa.GetType()}&quot;);
+    }
+}
+</code></pre>
+<p>输出结果：</p>
+<pre><code>New SA
+New SB with sa:AspNetCore.Services.ServiceA
+Test Controller: AspNetCore.Services.ServiceA AspNetCore.Services.ServiceB
+</code></pre>
+<p>此时会先把被依赖的 ServiceA 初始化完成再继续初始化 ServiceB。</p>
+<p>如果依赖注入的时候是先注入 B 再注入 A 呢？</p>
+<pre><code class="language-csharp">public void ConfigureServices(IServiceCollection services)
+{
+    services.AddScoped&lt;IServiceB, ServiceB&gt;();
+    services.AddScoped&lt;IServiceA, ServiceA&gt;();
+}
+</code></pre>
+<p>输出结果：</p>
+<pre><code>New SA
+New SB with sa:AspNetCore.Services.ServiceA
+Test Controller: AspNetCore.Services.ServiceA AspNetCore.Services.ServiceB
+</code></pre>
+<p>依赖注入的声明顺序并不重要，DI Container 会存储下 interface 和 class 的映射关系，在初始化的时候会根据依赖关系妥善处理。</p>
+<h2 id="一个接口多种实现">一个接口多种实现</h2>
+<p>如果一个 interface 有多个实现类，并且都进行了注入，在 constructor 取出这个 interface 的时候会取到哪一个？多个实现类是否都会被初始化？</p>
+<pre><code class="language-csharp">public interface IServiceA { }
+public class ServiceA : IServiceA
+{
+    public ServiceA()
+    {
+        Console.WriteLine(&quot;New SA&quot;);
+    }
+}
+public class ServiceB : IServiceA
+{
+    public ServiceB()
+    {
+        Console.WriteLine(&quot;New SB&quot;);
+    }
+}
+
+public class Startup
+{
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddSingleton&lt;IServiceA, ServiceA&gt;();
+        services.AddSingleton&lt;IServiceA, ServiceB&gt;();
+        ...
+    }
+}
+
+public class HelloController : ControllerBase
+{
+    public WeatherForecastController(IServiceA sa)
+    {
+        Console.WriteLine($&quot;Test Controller: {sa.GetType()}&quot;);
+    }
+}
+</code></pre>
+<p>输出结果：</p>
+<pre><code>New SB
+Test Controller: AspNetCore.Services.ServiceB
+</code></pre>
+<p>一个接口多个实现，只会取出最后的一个实现来构造实例。其他实现类的构造方法不会被调用。DI Container 在存好 interface 和 class 的映射关系后，如果有新的实现就会覆盖掉前面的映射。</p>
+<h2 id="多个接口一个实现">多个接口一个实现</h2>
+<p>如果一个接口有多个实现，并且都进行了单例的依赖注入，在取出实例的时候会被初始化几次？</p>
+<pre><code class="language-csharp">public interface IServiceA { }
+public interface IServiceB { }
+public class ServiceB : IServiceA, IServiceB
+{
+    public ServiceB()
+    {
+        Console.WriteLine(&quot;New SB&quot;);
+    }
+}
+
+public class Startup
+{
+    public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddSingleton&lt;IServiceA, ServiceB&gt;();
+        services.AddSingleton&lt;IServiceB, ServiceB&gt;();
+        ...
+    }
+}
+
+public class HelloController : ControllerBase
+{
+    public WeatherForecastController(IServiceA sa, IServiceB sb)
+    {
+        Console.WriteLine($&quot;Test Controller: {sa.GetType()} {sb.GetType()}&quot;);
+    }
+}
+</code></pre>
+<p>输出结果：</p>
+<pre><code>New SB
+New SB
+Test Controller: AspNetCore.Services.ServiceB AspNetCore.Services.ServiceB
+</code></pre>
+<p>可以看到，AddSingleton 是针对 interface 的单例，而不是实现类的单例。对于 DI 来说，ServiceB 是对两种 interface 的实现类，会分别进行初始化。</p>
+<h2 id="后续">后续</h2>
+<p>这些问题都是比较基础的依赖注入问题，希望对于依赖注入的学习起到抛砖引玉的作用。其中的一些理解分析也只是个人观点，如果有错误的地方欢迎指出。</p>
+<p>如果希望深入的学习 ASP.NET Core 的依赖注入，推荐阅读 <a href="https://github.com/dotnet/runtime/tree/master/src/libraries/Microsoft.Extensions.DependencyInjection">Microsoft.Extensions.DependencyInjection 源码</a> ，看完源码之后，很多疑惑和猜想便会自然得到解答。</p>
+<hr>
+<p>参考资料：</p>
+<ul>
+<li><a href="https://github.com/dotnet/runtime/tree/master/src/libraries/Microsoft.Extensions.DependencyInjection">Microsoft.Extensions.DependencyInjection Source Code</a></li>
+<li><a href="https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-3.1">Dependency Injection | ASP.NET Core Docs</a></li>
+<li><a href="https://auth0.com/blog/dependency-injection-in-dotnet-core/">Understanding Dependency Injection in .NET Core</a></li>
+<li><a href="https://joonasw.net/view/aspnet-core-di-deep-dive">ASP.NET Core Dependency Injection Deep Dive</a></li>
+<li><a href="https://volosoft.com/blog/ASP.NET-Core-Dependency-Injection">ASP.NET Core Dependency Injection</a></li>
+<li><a href="https://stackify.com/net-core-dependency-injection/">.Net Core Dependency Injection</a></li>
+<li><a href="https://www.infoworld.com/article/3232636/how-to-use-dependency-injection-in-aspnet-core.html">How to use dependency injection in ASP.Net Core</a></li>
+</ul>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[入参空值校验的原因与方法]]></title>
+        <id>https://blog.callmewhy.com/post/ru-can-de-kong-zhi-xiao-yan/</id>
+        <link href="https://blog.callmewhy.com/post/ru-can-de-kong-zhi-xiao-yan/">
+        </link>
+        <updated>2020-06-10T14:48:26.000Z</updated>
+        <content type="html"><![CDATA[<p>入参校验空值是一个非常基础的事儿。很多人看到这个问题，第一反应就是：这事儿也要讨论？大家不都这么写吗？</p>
+<pre><code class="language-csharp">public void DoSomething(Foo foo)
+{
+    if (foo == null)
+    {
+        throw new ArgumentNullException(nameof(foo));
+    }
+}
+</code></pre>
+<h2 id="为何校验">为何校验</h2>
+<p>很多 coding style 建议这样做，很多开源项目也是这样写的，甚至 VS 还提供了一键校验入参的快捷按钮可以自动生成一堆 <code>if params == null throw new Exception</code> 的代码。但是为什么呢？不校验入参会导致什么问题，校验入参又带来了什么好处？请看下面这个例子：</p>
+<pre><code class="language-csharp">public void PrintCar(Car car) 
+{
+    if (car == null)
+    {
+        throw new ArgumentNullException(nameof(foo));
+    }
+    Console.WriteLine(car.Name);
+}
+</code></pre>
+<p>在这个例子里，如果不校验入参，<code>Console.WriteLine(car.Name);</code> 会抛出 <code>NullReferenceException</code> ，如果校验入参，则会抛出 <code>ArgumentNullException</code> 。有人说，这解决了空指针异常的问题。其实仔细琢磨琢磨，并没有。你消灭了一个异常，又抛出了另一个异常，对于调用者来说还是要处理异常。虽然 <code>NullReferenceException</code> 数量看起来减少了，但是换来的是 <code>ArgumentNullException</code>，同样是需要调用者来捕获并处理。本质上，异常数量并没有发生改变，只是名字变了而已。不喊伏地魔的名字并不能消灭伏地魔。</p>
+<p>在上面的例子中，函数捕获到了可能发生的异常，却没有能力处理异常，只能继续往上抛异常，这种情形是否还有入参空值校验的必要？对于这个问题，不同人有不同看法。</p>
+<p>比如 <a href="https://dzone.com/articles/why-i-never-null-check-parameters">Why I Never Null-Check Parameters</a> 这篇文章的作者就提出了反对的看法。他认为，空指针异常是软件中客观存在的问题，无法通过捕获的方式妥善处理并解决，如果捕获后直接上抛，只是换了一个 Exception 的名称而已，这样的问题还是需要捕获并且及时修正；如果捕获后只在非空的时候处理业务逻辑而不上抛，则会隐藏空值传入带来的潜在问题。</p>
+<p>对于这个问题，个人觉得入参空值校验还是有必要的，基于以下两点理由：</p>
+<ul>
+<li>通过入参空值校验，<code>NullReferenceException</code> 和  <code>ArgumentNullException</code> 虽然看起来只是名字不一样，但是更加细分了 Exception 的责任方。<code>ArgumentNullException</code> 明确是调用者的问题，而 <code>NullReferenceException</code> 则可以明确是被调用者的问题。在后期 Debug 的时候会比较清晰。就像是 HTTP Status Code 中的 40x 和 50x 状态码一样，Bad Request 和 Server Error 是两种概念。</li>
+<li>有一些代码逻辑并不是 stateless 的，在这样的方法中如果中途出现异常会导致脏数据的出现，且没有数据库的那种回滚机制，脏数据无法处理。比如以下代码：</li>
+</ul>
+<pre><code class="language-csharp">public void CarCounter(Car car) 
+{
+    this.CarCount += 1;
+    this.CarNames.Add(car.Name);
+}
+</code></pre>
+<p>方法的第二行发现了空指针异常，而在异常发生之前已经执行了一些状态变更的代码。在这种场景下，就会产生错误的脏数据。这个例子比较简单，我们可能做一个类似 try catch count-- 的逻辑就可以实现一个类似于会话回滚的机制。但是大部分场景是比较复杂的，而且对于发送通知这种无法回滚的逻辑而言，这会是巨大的灾难。</p>
+<p>入参的空值校验，其实是为了确保方法本身的<a href="https://zh.wikipedia.org/wiki/%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86#%E5%BC%82%E5%B8%B8%E5%AE%89%E5%85%A8">强异常安全（strong exception safety）</a>，即：运行可以是失败，但失败的运行保证不会有负效应，因此所有涉及的数据都保持代码运行前的初始值。</p>
+<p>综上所述，在很多方法中，入参的空值校验是非常有必要的，可以更加细化 Exception 的分类，明确异常产生的责任方，且可以有效的避免脏数据情况的产生。这种防御式编程的思想，可以有效的提高我们的软件质量。</p>
+<h2 id="何时校验">何时校验</h2>
+<p>虽然入参的校验是有必要的，但是这并不代表我们应该在所有方法里都做入参空值校验。</p>
+<p>对于 public 方法，我们不知道外部会传给我们什么样的参数，在进行业务逻辑之前先校验一下入参是否是空值，可以尽早规避程序中会遇到的空指针异常。<br>
+对于 private 方法，调用者就是我们自己，完全知道会传入什么值，空值校验的工作可以在入口处提前处理妥当，在这种情况下方法内的空值检测就没有什么太大的必要。</p>
+<p>如果你是一名 C# 程序员，建议开启 <a href="https://docs.microsoft.com/en-us/visualstudio/code-quality/ca1062">CA1062 Warning</a>。这样的话，我们就不用纠结什么时候该校验什么时候不该校验了，只需要把关注点放在『什么时候该 public 什么时候该 private』即可。</p>
+<h2 id="如何校验">如何校验</h2>
+<p>道理大家都知道，但是要真的在代码里写一堆 <code>if == null throw new Exception</code> 的冗余代码，还是一件非常恶心的事情。这种冗余代码会降低代码的可读性，无形中增加项目的复杂度。</p>
+<p>在《<a href="https://www.infoq.com/news/2020/01/CSharp-Null-Validation/">C# Futures: Simplified Parameter Null Validation</a>》中，作者畅谈了 C# 中入参空值处理的几种方案，比如 <a href="https://github.com/dotnet/csharplang/issues/2145">C# Proposal #2145</a> 中的 Bang Operator： <code>void Insert(string s!) {}</code>，比如新增一个 Attribute：<code>void Insert([NotNull] string value)</code>，比如通过 <code>Compiler Flag</code> 来让编译器干这个事情。</p>
+<p>在目前的几种方案中，<a href="https://docs.microsoft.com/en-us/dotnet/framework/debug-trace-profile/code-contracts">Code Contract</a> 的 attribute 语法最为优雅：</p>
+<pre><code class="language-csharp">public static void CheckNotNull([ValidatedNotNullAttribute] this object value)
+{
+}
+</code></pre>
+<p>然而 Code Contract 本身已经处于一个 <a href="https://github.com/dotnet/docs/issues/6361#issuecomment-423815289">不再维护</a> 的状态。</p>
+<p>相比之下，封装一个 Helper 的方案最为稳健：</p>
+<pre><code class="language-csharp">internal static class ThrowIf
+{
+    public static class Argument
+    {
+        public static void IsNull(object argument, string argumentName)
+        {
+            if (argument == null)
+            {
+                throw new ArgumentNullException(argumentName);
+            }
+        }
+    }
+}
+public void DoSomething(Foo foo, Bar bar)
+{
+    ThrowIf.Argument.IsNull(foo, &quot;foo&quot;);
+    ThrowIf.Argument.IsNull(bar, &quot;bar&quot;);
+}
+</code></pre>
+<p>随着 C#7 引入了新的运算符 null-coalescing operator，我们也可以把以前的四行代码用 <code>??</code> 放在一行里实现：</p>
+<pre><code class="language-csharp">public void DoSomething(Foo foo, Bar bar)
+{
+    _ = foo ?? throw new ArgumentNullException(nameof(foo));
+    _ = bar ?? throw new ArgumentNullException(nameof(bar));
+}
+</code></pre>
+<p>如果有更好的最佳实践，欢迎评论区指点迷津。感恩。</p>
+<hr>
+<p>参考资料</p>
+<ul>
+<li><a href="https://www.baeldung.com/java-avoid-null-check">Avoid Check for Null Statement in Java</a></li>
+<li><a href="https://dzone.com/articles/why-i-never-null-check-parameters">Why I Never Null-Check Parameters</a></li>
+<li><a href="https://mariusschulz.com/blog/implementing-an-exception-helper-class-for-parameter-null-checking">Implementing an Exception Helper Class for Parameter Null Checking</a></li>
+<li><a href="https://docs.microsoft.com/en-us/dotnet/framework/debug-trace-profile/code-contracts">Code Contracts | MS Docs</a></li>
+<li><a href="https://www.microsoft.com/en-us/research/project/code-contracts/">Code Contracts | MS Reserch</a></li>
+<li><a href="https://blog.rsuter.com/elegant-method-parameter-validation-with-code-contracts-support/">Elegant method parameter validation with Code Contracts support</a></li>
+<li><a href="https://blogs.u2u.be/peter/post/simpler-checking-of-arguments-with-c-7-throw-expressions">Simpler checking of arguments with C# 7 throw expressions</a></li>
+</ul>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[如何编写『有价值』的单元测试]]></title>
+        <id>https://blog.callmewhy.com/post/ru-he-bian-xie-you-jie-zhi-de-dan-yuan-ce-shi/</id>
+        <link href="https://blog.callmewhy.com/post/ru-he-bian-xie-you-jie-zhi-de-dan-yuan-ce-shi/">
+        </link>
+        <updated>2020-06-07T09:13:17.000Z</updated>
+        <content type="html"><![CDATA[<p>TBD</p>
+<hr>
+<p>参考资料</p>
+<ul>
+<li><a href="https://coolshell.cn/articles/8209.html">“单元测试要做多细？”</a></li>
+<li><a href="https://martinfowler.com/articles/mocksArentStubs.html">Mocks Aren't Stubs</a></li>
+</ul>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[浏览器工作原理学习笔记]]></title>
+        <id>https://blog.callmewhy.com/post/liu-lan-qi-gong-zuo-yuan-li-xue-xi-bi-ji/</id>
+        <link href="https://blog.callmewhy.com/post/liu-lan-qi-gong-zuo-yuan-li-xue-xi-bi-ji/">
+        </link>
+        <updated>2020-01-10T06:03:08.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="多进程">多进程</h2>
+<h3 id="单进程问题">单进程问题</h3>
+<ul>
+<li>不稳定，插件崩溃浏览器就崩溃</li>
+<li>不流畅，脚本执行会让页面卡顿，内存泄漏也会导致浏览器变慢</li>
+<li>不安全，恶意插件和恶意脚本容易获取系统权限作恶</li>
+</ul>
+<h3 id="多进程优点">多进程优点</h3>
+<ul>
+<li>进程隔离，插件或者页面崩溃不会导致其他页面崩溃</li>
+<li>页面隔离，即使 JS 阻塞了渲染进程，影响到的也只是当前的渲染页面，而并不会影响浏览器和其他页面，其他页面的脚本是运行在它们自己的渲染进程中的，浏览器也可以正常使用。</li>
+<li>通过安全沙盒解决安全问题</li>
+</ul>
+<h3 id="五个常见进程">五个常见进程</h3>
+<ul>
+<li>浏览器主进程：负责界面显示、用户交互、子进程管理，同时提供存储等功能。</li>
+<li>渲染进程：负责页面渲染，运行在独立沙盒中，排版引擎和 JS 引擎都是运行在该进程中。一般每个标签页创建一个渲染进程，同源标签（域名、协议、端口）复用同一个渲染进程。官方把这个默认策略叫 process-per-site-instance，但是通过 <code>rel=&quot;noopener noreferrer&quot;</code> 可以强制新进程渲染，表示当前页面明确新窗口不需要访问父窗口的内容，防止钓鱼网站。</li>
+<li>网络进程：负责页面的网络资源加载，之前是作为一个线程运行在浏览器进程里面的，后来独立出来，成为一个单独的进程。</li>
+<li>GPU 进程：绘制 UI 界面</li>
+<li>插件进程：负责插件的运行，因插件易崩溃，所以需要通过插件进程来隔离，以保证插件进程崩溃不会对浏览器和页面造成影响。</li>
+</ul>
+<h3 id="渲染">渲染</h3>
+<h3 id="浏览器渲染机制">浏览器渲染机制</h3>
+<ul>
+<li>DOM：渲染引擎解析 HTML 文档，构建 DOM Tree</li>
+<li>Computed Style：解析对应的 CSS 样式信息，生成 document.styleSheets，计算 DOM 样式</li>
+<li>布局（reflow/layout）：计算布局信息，生成布局树 LayoutTree</li>
+<li>分层（layer）：对布局树进行分层。满足以下条件之一就会提升为单独图层：有层叠上下文属性，或者需要裁剪（超出/滚动）。</li>
+<li>绘制（repaint/paint）：遍历渲染树，绘制每个节点，把每一个元素对应的盒变成位图。<br>
+<img src="https://blog.callmewhy.com/post-images/1578326991173.png" alt="" loading="lazy"></li>
+</ul>
+<h3 id="重排-重绘-合成">重排、重绘、合成</h3>
+<ul>
+<li>重排（reflow）：当渲染树中的部分因为元素的尺寸、布局、隐藏等改变而需要重新构建。触发条件：页面渲染初始化（无法避免）、添加或删除 DOM、DOM 位置或尺寸的改变、浏览器窗口尺寸的变化、填充内容的改变，比如文本的改变或图片大小改变而引起的计算值宽度和高度的改变。</li>
+<li>重绘（repaint）：改变元素外观所触发的行为，浏览器会根据元素的新属性重新绘制，省去了布局和分层阶段。比如，仅修改 DOM 元素的字体颜色。</li>
+<li>合成：既不改布局也不需要绘制，比如 CSS transform 动画，避开重排与重绘阶段，在非主线程上执行合成动画操作。</li>
+<li><code>display: none;</code> 会发生 reflow，而 <code>visibility: hidden;</code> 只会触发 repaint</li>
+</ul>
+<h3 id="如何避免重排重绘">如何避免重排重绘</h3>
+<ul>
+<li>通过 class 批量修改样式</li>
+<li>使用离线 DOM 或者 documentFragment</li>
+<li>避免使用 table 布局</li>
+<li>对类似 window resize 这样的事件做 debounce</li>
+<li>对 dom 属性的读写分离</li>
+</ul>
+<h3 id="js-和-css-阻塞">JS 和 CSS 阻塞</h3>
+<ul>
+<li>JS：会先下载并执行，再继续渲染，也就是说，下载和执行，都会阻塞 DOM 解析，因为 JS 可能存在 DOM 操作</li>
+<li>CSS：正常不会阻塞 DOM 解析，但是遇到 script 标签会触发渲染，会等到 CSS 下载完成再继续执行，这种情况下会阻塞 DOM 解析。</li>
+</ul>
+<h3 id="五个常驻线程">五个常驻线程</h3>
+<p>JS Runtime 是单线程，但是浏览器提供多线程环境</p>
+<ul>
+<li>GUI 渲染线程：负责解析HTML，CSS，构建DOM树，布局和绘制，与 JS 引擎线程互斥</li>
+<li>JS 引擎线程：负责处理 JS 脚本，执行会阻塞渲染线程</li>
+<li>定时器触发线程：负责执行定时器一类函数的进程，如 setTimeout、setInterval。主线程执行代码遇到计时器时，会将计时器交给该线程处理，当计时完毕之后，定时器线程会将计时完毕后的事件加入到事件队列的尾部，等待 JS 引擎线程的执行</li>
+<li>事件触发线程：主要负责将准备好执行的事件交给 JS 引擎线程执行，如计时器计时完毕后的事件，AJAX 请求成功返回并触发的回调函数和用户触发点击事件时，事件触发线程会将回调函数加入到任务队列的尾部，等待 JS 引擎线程的执行</li>
+<li>异步 HTTP 请求线程：当主线程依次执行代码时，遇到异步请求，会将函数交给改线程处理，当监听状态码变更时，如果有回调函数，会将回调函数加入到任务队列的尾部，等待 JS 引擎线程的执行</li>
+</ul>
+<h2 id="js">JS</h2>
+<h3 id="编译与执行">编译与执行</h3>
+<ul>
+<li>编译：生成执行上下文（变量环境+词法环境）和可执行代码，变量和函数会被存放到变量环境中，变量的默认值会被设置为 undefined，同名变量会被覆盖。</li>
+<li>执行：从变量空间中寻找函数并调用</li>
+</ul>
+<h3 id="执行上下文">执行上下文</h3>
+<p>执行上下文是 JS 代码执行时的运行环境，主要分为三种，通过栈来管理：</p>
+<ul>
+<li>当 JavaScript 执行全局代码的时候，会编译全局代码并创建全局执行上下文，而且在整个页面的生存周期内，全局执行上下文只有一份。</li>
+<li>当调用一个函数的时候，函数体内的代码会被编译，并创建函数执行上下文，一般情况下，函数执行结束之后，创建的函数执行上下文会被销毁。</li>
+<li>当使用 eval 函数的时候，eval 的代码也会被编译，并创建执行上下文。</li>
+</ul>
+<h3 id="作用域链">作用域链</h3>
+<ul>
+<li>作用域：是运行时代码内变量的独立可访问空间，可以隔离变量，决定了变量的可见性。ES6 之前只有全局作用域（window）和函数作用域（IIFE），ES6 之后引入了块级作用域（let const）。</li>
+<li>作用域链：解析变量时，始终从代码嵌套的最内层开始，如果最内层没有找到变量，就会跳转到上一层父作用域中查找，直到找到该变量。</li>
+</ul>
+<h3 id="变量提升">变量提升</h3>
+<p>在代码执行过程中，JS 引擎会把变量的声明部分和函数的声明部分提升到代码开头。变量被提升后，会被变量设置默认值 undefined。<br>
+实际上变量和函数声明在代码里的位置是不会改变的，而且是在编译阶段被放入内存中。执行上下文中存有一个变量环境，保存了变量提升的内容。<br>
+在 ES6 中，通过 let 声明的变量，在编译阶段会被存放到执行上下文的词法环境里，作用域块执行完后，内部定义的变量会从词法环境的栈顶弹出，从而解决了变量提升的问题。</p>
+<h2 id="循环">循环</h2>
+<h3 id="event-loop">Event Loop</h3>
+<p>主线程从任务队列读取事件这个过程，是循环不断的，称之为 Event Loop。</p>
+<ul>
+<li>执行栈里清空了，才会从任务队列中取任务，浏览器不止一个任务队列（Task Queue 和 Microtask Queue）</li>
+<li>setTimeout 是浏览器行为，和 DOM 事件一样</li>
+<li>宏观任务一个一个执行，微任务一批一批执行</li>
+</ul>
+<p>异步任务有两种：</p>
+<ul>
+<li>宏任务（Macrotask）：宿主发起的任务，包括整体代码 script，setTimeout，setInterval、setImmediate、I/O操作、UI rendering</li>
+<li>微任务（Microtask）：JavaScript 引擎发起的任务，process.nextTick, Promises, Object.observe, MutationObserver</li>
+</ul>
+<figure data-type="image" tabindex="1"><img src="https://blog.callmewhy.com/post-images/1578469337961.jpg" alt="" loading="lazy"></figure>
+<h3 id="事件模型">事件模型</h3>
+<p>DOM 事件模型分为捕获和冒泡。一个事件发生后，会在子元素和父元素之间传播（propagation）。<br>
+这种传播分成三个阶段：</p>
+<ul>
+<li>捕获阶段：事件从 window 对象自上而下向目标节点传播的阶段</li>
+<li>目标阶段：真正的目标节点正在处理事件的阶段</li>
+<li>冒泡阶段：事件从目标节点自下而上向 window 对象传播的阶段</li>
+</ul>
+<p>在实际监听事件时，可以这样使用冒泡和捕获机制：默认使用冒泡模式；当开发组件时，遇到需要父元素控制子元素的行为，可以使用捕获机制。</p>
+<h3 id="事件代理">事件代理</h3>
+<p>由于事件会在冒泡阶段向上传播到父节点，因此可以把子节点的监听函数定义在父节点上，由父节点的监听函数统一处理多个子元素的事件，通过 event.target 来判断。这种方法叫做事件的代理（delegation）。<br>
+优点：</p>
+<ul>
+<li>减少内存消耗，提高性能</li>
+<li>方便动态绑定事件</li>
+</ul>
+<p>参考资料</p>
+<ul>
+<li><a href="https://time.geekbang.org/column/article/0?cid=216">浏览器工作原理与实践</a></li>
+</ul>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[数据库常见问题]]></title>
+        <id>https://blog.callmewhy.com/post/shu-ju-ku-chang-jian-wen-ti/</id>
+        <link href="https://blog.callmewhy.com/post/shu-ju-ku-chang-jian-wen-ti/">
+        </link>
+        <updated>2019-12-12T01:41:31.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="float-和-decimal">float 和 decimal</h2>
+<p>float 存储的是近似值，decimal 是存储的精确值。<br>
+当数据是整数的时候，float 会以整数处理。<br>
+float 容易出现误差，所以不会用 = 做比较，更多是做 range 比较。</p>
+<h2 id="如何分析语句的性能">如何分析语句的性能</h2>
+<p>通过 EXPLAIN 关键字模拟优化器执行 SQL 语句，从而知道 MySQL 是如何处理 SQL 语句的。</p>
+<h2 id="慢查询分析">慢查询分析</h2>
+<p>当 MySQL 性能下降时，通过开启慢查询来获得哪条SQL语句造成的响应过慢，进行分析处理。当然开启慢查询会带来CPU损耗与日志记录的IO开销，所以我们要间断性的打开慢查询日志来查看 MySQL运行状态。<br>
+慢查询能记录下所有执行超过 long_query_time 时间的SQL语句, 用于找到执行慢的SQL, 方便我们对这些SQL进行优化</p>
+<p>show variables like &quot;%slow%&quot;;-- 是否开启慢查询;<br>
+show status like &quot;%slow%&quot;; -- 查询慢查询SQL状况;<br>
+show variables like &quot;long_query_time&quot;; -- 慢查询时间</p>
+<p>通过 mysqldumpslow 工具分析慢查询 slow_query_log</p>
+<h2 id="如何优化-mysql-配置">如何优化 MySQL 配置</h2>
+<ul>
+<li>innodb_buffer_pool_size 缓冲池大小，越大越好，尽量用内存</li>
+<li>innodb_log_file_size：redo 日志大小，用于写操作快速可靠，崩溃恢复</li>
+<li>max_connections：最大连接数</li>
+<li>查询缓存、线程缓存、排序缓存</li>
+<li>设置 buffer size 和 tmp_table_size</li>
+<li>最大连接数、允许打开的文件数</li>
+<li>线程池</li>
+<li>慢查询日志</li>
+</ul>
+<h2 id="建表主键怎么决定">建表主键怎么决定</h2>
+<p>业务主键：在数据库表中把具有业务逻辑含义的字段作为主键</p>
+<ul>
+<li>减少一个业务无关字段</li>
+<li>避免表关联关系丢失，比如银行系统使用身份证号，出于安全性考虑，但是也会出现身份证号码重复的问题</li>
+</ul>
+<p>代理主键：在数据库表中使用业务逻辑无关的字段作为主键</p>
+<ul>
+<li>不受业务变更影响</li>
+<li>InnoDB 是按照主键聚合的，数据在物理上按照主键大小顺序排序，可以确保顺序插入，提高插入效率</li>
+<li>存储占用空间小，比如 InnoDB 的辅助索引叶子节点 data 都是主键</li>
+<li>联表查询效率高</li>
+<li>缺点：需要等待插入完成才有主键，或者等待主键生成器返回才会有主键。不利于分布式的设计</li>
+</ul>
+<p>推荐做法：</p>
+<ul>
+<li>直接使用与业务无关的自增 id 作为主键</li>
+<li>添加业务字段索引</li>
+</ul>
+<h2 id="事务的-acid-特性">事务的 ACID 特性</h2>
+<ul>
+<li>原子性(Atomic): 事务中的多个操作，不可分割，要么都成功，要么都失败； All or Nothing.</li>
+<li>一致性(Consistency): 事务操作之后, 数据库所处的状态和业务规则是一致的; 比如a,b账户相互转账之后，总金额不变；</li>
+<li>隔离性(Isolation): 多个事务之间就像是串行执行一样，不相互影响;</li>
+<li>持久性(Durability): 事务提交后被持久化到永久存储.</li>
+</ul>
+<h2 id="四大事务隔离级别">四大事务隔离级别</h2>
+<ul>
+<li>RU，read uncommitted：读取未提交数据，即没有 commit 仍然能读取到未提交的数据</li>
+<li>RC，read committed：可以读取其他事务提交的数据，大多数数据库默认隔离级别，同一个事务中读取到两次不同的结果，不可重复读，会出现脏读现象</li>
+<li>RR，repeatable read：可重读，同一个事务中多次执行同一个select, 读取到的数据没有发生改变(一般使用MVCC实现)。会出现幻读现象，两次读取出来的记录数不一样。MySQL 默认的隔离级别，通过 GAP 解决了幻读</li>
+<li>serializable：串行化，最高级别，会挂起其他会话的写操作，对性能会造成影响</li>
+</ul>
+<h2 id="幻读的概念">幻读的概念</h2>
+<p>幻读指的是在同一事务下，连续执行两次同样的SQL语句第二次的SQL语句可能返回之前不存在的行<br>
+事务A读取与搜索条件相匹配的若干行。事务B以插入或删除行等方式来修改事务A的结果集，然后再提交。</p>
+<p>一般解决幻读的方法是增加范围锁RangeS，select for update，select in share mode，锁定检索范围为只读，这样就避免了幻读。<br>
+最高隔离级别 SERIALIZABLE_READ 可以保证不出现幻读的问题。</p>
+<h2 id="幻读和不可重复读区别">幻读和不可重复读区别</h2>
+<ul>
+<li>不可重复读的重点是修改：同样的条件的select, 你读取过的数据, 再次读取出来发现值不一样了</li>
+<li>幻读的重点在于新增或者删除：同样的条件的select，第1次和第2次读出来的记录数不一样</li>
+</ul>
+<h2 id="mvcc-的概念实现的原理解决的问题">MVCC 的概念，实现的原理，解决的问题</h2>
+<p>MVCC（Multi-Version Concurrent Control）是一种多版本并发控制机制。<br>
+锁机制可以控制并发操作，但是其系统开销较大，而 MVCC 可以在大多数情况下代替行级锁，使用 MVCC 能降低其系统开销。<br>
+MVCC是通过保存数据在某个时间点的快照来实现的。因此每一个事务无论执行多长时间看到的数据，都是一样的。所以 MVCC 实现可重复读。<br>
+Innodb 的 MVCC 是通过在每行记录后面保存两个隐藏的列来实现的。这两个列，一个保存了这个行的创建时间，另一个保存的是行的删除时间。这里存储的并不是实际的时间值，而是系统版本号，每开始一个新的事务，系统版本号就会自动递增，事务开始时刻的系统版本号会作为事务的 ID。</p>
+<h2 id="聚集索引和非聚集索引的区别">聚集索引和非聚集索引的区别</h2>
+<p>聚集索引 Clustered Index</p>
+<ul>
+<li>键值的逻辑顺序决定了表中相应行的物理顺序</li>
+<li>由于聚集索引规定数据在表中的物理存储顺序，因此一个表只能包含一个聚集索引。但该索引可以包含多个列（组合索引）</li>
+<li>聚集索引对于那些经常要搜索范围值的列特别有效</li>
+<li>当索引值唯一时，使用聚集索引查找特定的行也很有效率</li>
+</ul>
+<p>非聚集索引 NonClustered Index</p>
+<ul>
+<li>索引的逻辑顺序与磁盘上的物理存储顺序不同</li>
+</ul>
+<p>Clustered Index 的叶节点就是数据节点。而 NonClustered Index 的叶节点仍然是索引节点，只不过有一个指针指向对应的数据块。</p>
+<h2 id="innodb-索引的数据结构">Innodb 索引的数据结构</h2>
+<p>innodb 用 B+Tree 实现索引结构。<br>
+与 B-Tree 相比，B+Tree 有以下不同点：</p>
+<ul>
+<li>非叶子结点的子树指针与关键字个数相同</li>
+<li>非叶子结点的子树指针P[i]，指向关键字值属于[K[i], K[i+1])的子树（B-树是开区间）</li>
+<li>为所有叶子结点增加一个链指针</li>
+<li>所有关键字都在叶子结点出现</li>
+<li>内节点不存储 data，只存储 key</li>
+</ul>
+<h2 id="b-树的优点">b+ 树的优点</h2>
+<ul>
+<li>非叶子节点不会带上 data，这样一个块中可以容纳更多的索引项，一是可以降低树的高度，二是一个内部节点可以定位更多的叶子节点</li>
+<li>叶子节点之间通过指针来连接，范围扫描将十分简单，而对于B树来说，则需要在叶子节点和内部节点不停的往返做中序遍历</li>
+</ul>
+<h2 id="两种存储引擎的索引实现">两种存储引擎的索引实现</h2>
+<p>MyISAM索引实现：</p>
+<ul>
+<li>使用B+Tree作为索引结构，叶节点的data域存放的是数据记录的地址</li>
+</ul>
+<p>InnoDB 索引实现：</p>
+<ul>
+<li>InnoDB的数据文件本身就是索引文件，叶节点 data 域保存了完整的数据记录。这个索引的key是数据表的主键，因此InnoDB表数据文件本身就是主索引</li>
+<li>辅助索引使用B+Tree作为索引结构，叶节点的 data 域存放的是数据记录的主键的值</li>
+</ul>
+<h2 id="数据库索引有哪些">数据库索引有哪些</h2>
+<p>主键索引：   Primary Key<br>
+数据库表经常有一列或列组合，其值唯一标识表中的每一行。该列称为表的主键。   在数据库关系图中为表定义主键将自动创建主键索引，主键索引是唯一索引的特定类型。该索引要求主键中的每个值都唯一。当在查询中使用主键索引时，它还允许对数据的快速访问。</p>
+<p>普通索引：Index<br>
+允许出现相同的索引内容</p>
+<p>唯一索引：   UNIQUE<br>
+表明此索引的每一个索引值只对应唯一的数据记录，对于单列惟一性索引，这保证单列不包含重复的值。对于多列惟一性索引，保证多个值的组合不重复。</p>
+<h2 id="如何创建合理的索引">如何创建合理的索引</h2>
+<ul>
+<li>维度高的列创建索引，维度高指不重复值出现的个数多，比如年龄维度高于性别</li>
+<li>对 where、on、group by、order by 中出现的列使用索引</li>
+<li>对较小的数据列使用索引，这样会使索引文件更小，同时内存中也可以装载更多的索引键</li>
+<li>为较长的字符串使用前缀索引，比如姓名这种，维度已经够了，长度过长占用空间且效率低</li>
+<li>不要过多创建索引，除了增加额外的磁盘空间外，对于DML操作的速度影响很大，因为其每增删改一次就得从新建立索引</li>
+<li>使用组合索引，可以减少文件索引大小，在使用时速度要优于多个单列索引</li>
+</ul>
+<h2 id="哪些情况下索引会失效">哪些情况下索引会失效</h2>
+<ul>
+<li>索引列参与了计算</li>
+<li>使用了函数运算</li>
+<li>正则表达式</li>
+<li>条件中用 or</li>
+<li>多列索引，不是最左侧</li>
+<li>like 模糊搜索以 % 开头</li>
+<li>字符串与数字比较不使用索引，所以字符串要用引号</li>
+<li>预计全表扫描比索引快</li>
+</ul>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[计算机网络常见问题]]></title>
+        <id>https://blog.callmewhy.com/post/ji-suan-ji-wang-luo-chang-jian-wen-ti/</id>
+        <link href="https://blog.callmewhy.com/post/ji-suan-ji-wang-luo-chang-jian-wen-ti/">
+        </link>
+        <updated>2019-10-03T12:58:17.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="基础知识">基础知识</h2>
+<h3 id="常见协议分层">常见协议分层</h3>
+<ul>
+<li>应用层：HTTP，负责封装请求内容</li>
+<li>传输层：TCP、UDP，负责把数据包送达具体应用</li>
+<li>网络层：IP，负责把数据包送达目标主机</li>
+</ul>
+<h2 id="tcp">TCP</h2>
+<h3 id="tcp-三次握手-tcp-四次挥手">TCP 三次握手、TCP 四次挥手</h3>
+<p>￼<img src="https://blog.callmewhy.com/post-images/1578488366688.jpg" alt="" loading="lazy"></p>
+<h3 id="三次握手可以两次吗">三次握手可以两次吗</h3>
+<p>为了实现可靠数据传输， TCP 协议的通信双方， 都必须维护一个序列号， 以标识发送出去的数据包中， 哪些是已经被对方收到的。 三次握手的过程即是通信双方相互告知序列号起始值， 并确认对方已经收到了序列号起始值的必经步骤。<br>
+如果只是两次握手， 至多只有连接发起方的起始序列号能被确认， 另一方选择的序列号则得不到确认。在 S ACK 的时候，C 可能已经关闭无法接受信息，导致网络资源浪费。</p>
+<h3 id="四次挥手可以三次吗">四次挥手可以三次吗</h3>
+<p>当服务端收到客户端的 SYN 连接请求报文后，可以直接发送 SYN+ACK 报文。其中 ACK 报文是用来应答的，SYN 报文是用来同步的。但是关闭连接时，当服务端收到 FIN 报文时，很可能并不会立即关闭，所以只能先回复一个 ACK 报文。只有等到服务端所有的报文都发送完了，才能发送 FIN 报文，因此不能一起发送。所以需要四次挥手。</p>
+<h3 id="客户端第一个syn包丢了怎么办">客户端第一个「SYN」包丢了，怎么办？</h3>
+<p>客户端会尝试三次重传 SYN 包，间隔时间分别是 5.8s、24s、48s。建立一个新连接的最长时间限制为 75 秒。</p>
+<h3 id="服务端收到syn并回复的syn-ack包丢了怎么办">服务端收到「SYN」并回复的「SYN, ACK」包丢了，怎么办？</h3>
+<p>客户端没收到 ACK 会以为是前面 SYN 丢了，尝试重传 SYN 包。<br>
+服务器端在超时时间内没有收到客户端发来的「ACK」包，也会触发重传，此时服务端处于 SYN_RCVD 状态，会依次等待 3s、6s、12s 后，重新发送「SYN, ACK」包。不同的操作系统下，重传的次数有不同的配置，比如 linux 默认是 5 。如果重试后还是没有收到，则会断开连接。<br>
+同时由于客户端在没有收到「SYN,ACK」时，也会进行重传，当客户端重传的「SYN」收到后，会立即重新发送「SYN,ACK」包。</p>
+<h3 id="客户端最后一次回复的ack包丢了怎么办">客户端最后一次回复的「ACK」包丢了，怎么办？</h3>
+<p>客户端此时进入 ESTABLISHED 状态。<br>
+服务端因为收不到「ACK」会走重传机制，依然处于 SYN-RCVD 状态。如果此时接收到客户端真实发送来的数据包时，通过包内 ACK 的确认序号，会认为连接已建立，并进入 ESTABLISHED 状态。</p>
+<h3 id="客户端故意不发最后一次syn包怎么办">客户端故意不发最后一次「SYN」包，怎么办？</h3>
+<p>这就是 SYN FLOOD 攻击，虽然服务器有重试的次数限制，但是随着数量累积，还是会有较大压力。</p>
+<h2 id="http">HTTP</h2>
+<h3 id="http-报文组成部分">HTTP 报文组成部分</h3>
+<p>请求报文：请求行、请求头、空行、请求体<br>
+响应报文：状态行、响应头、空行、响应体</p>
+<h3 id="http10-和-http11-特性">HTTP/1.0 和 HTTP/1.1 特性</h3>
+<p>HTTP/1.0：</p>
+<ul>
+<li>默认没有复用 TCP 连接，connection: close，请求头中显式声明 keep-alive 可以开启</li>
+<li>前一个请求响应到达之后下一个请求才能发送，容易导致队头阻塞</li>
+</ul>
+<p>HTTP/1.1：</p>
+<ul>
+<li>默认是 connection: keep-alive 保持持续连接，一般默认的连接时间长度是 5-15 秒，保持不必要的连接会影响性能</li>
+<li>管道化，可以不等第一个请求响应继续发送后面的请求，但响应的顺序还是按照请求的顺序返回</li>
+<li>缓存处理，新增 cache-control 和 etag</li>
+</ul>
+<h3 id="http2-特性">HTTP/2 特性</h3>
+<ul>
+<li>减少传输数据量：通过二进制传输 和 Header 压缩实现</li>
+<li>多路复用：使用同一个 TCP 连接来传输一个域名下的所有请求，请求还可以有优先级。一个 TCP 连接中可以存在多条流。换句话说，也就是可以发送多个请求，对端可以通过帧中的标识知道属于哪个请求。通过这个技术，可以避免 HTTP 旧版本中的队头阻塞问题，极大的提高传输性能。</li>
+<li>服务端推送：能够在客户端发送第一个请求到服务端时，提前把一部分内容推送给客户端，放入缓存当中，这可以避免客户端请求顺序带来的并行度不高，从而导致的性能问题。</li>
+<li>丢包重传会导致所有请求阻塞，这种情况下性能反而不如 HTTP/1。基于 QUIC 的 HTTP/3 可以彻底解决 TCP 的队头阻塞问题</li>
+</ul>
+<h3 id="https-的工作原理">HTTPS 的工作原理</h3>
+<ul>
+<li>客户端连接 443 端口发送请求，包括：支持的加密压缩算法协议版本、一个随机数 r1</li>
+<li>服务器端返回结果，包括：确认加密算法、包含公钥的证书、一个随机数 r2</li>
+<li>客户端解析证书，验证证书的颁发机构和过期时间，如果证书没问题，则生成一个随机值 pre-master secret，用公钥对该随机值加密，发送给服务端</li>
+<li>服务端用私钥解密，得到 pre-master secret。至此，非对称加密过程结束，实现了身份认证和密钥协商。</li>
+<li>通过 r1、r2、pre-master secret 三个随机数生成一个 master secret，从而得到对话密钥集合 sessions keys ，以后的通讯都用这些密钥进行加密解密</li>
+<li>服务器端用随机值加密后传输信息给客户端</li>
+<li>客户端可以用之前生成的随机值还原出原文。至此，一个对称加密的过程结束，用于服务器端传送给客户端数据。</li>
+<li>因为非对称加密的性能很差，所以传输的时候用对称加密</li>
+</ul>
+<figure data-type="image" tabindex="1"><img src="https://blog.callmewhy.com/post-images/1578301335829.png" alt="" loading="lazy"></figure>
+<hr>
+<p>参考资料</p>
+<ul>
+<li><a href="https://mp.weixin.qq.com/s/LpkCPTh6GmL7GvB4QiEqeg">TCP 意外情况</a></li>
+</ul>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Vue 相关原理学习笔记]]></title>
+        <id>https://blog.callmewhy.com/post/vue-xiang-guan-yuan-li-xue-xi-bi-ji/</id>
+        <link href="https://blog.callmewhy.com/post/vue-xiang-guan-yuan-li-xue-xi-bi-ji/">
+        </link>
+        <updated>2019-08-24T08:07:58.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="响应式原理">响应式原理</h2>
+<h3 id="方案一objectdefineproperty">方案一：Object.defineProperty</h3>
+<p>基于 Object.defineProperty 通过 setter/getter 方法来监听数据的变化。 getter 进行依赖收集，setter 在数据变更的时候通知订阅者，递归调用监听对象的所有属性。</p>
+<p>缺点：</p>
+<ul>
+<li>无法检测到对象属性的添加或删除</li>
+<li>不能监听数组的变化，需要重写数组方法</li>
+</ul>
+<pre><code class="language-js">function defineReactive(obj, key, value) {
+    Object.defineProperty(obj, key, {
+        enumerable: true,
+        configurable: true,
+        get() {
+            console.log('get', obj, key, value)
+            return value
+        },
+        set(newVal) {
+            observe(newVal)
+            if (newVal !== value) {
+                console.log('set', obj, key, newVal)
+                value = newVal
+            }
+        }
+    })
+}
+
+function observe(obj) {
+    if (!obj || typeof obj !== 'object') {
+        return
+    }
+    Object.keys(obj).forEach(key =&gt; {
+        const value = obj[key]
+        observe(value)
+        defineReactive(obj, key, obj[key])
+    })
+}
+
+const data = { a: { b: 1 } }
+observe(data)
+data.a.b = 2
+</code></pre>
+<h3 id="方案二es6-proxy">方案二：ES6 Proxy</h3>
+<p>优点：</p>
+<ul>
+<li>针对整个对象，而不是某个属性，所以不需要遍历，但是仍需要递归</li>
+<li>支持数组变化监听</li>
+</ul>
+<pre><code class="language-js">const handler = {
+    get(target, key) {
+        if (typeof target[key] == 'object' &amp;&amp; target[key] !== null) {
+            return new Proxy(target[key], handler)
+        }
+        console.log('set', key)
+        return Reflect.get(target, key)
+    },
+    set(target, key, value) {
+        if (key === 'length') return true
+        console.log('set', value)
+        return Reflect.set(target, key, value)
+    }
+}
+
+const data = { a: { b: 1 } }
+const proxy = new Proxy(data, handler)
+proxy.a.b = 2
+</code></pre>
+<h2 id="如何收集依赖">如何收集依赖</h2>
+<p>两个关键类：</p>
+<ul>
+<li>Watcher：封装一个观察订阅的依赖，触发 getter 事件</li>
+<li>Dep：存放 Watcher 数组，需要通知变更的时候遍历 Watcher 发送通知</li>
+</ul>
+<p>流程：</p>
+<ul>
+<li>对于某个属性，先声明一个 Dep 对象，用来存放依赖</li>
+<li>Watcher 初始化的时候，会临时将 Dep.target 指向 this ，然后调用 getter 方法</li>
+<li>在 getter 中，将 Dep.target 指向的 Water 存入依赖数组</li>
+<li>在 setter 中，通过 dp.notify() 通知所有依赖对象</li>
+</ul>
+<h2 id="computed-原理">Computed 原理</h2>
+<h2 id="mvvm-原理">MVVM 原理</h2>
+<h2 id="vue-router-原理">Vue Router 原理</h2>
+<ul>
+<li>hash mode：根据不同 hash 值渲染不同的组件和数据，通过在 window.onhashchange 监听 hash 改变实现路由切换</li>
+<li>history mode：利用了 HTML5 History API 中的 pushState() 和 replaceState() 方法，虽然改变了当前的 URL ，但浏览器不会向后端发送请求。后台需要配置一个解析规则，避免 404 出现。这个模式下的跳转监听通过 window.onpopstate 实现，push 需要手动触发。</li>
+</ul>
+<h2 id="vuex-原理">Vuex 原理</h2>
+<p>vuex 中的 store 本质就是没有 template 的 vue 组件</p>
+<h2 id="nuxt-原理">Nuxt 原理</h2>
+<p>在打包之前，有两者的入口文件：</p>
+<ul>
+<li>Server entry：服务端入口文件主要是返回新创建的 Vue 实例。为了避免在一个单例对象中的多次请求对状态的污染，所以每次渲染都会重复创建 Vue 实例。在这个地方，也会进行组件状态数据的预获取，路由处理等。</li>
+<li>Client entry：客户端入口文件就是将 Vue 实例挂载到指定的 DOM 元素上。</li>
+</ul>
+<p>在打包之后，有两个 bundle 文件：</p>
+<ul>
+<li>Server bundle：服务器按照请求通过 Node 去生成预渲染的 HTML 字符串返回到请求的客户端，完成初始的渲染。</li>
+<li>Client bundle：客户端拿到 HTML 之后，会使用这个 bundle 进行混合，使其变为由 Vue 管理的动态 DOM，为之后能够响应后续的数据变化。</li>
+</ul>
+<figure data-type="image" tabindex="1"><img src="https://blog.callmewhy.com/post-images/1578487453810.jpg" alt="" loading="lazy"></figure>
+<p>同构渲染：同一份代码，服务端先渲染生成 HTML（Dehydrate），客户端拿到代码后运行 JS ，进行客户端激活（Client-Side Hydration，CSH）的过程。</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[前端基础知识梳理]]></title>
+        <id>https://blog.callmewhy.com/post/qian-duan-ji-chu-zhi-shi-shu-li/</id>
+        <link href="https://blog.callmewhy.com/post/qian-duan-ji-chu-zhi-shi-shu-li/">
+        </link>
+        <updated>2019-05-08T04:19:06.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="css">CSS</h2>
+<h3 id="几种布局">几种布局</h3>
+<ul>
+<li>正常布局流，display 属性为 block inline inline-block 这些标准属性，是浏览器默认的HTML布局方式</li>
+<li>table 布局，优点是兼容性好，缺点是需要等内容全部加载完才可以展示</li>
+<li>浮动布局，通过 float 属性，例如 float: left 可以让块级元素并排而不是堆叠</li>
+<li>position 属性布局
+<ul>
+<li>静态定位 static：默认属性</li>
+<li>相对定位 relative：允许元素的相对移动</li>
+<li>静态定位 absolute：相对第一个非 static 的父类元素定位</li>
+<li>固定定位 fixed：相对浏览器视图固定</li>
+<li>粘性布局 sticky：指定阈值后，未越过阈值为 relative，越过阈值为 fixed</li>
+</ul>
+</li>
+<li>CSS Grid，display 属性为 grid，兼容性差</li>
+<li>Flexbox，display 属性为 flex</li>
+</ul>
+<h3 id="盒模型">盒模型</h3>
+<ul>
+<li>content、padding、border、border</li>
+<li>标准盒模型（content-box）的宽高就是 content 的宽高，IE 盒模型（border-box）的宽高是 content+padding+border 宽高的总和</li>
+</ul>
+<h3 id="选择器及其优先级">选择器及其优先级</h3>
+<ul>
+<li>!important</li>
+<li>内联样式 style=&quot;&quot;</li>
+<li>ID 选择器 #id</li>
+<li>类选择器/属性选择器/伪类选择器</li>
+<li>元素选择器/关系选择器/伪元素选择器</li>
+<li>通配符选择器</li>
+</ul>
+<h3 id="bfc">BFC</h3>
+<p>Formatting Context 指一个独立的渲染区域，或者说是一个隔离的独立容器。<br>
+常见的 Formatting Context：</p>
+<ul>
+<li>BFC（Block formatting contexts）：块级格式上下文</li>
+<li>IFC（Inline formatting contexts）：内联格式上下文</li>
+<li>GFC（GrideLayout formatting contexts）：网格布局格式化上下文</li>
+<li>FFC（Flex formatting contexts）：自适应格式上下文</li>
+</ul>
+<p>BFC（Block Formatting Context）是一个用来管理块级元素的容器，是 Web 页面中盒模型布局的 CSS 渲染模式。</p>
+<ul>
+<li>内部的 Box 会在垂直方向上一个接一个地放置，垂直方向的距离由 margin 决定</li>
+<li>属于同一个 BFC 的两个相邻的块级元素的 margin 会发生重叠</li>
+<li>每个元素的 margin box 的左边， 与包含块 border box 的左边相接触。即使存在浮动也是如此</li>
+<li>BFC 的区域不会与 float 的元素区域重叠</li>
+<li>计算 BFC 的高度时，浮动子元素也参与计算</li>
+<li>BFC 是隔离的独立容器，容器里面的子元素不会影响到外面元素</li>
+</ul>
+<p>BFC 主要的作用是：</p>
+<ul>
+<li>清除浮动，比如实现左边侧边栏的效果</li>
+<li>防止同一 BFC 容器中的相邻元素间的外边距重叠问题</li>
+</ul>
+<h3 id="伪类和伪元素">伪类和伪元素</h3>
+<p>伪类（一个冒号）</p>
+<ul>
+<li>获取不存在与DOM树中的信息。比如a标签的:link、visited等，这些信息不存在与DOM树结构中，只能通过CSS选择器来获取；</li>
+<li>获取不能被常规CSS选择器获取的信息。比如：要获取第一个子元素，我们无法用常规的CSS选择器获取，但可以通过 :first-child 来获取到。</li>
+</ul>
+<p>伪元素（两个冒号，CSS3 中区分开）</p>
+<ul>
+<li>伪元素用于创建一些不在文档树中的元素，并为其添加样式。比如说，我们可以通过:before来在一个元素前增加一些文本，并为这些文本添加样式。虽然用户可以看到这些文本，但是这些文本实际上不在文档树中。常见的伪元素有 ::before、::after 等</li>
+</ul>
+<h3 id="清理浮动">清理浮动</h3>
+<ul>
+<li>原因：浮动会导致父容器高度塌陷</li>
+<li>方案1：在父元素末尾添加冗余的块级元素，设置 <code>clear: both</code></li>
+<li>方案2：通过伪元素 <code>:after</code> 添加一个看不见的块元素，推荐方案</li>
+<li>方案3：给父元素设置 <code>overflow: hidden</code> ，将它变成 BFC，可以包含浮动</li>
+</ul>
+<h3 id="移动端适配">移动端适配</h3>
+<ul>
+<li>rem 做单位，根据视图大小来改变根元素字体大小</li>
+<li>vw 做单位，可以按设计稿的像素开发，缺点是跟随 viewport 放大缩小，没有最大最小值的限制</li>
+</ul>
+<h3 id="setinterval-和-requestanimationframe">setInterval 和 requestAnimationFrame</h3>
+<ul>
+<li>setInterval 是从开始时间计时，无法确保执行间隔。由定时触发器线程执行定时，由事件触发线程塞进任务队列的尾部，由 JS 引擎的主线程来执行，不会重复放入事件队列中，如果主线程阻塞，且队列中已经存在了一个定时器，则下一次会直接跳过计时。主线程执行结束后，会立即执行队列中的定时器。</li>
+<li>requestAnimationFrame 由系统来决定回调函数的执行时机，能保证回调函数在屏幕每一次的刷新间隔中只被执行一次。有两个优点：与屏幕渲染一致，所以更加节能；有函数节流的效果。</li>
+</ul>
+<h2 id="javascript">JavaScript</h2>
+<h3 id="七种数据类型">七种数据类型</h3>
+<ul>
+<li>Undefined</li>
+<li>Null</li>
+<li>Boolean</li>
+<li>String</li>
+<li>Number</li>
+<li>Symbol</li>
+<li>Object（包括数组、函数、正则、日期）</li>
+</ul>
+<h3 id="判断数据类型的方法重要">判断数据类型的方法（重要）</h3>
+<ul>
+<li>typeof：JS 在底层存储变量的时候，会在变量的机器码的低位 1-3 位存储其类型信息，number（010）, string（100）, object（000）, boolean（110）, undefined（-2^30），null ：所有机器码为0
+<ul>
+<li>优点：能够快速区分基本数据类型，包括 function（通过是否实现 call 方法判断）</li>
+<li>缺点：不能将 Object、Array 和 Null 区分，都返回 object</li>
+</ul>
+</li>
+<li>instanceof：判断一个实例是否属于某种类型，检查左边实例的 <code>__proto__</code> 和右边类的 prototype 是否在同一条原型链上
+<ul>
+<li>优点：可以用来判断对象的具体类型</li>
+<li>缺点：Number，Boolean，String 基本数据类型不能判断；多个 iframe 中判断不准确</li>
+</ul>
+</li>
+<li>constructor：通过构造函数比较来判断
+<ul>
+<li>优点：可以判断基本数据类型</li>
+<li>缺点：无法判断 null 和 undefined，构造函数本身可被覆盖，不够稳定</li>
+</ul>
+</li>
+<li><code>Object.prototype.toString.call</code> 准确判断对象实例的类型</li>
+</ul>
+<h3 id="原型对象">原型对象</h3>
+<p>每个函数都会有一个 prototye 属性指向函数的原型对象，每个原型对象都会获取一个 constructor 属性指向构造函数，即：Function.prototype.constructor == Function</p>
+<h3 id="new-运算符的原理">new 运算符的原理</h3>
+<ul>
+<li>创建一个空对象，它的 <code>__proto__</code> 等于构造函数的原型对象（可以用Object.create()完成）</li>
+<li>构造函数以第1步创建的对象做为上下文，是否会返回一个对象</li>
+<li>若第2步返回了对象，则使用该对象作为新实例，否则用第1步创建的对象作为新实例</li>
+</ul>
+<pre><code class="language-js">function myNew(func) {
+    var o = Object.create(func.prototype)
+    var i = func.call(o)
+    return typeof i === 'object' ? i : o
+}
+</code></pre>
+<h3 id="继承的几种实现方式重要">继承的几种实现方式（重要）</h3>
+<ul>
+<li>原型链继承：<code>B.prototype = new A()</code>
+<ul>
+<li>缺点：引用类型的属性会被所有子类共享，创建子类实例时父类构造函数无法传参</li>
+</ul>
+</li>
+<li>构造函数继承：<code>function B(params) { A.call(this, params) }</code>
+<ul>
+<li>缺点：只能继承构造函数内的实例属性；无法获取父类原型链的属性；无法复用函数，每个子类都是独立副本</li>
+</ul>
+</li>
+<li>原型链+构造函数
+<ul>
+<li>缺点：调用了两次父类构造函数</li>
+</ul>
+</li>
+<li>Class 实现继承，需要 ES6 支持</li>
+<li>原型链+构造函数优化</li>
+</ul>
+<pre><code class="language-js">function B(params) {
+    A.call(this, ...params)
+}
+B.prototype = Object.create(A.prototype)
+B.prototype.constructor = B
+</code></pre>
+<h3 id="call-apply-和-bind-区别">call、apply 和 bind 区别</h3>
+<p>三个函数的作用都是将函数绑定到上下文中，用来改变函数中 this 的指向</p>
+<pre><code class="language-js">// call 方法接受的是若干个参数列表
+fun.call(thisArg[, arg1[, arg2[, ...]]])
+// apply 接收的是一个包含多个参数的数组
+fun.apply(thisArg, [argsArray])
+// bind 会创建一个新的函数
+var bindFn = fun.bind(thisArg[, arg1[, arg2[, ...]]])
+bindFn()
+</code></pre>
+<h3 id="防抖debouncing和节流throttling重要">防抖（Debouncing）和节流（Throttling）（重要）</h3>
+<ul>
+<li>防抖（Debouncing）：将触发频繁的事件合并成一次执行。适用场景： input 实时反馈、scroll 事件优化。</li>
+<li>节流（Throttling）： 设置一个阀值，在阀值内，将触发的事件合并成一次执行，且当到达阀值，必定执行一次事件。防止浏览器频繁响应事件，严重拉低性能。适用场景：resize 事件、鼠标移动事件</li>
+</ul>
+<h3 id="模块化的实现">模块化的实现</h3>
+<ul>
+<li>CommonJS：主要用于 NodeJS，同步加载，文件即模块，导出的是值的拷贝。通过 <code>exports</code> <code>require</code> 导出和加载，加载后会在内存里生成一个对象，引入时会去 <code>exports</code> 属性上取值，所以只会加载一次。浏览器端需要通过 browserify 进行打包。输出的是值的拷贝。</li>
+<li>AMD：在模块开始时异步加载所有依赖模块，全量加载，可以并行</li>
+<li>CMD：类似 CommonJS 的风格，动态引入，按需加载，延迟执行</li>
+<li>ES6：在语言标准的层面实现了模块功能，模块是一个单例，通过 <code>import</code> <code>export</code> 导出和加载，输出的是值的引用。</li>
+</ul>
+<h2 id="其他">其他</h2>
+<h3 id="浏览器缓存策略重要">浏览器缓存策略（重要）</h3>
+<p>缓存流程：</p>
+<ul>
+<li>浏览器每次发起请求，都会先在浏览器缓存中查找该请求的结果以及缓存标识</li>
+<li>浏览器每次拿到返回的请求结果都会将该结果和缓存标识存入浏览器缓存中</li>
+</ul>
+<p>缓存策略分为两种：强缓存和协商缓存，并且缓存策略都是通过设置 HTTP Header 来实现的。</p>
+<ul>
+<li>强制缓存：不发送请求，直接读取缓存，通过设置两种 HTTP Header 控制：Expires（HTTP/1.0）和 Cache-Control（HTTP/1.1），强制缓存生效会返回 200 状态码。</li>
+<li>协商缓存：强制缓存失效后，浏览器携带缓存标识向服务器发起请求，由服务器根据缓存标识决定是否使用缓存
+<ul>
+<li>两种结果：
+<ul>
+<li>生效返回 304，还是由客户端从缓存读取</li>
+<li>失效返回 200，服务器返回最新结果</li>
+</ul>
+</li>
+<li>两种方式：
+<ul>
+<li>Last-Modified 和 If-Modified-Since：标记最后修改时间，缺点是不够精确，只能精确到秒</li>
+<li>ETag 和 If-None-Match：由服务器生成当前资源的唯一标识<br>
+<img src="https://blog.callmewhy.com/post-images/1578713476462.jpeg" alt="" loading="lazy"></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="web-worker">Web Worker</h3>
+<p>Web Worker 为 JavaScript 创造多线程环境，允许主线程创建 Worker 线程，将一些任务分配给后者运行。在主线程运行的同时，Worker 线程在后台运行，两者互不干扰。等到 Worker 线程完成计算任务，再把结果返回给主线程。这样的好处是，一些计算密集型或高延迟的任务，被 Worker 线程负担了，主线程（通常负责 UI 交互）就会很流畅，不会被阻塞或拖慢。</p>
+<ul>
+<li>同源限制：Worker 线程的脚本文件必须和主线程脚本文件同源</li>
+<li>DOM 限制，无法获取 document window ，可以获取 navigator 和 location</li>
+<li>通信限制：无法与主线程直接通信，必须通过消息完成，主线程 <code>postMessage</code> ，worker 线程 <code>onmessage</code> 监听</li>
+<li>脚本限制：无法执行 alert confirm 函数，但是可以发送 ajax 请求</li>
+<li>文件限制：无法读取本地文件，脚本来源自网络</li>
+<li>应用场景：后台轮询</li>
+</ul>
+<h3 id="pwa-progressive-web-app">PWA - Progressive Web App</h3>
+<p>PWA 经过应用一些新技术进行改进，在安全、性能和体验三个方面提升 Web 体验，本质上还是 Web App。<br>
+改造方式：</p>
+<ul>
+<li>全站 HTTPS 化，这是 PWA 的基础，没有 HTTPS 就没有 Service Worker</li>
+<li>通过 Service Worker 提升基础性能，离线提供静态文件，提升用户首屏体验</li>
+<li>App Manifest 同步进行</li>
+<li>考虑其他的特性，离线消息推送等</li>
+</ul>
+<h3 id="script-标签解析">script 标签解析</h3>
+<ul>
+<li>默认情况，会立即加载并执行指定的脚本，不等待标签后面的文档加载完毕</li>
+<li>async defer 共同点：开新线程并行下载，不会阻塞解析</li>
+<li>async：下载完成后立即执行，执行时会阻塞文档解析，无法确保顺序，适合 GA 这种无依赖脚本</li>
+<li>defer：所有文档元素加载完成之后按照顺序执行，在 DOMContentLoaded 事件触发之前完成</li>
+<li>动态添加的 script 标签隐含 async 属性</li>
+</ul>
+<h3 id="preload-和-prefetch">preload 和 prefetch</h3>
+<ul>
+<li>preload 预加载本次导航可能用到的资源，优先级根据 as 属性决定，加载资源存储在缓存里，下次请求直接读取缓存，不会重复请求资源，跳转的时候未完成的任务会取消，主要目的是提前做好缓存。</li>
+<li>prefetch 预加载下次导航可能用到的资源，优先级最低，不保证缓存资源，所以多次请求会重复请求，导航到其他页面的时候未完成的请求也会保持。</li>
+</ul>
+<h3 id="cookie-特性">Cookie 特性</h3>
+<ul>
+<li>通过 domain 限制域名，通过 path 限制路径，通过 Expires/Max-Age 限制有效期</li>
+<li>cookie 本身没有删除，通过设置 Max-Age 为 0 可以让 cookie 失效删除</li>
+<li>HttpOnly 字段设置为 true ，则 JS 无法获取 cookie 的值，可以防止 XSS 攻击</li>
+<li>document.cookie 获取和修改 cookie ，是一个字符串，分号分割</li>
+</ul>
+<h3 id="性能优化方案重要">性能优化方案（重要）</h3>
+<ul>
+<li>网络优化
+<ul>
+<li>使用 CDN</li>
+<li>升级 HTTP/2</li>
+<li>使用缓存（强制缓存和协商缓存）</li>
+</ul>
+</li>
+<li>资源优化
+<ul>
+<li>preloader、prefetch、async、defer 等相关指令</li>
+<li>资源域名拆分，避免浏览器 TCP 连接数限制</li>
+<li>资源压缩与合并</li>
+</ul>
+</li>
+<li>渲染优化
+<ul>
+<li>减少 DOM 操作</li>
+<li>图片指定宽高</li>
+<li>避免重排重绘</li>
+</ul>
+</li>
+</ul>
+<h3 id="图片懒加载实现原理">图片懒加载实现原理</h3>
+<ul>
+<li>用 data-src 存储图片地址，初始化的时候图片无内容，监听 scroll 事件，执行防抖函数滞后执行避免掉帧，通过 getBoundingClientRect 判断图片是否出现在屏幕中，在展示的时候再加载图片。</li>
+<li>判断图片是否展示也可以通过 IntersectionObserver 实现。</li>
+<li>Chrome 已经官方支持 <a href="https://web.dev/native-lazy-loading">Lazy Load</a>，在 img 标签加上  loading=&quot;lazy&quot; 即可。</li>
+</ul>
+<h3 id="cdn-的工作原理">CDN 的工作原理</h3>
+<p>Content Delivery Network，缩写 CDN，将网站的内容发布到最接近用户的网络节点，使用户可以就近取得所需内容，提高用户访问网站的响应速度。一般通过修改 DNS 实现，利用 CNAME 将域名和目标 IP 之间进行解耦。</p>
+<p>核心：</p>
+<ul>
+<li>缓存：将从根服务器请求来的资源按要求缓存</li>
+<li>回源：当有用户访问某个资源的时候，如果被解析到的那个 CDN 节点没有缓存响应的内容，或者是缓存已经到期，就会回源站去获取。没有人访问，CDN 节点不会主动去源站请求资源。</li>
+</ul>
+<p>优点：</p>
+<ul>
+<li>加速：通过靠近用户的网络节点降低访问延时</li>
+<li>负载：分流减轻源站的负载</li>
+</ul>
+<h3 id="安全概念重要">安全概念（重要）</h3>
+<ul>
+<li>CSRF：Cross-Site Request Forgery，跨站请求伪造，挟持用户在当前已登录的 Web 应用程序上执行非本意的操作，比如通过 <code>&lt;img src=&quot;https://t.cn/withdraw?account=xx&amp;amount=xx&quot;&gt;</code> 伪造请求
+<ul>
+<li>防御措施：Token 验证和 Referer 验证</li>
+</ul>
+</li>
+<li>XSS：Cross Site Script，跨域脚本攻击，类似 SQL 注入
+<ul>
+<li>三种方式：
+<ul>
+<li>DOM based XSS：DOM 型，不经过后端，URL -&gt; 浏览器</li>
+<li>Reflected XSS：反射型，不经过数据库，浏览器 -&gt; 后端 -&gt; 浏览器</li>
+<li>Stored XSS：存储型，经过数据库，浏览器 -&gt; 后端 -&gt; 数据库 -&gt; 后端 -&gt; 浏览器</li>
+</ul>
+</li>
+<li>防御措施：cookie 设置 httpOnly 防止读取和篡改，对服务端请求做过滤和转义</li>
+</ul>
+</li>
+</ul>
+<h3 id="为什么会有-options-请求">为什么会有 OPTIONS 请求</h3>
+<p>规范要求，对那些可能对服务器数据产生副作用的 HTTP 请求方法（特别是 GET 以外的 HTTP 请求，或者搭配某些 MIME 类型的 POST 请求），浏览器必须首先使用 OPTIONS 方法发起一个预检请求（preflight request），从而获知服务端是否允许该跨域请求。服务器确认允许之后，才发起实际的 HTTP 请求。</p>
+<ul>
+<li>获取服务器支持的 HTTP 请求方法；</li>
+<li>用来检查服务器的性能。例如：AJAX 进行跨域请求时的预检，需要向另外一个域名的资源发送一个 HTTP OPTIONS 请求头，用以判断实际发送的请求是否安全。</li>
+</ul>
+<p>当请求满足下述任一条件时，即应首先发送预检请求（使用 OPTIONS）：</p>
+<ul>
+<li>使用了下面任一 HTTP 方法：
+<ul>
+<li>PUT</li>
+<li>DELETE</li>
+<li>CONNECT</li>
+<li>OPTIONS</li>
+<li>TRACE</li>
+<li>PATCH</li>
+</ul>
+</li>
+<li>人为设置了对 CORS 安全的首部字段集合之外的其他首部字段。该集合为：
+<ul>
+<li>Accept</li>
+<li>Accept-Language</li>
+<li>Content-Language</li>
+<li>Content-Type (but note the additional requirements below)</li>
+<li>DPR</li>
+<li>Downlink</li>
+<li>Save-Data</li>
+<li>Viewport-Width</li>
+<li>Width</li>
+</ul>
+</li>
+<li>Content-Type 的值不属于下列之一:
+<ul>
+<li>application/x-www-form-urlencoded</li>
+<li>multipart/form-data</li>
+<li>text/plain</li>
+</ul>
+</li>
+</ul>
+<hr>
+<p>参考资料</p>
+<ul>
+<li><a href="http://www.ruanyifeng.com/blog/2018/07/web-worker.html">Web Worker 使用教程</a></li>
+<li><a href="https://www.infoq.cn/article/CS9-WZQlNR5h05HHDo1b">史上最全！图解浏览器的工作原理</a></li>
+<li><a href="https://juejin.im/post/5c6a732151882528735f2d33">原来 JavaScript 是这样运行的</a></li>
+<li><a href="https://jakearchibald.com/2015/tasks-microtasks-queues-and-schedules/">Tasks, microtasks, queues and schedules</a></li>
+<li><a href="https://dev.to/lydiahallie/javascript-visualized-prototypal-inheritance-47co">JavaScript Visualized: Prototypal Inheritance</a></li>
+<li><a href="https://lavas.baidu.com/pwa/">PWA - Lavas Baidu</a></li>
+<li><a href="https://juejin.im/post/5c32ac69f265da6150649ec2">深入浅出浏览器缓存机制</a></li>
+<li><a href="https://jakearchibald.com/2015/tasks-microtasks-queues-and-schedules/">Tasks, microtasks, queues and schedules</a></li>
+<li><a href="https://www.cnblogs.com/wengxuesong/archive/2016/05/16/5497653.html">使用 VH 和 VW 实现真正的流体排版</a></li>
+<li><a href="https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Caching_FAQ">HTTP 缓存</a></li>
+<li><a href="https://mp.weixin.qq.com/s/Uxtm-z48FnhK13Zbm15Tcw">深入浅出 JS 模块化</a></li>
+</ul>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[系统设计学习笔记]]></title>
+        <id>https://blog.callmewhy.com/post/xi-tong-she-ji-mian-shi-ti-xue-xi-bi-ji/</id>
+        <link href="https://blog.callmewhy.com/post/xi-tong-she-ji-mian-shi-ti-xue-xi-bi-ji/">
+        </link>
+        <updated>2018-02-16T03:36:43.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="通用模板">通用模板</h2>
+<p>系统设计的面试题是一个开放式的对话，大体可以分成四个步骤：</p>
+<h3 id="第一步明确需求">第一步：明确需求</h3>
+<ul>
+<li>需求是无止境的，需要明确一个范畴，专注讨论范畴内的需求用例</li>
+<li>目标用户是谁，用户规模大概多大</li>
+<li>有哪些功能，核心功能的输入输出是什么</li>
+<li>有哪些边界情况需要注意</li>
+<li>预期的数据量和处理速度</li>
+</ul>
+<h3 id="第二步设计架构">第二步：设计架构</h3>
+<ul>
+<li>做一个高层次设计，画出核心组件的架构</li>
+<li>用连线代表核心组件之间的交互</li>
+</ul>
+<h3 id="第三步细化实现">第三步：细化实现</h3>
+<ul>
+<li>具体到每个系统组件，提供具体的解决方案</li>
+<li>演示所有功能的交互流程和解决方案</li>
+</ul>
+<h3 id="第四步扩展设计">第四步：扩展设计</h3>
+<ul>
+<li>不用直接得出最终设计，通过 benchmark/load/profile 迭代分析瓶颈</li>
+<li>可参考方案：DNS、CDN、负载均衡、水平扩展、反向代理、应用层、缓存、主从复制</li>
+<li>论述可能的解决办法和代价，每件事情需要权衡利弊做出取舍</li>
+<li>重要的是讨论在初始设计中可能遇到的瓶颈，以及如何解决每个瓶颈</li>
+</ul>
+<p>一些常见的优化方案：</p>
+<ul>
+<li>DNS：根据地理位置分流</li>
+<li>CDN：内容分发加速，客户端访问速度更快</li>
+<li>Load Balancer：反向代理层做负载均衡，缓解单个 web server 的访问压力</li>
+<li>Memory Cache：高频数据放在内存缓存中，缓解数据库查询压力</li>
+<li>SQL Write Master-Slave &amp; Read Replicas：主从分离提高数据安全性和可用性，slave 上做查询可以缓解生产服务器访问压力过大的问题。</li>
+<li>SQL Analytics：分析 SQL 的执行耗时，优化应用层的 SQL 语句性能</li>
+<li>Graph Service：解决复杂的关系网络，比如社交系统的用户关注</li>
+<li>Object Store：通过 S3 之类的云服务存储图片等多媒体对象</li>
+<li>Queue：通过队列解决异步任务</li>
+</ul>
+<h2 id="案例一粘贴板分享平台">案例一：粘贴板分享平台</h2>
+<h3 id="第一步明确需求-2">第一步：明确需求</h3>
+<p>我们将问题的范畴限定在如下用例：</p>
+<ul>
+<li>用户：输入文本，保存后得到一个随机链接
+<ul>
+<li>默认不会过期</li>
+<li>设置过期时间</li>
+</ul>
+</li>
+<li>用户：输入一个链接，可以查看分享的内容</li>
+<li>服务：用户行为统计与分析，可以使用外部服务（Google Analytics）</li>
+<li>服务：自动删除过期的内容</li>
+<li>服务：高可用，冗余+自动故障转移</li>
+</ul>
+<p>范畴之外的用例：</p>
+<ul>
+<li>用户：可以注册、登录、查看历史记录</li>
+<li>用户：可以设置可见性、过期时间</li>
+</ul>
+<p>状态假设：</p>
+<ul>
+<li>访问流量不是均匀分布的</li>
+<li>打开一个短链接应该是很快的</li>
+<li>pastes 只能是文本</li>
+<li>页面访问分析数据可以不用实时</li>
+<li>一千万的用户量，每个月一千万的 paste 写入量，一亿的 paste 读取量，读写比例在 10:1</li>
+</ul>
+<p>估算使用情况：</p>
+<ul>
+<li>每个 paste 的大小，每条数据大约 2kb</li>
+<li>每个月新的 paste 内容在 20GB</li>
+<li>平均 4 paste/s 的写入频率</li>
+<li>平均 40 paste/s 的读取频率</li>
+</ul>
+<h3 id="第二步设计架构-2">第二步：设计架构</h3>
+<figure data-type="image" tabindex="1"><img src="https://blog.callmewhy.com/post-images/1576660511452.png" alt="" loading="lazy"></figure>
+<h3 id="第三步细化实现-2">第三步：细化实现</h3>
+<ul>
+<li>用一个关系型数据库作为哈希表，用来把生成的 url 映射到一个包含 paste 文件的文件服务器和路径上</li>
+<li>为了避免托管一个文件服务器，我们可以用一个托管的对象存储，比如 Amazon 的 S3</li>
+</ul>
+<p><strong>用例：输入文本，保存后得到一个随机链接</strong></p>
+<ul>
+<li>Client 发送一个创建 paste 的请求到 Reverse Proxy</li>
+<li>Reverse Proxy 转发请求给 Write API Server</li>
+<li>Write API 执行如下操作：
+<ul>
+<li>生成一个唯一的 url
+<ul>
+<li>MD5 做哈希，Base62 做编码</li>
+<li>检查这个 url 在 SQL 数据库 里面是否是唯一的</li>
+<li>如果这个 url 不是唯一的，生成另外一个 url</li>
+<li>如果我们支持自定义 url，我们可以使用用户提供的 url（也需要检查是否重复）</li>
+</ul>
+</li>
+<li>把生成的 url 存储到 SQL 数据库 的 pastes 表里面</li>
+<li>存储 paste 的内容数据到 对象存储 里面</li>
+<li>返回生成的 url</li>
+</ul>
+</li>
+</ul>
+<p><strong>用例：输入一个链接，可以查看分享的内容</strong></p>
+<ul>
+<li>Client 发送一个获取 paste 的请求到 Reverse Proxy<br>
+Reverse Proxy转发请求给 Read API Server</li>
+<li>Read API 执行如下操作：
+<ul>
+<li>在 SQL 数据库 检查这个生成的 url</li>
+<li>如果这个 url 在 SQL 数据库 里面，则从 对象存储 获取这个 paste 的内容</li>
+<li>否则，返回一个错误页面给用户</li>
+</ul>
+</li>
+</ul>
+<p><strong>用例：用户行为统计与分析</strong><br>
+非实时分析的功能可以通过 MapReduce 之类的服务来计算点击率之类的数据</p>
+<h3 id="第四步扩展设计-2">第四步：扩展设计</h3>
+<figure data-type="image" tabindex="2"><img src="https://blog.callmewhy.com/post-images/1576660520148.png" alt="" loading="lazy"></figure>
+<h2 id="案例二设计-twitter-时间轴线和搜索">案例二：设计 Twitter 时间轴线和搜索</h2>
+<h3 id="第一步明确需求-3">第一步：明确需求</h3>
+<p>我们将问题的范畴限定在如下用例：</p>
+<ul>
+<li>用户：发布推文
+<ul>
+<li>服务：推送通知给关注的人</li>
+</ul>
+</li>
+<li>用户：浏览用户的时间线</li>
+<li>用户：浏览自己主页的时间线</li>
+<li>用户：搜索关键词</li>
+<li>服务：高可用</li>
+</ul>
+<p>范畴之外的用例：</p>
+<ul>
+<li>服务：推送推文到热门数据流</li>
+<li>服务：一些定制化的可见性功能</li>
+<li>服务：数据分析</li>
+</ul>
+<p>状态假设：</p>
+<ul>
+<li>流量不是均匀分布的</li>
+<li>发布推文、浏览时间线的速度要快</li>
+<li>1 亿的活跃用户</li>
+<li>每天 5 亿的推文</li>
+<li>每个月 2500 亿的浏览量</li>
+<li>每个月 100 亿的搜索量</li>
+</ul>
+<p>估算使用情况：</p>
+<ul>
+<li>一条推文大约 10kb</li>
+<li>每个月大约是 150TB 的数据量</li>
+<li>每秒 10 万次读取请求</li>
+<li>每秒 6000 个推文</li>
+<li>每秒 4000 次搜索</li>
+</ul>
+<h3 id="第二步设计架构-3">第二步：设计架构</h3>
+<figure data-type="image" tabindex="3"><img src="https://blog.callmewhy.com/post-images/1576672439820.png" alt="" loading="lazy"></figure>
+<h3 id="第三步细化实现-3">第三步：细化实现</h3>
+<p><strong>用例：用户发表推文</strong></p>
+<ul>
+<li>Client 发送请求到 Reverse Proxy</li>
+<li>Reverse Proxy 分发请求到 Write API Server</li>
+<li>Write API 把数据写进用户的时间线，存储在 SQL DB 里</li>
+<li>Write API 通知 Fan Out Service，进行如下操作：
+<ul>
+<li>查询 User Graph Service 服务，在 Memory Cache 中找到该用户的关注者</li>
+<li>将该信息通过 Memery Cache 存储在关注者的主页时间线里</li>
+<li>将该信息存储在 Search Index Service，方便快速搜索</li>
+<li>媒体资源存储在 Object Store</li>
+<li>用 Notification Service 推送通知，可以用 Queue 来异步发送通知</li>
+</ul>
+</li>
+</ul>
+<p><strong>用例：用户浏览自己主页的时间线</strong></p>
+<ul>
+<li>客户端发送浏览请求到 Reverse Proxy</li>
+<li>Reverse Proxy 分发请求到 Read API Server</li>
+<li>Read API 联系 Timeline Service ，进行如下操作：
+<ul>
+<li>从 Memory Cache 中获取时间线数据，包括 ID 和 User ID</li>
+<li>从 Post Info Server 获取这些 ID 的信息</li>
+<li>从 User Info Server 获取这些用户的信息</li>
+</ul>
+</li>
+</ul>
+<p><strong>用例：用户浏览其他用户的时间线</strong></p>
+<ul>
+<li>客户端发送浏览请求到 Reverse Proxy</li>
+<li>Reverse Proxy 分发请求到 Read API Server</li>
+<li>Read API 从 SQL DB 中获取用户的时间线数据</li>
+</ul>
+<p><strong>用例：用户搜索某个关键词</strong></p>
+<ul>
+<li>客户端发送浏览请求到 Reverse Proxy</li>
+<li>Reverse Proxy 分发请求到 Search API Server</li>
+<li>Search API 联系 Search Service，进行如下操作：
+<ul>
+<li>格式化输入，明确搜索内容，包括：移除符号、拆分词组、修正笔误、规范化大小写</li>
+<li>查询 Search Cluster，对查询结果做进一步聚合排序处理</li>
+</ul>
+</li>
+</ul>
+<h3 id="第四步扩展设计-3">第四步：扩展设计</h3>
+<figure data-type="image" tabindex="4"><img src="https://blog.callmewhy.com/post-images/1576681919070.png" alt="" loading="lazy"></figure>
+<p>一些额外优化的点：</p>
+<ul>
+<li>Memory Cache 中每个时间线只保存几百条数据</li>
+<li>Memory Cache 只存储活跃用户的时间线</li>
+<li>Tweet Info 和 User Info 都只缓存储活跃用户</li>
+</ul>
+<h2 id="案例三设计一个网页爬虫">案例三：设计一个网页爬虫</h2>
+<figure data-type="image" tabindex="5"><img src="https://blog.callmewhy.com/post-images/1576727812713.png" alt="" loading="lazy"></figure>
+<h2 id="案例四设计一个理财网站">案例四：设计一个理财网站</h2>
+<figure data-type="image" tabindex="6"><img src="https://blog.callmewhy.com/post-images/1576728102531.png" alt="" loading="lazy"></figure>
+<h2 id="案例五设计一个社交网站">案例五：设计一个社交网站</h2>
+<figure data-type="image" tabindex="7"><img src="https://blog.callmewhy.com/post-images/1576728169806.png" alt="" loading="lazy"></figure>
+<h2 id="案例六设计一个键值存储的搜索引擎">案例六：设计一个键值存储的搜索引擎</h2>
+<figure data-type="image" tabindex="8"><img src="https://blog.callmewhy.com/post-images/1576728221301.png" alt="" loading="lazy"></figure>
+<h2 id="案例七通过分类特性设计电商平台的销售排名">案例七：通过分类特性设计电商平台的销售排名</h2>
+<figure data-type="image" tabindex="9"><img src="https://blog.callmewhy.com/post-images/1576728273729.png" alt="" loading="lazy"></figure>
+<h2 id="案例八设计一个百万用户级别的系统">案例八：设计一个百万用户级别的系统</h2>
+<figure data-type="image" tabindex="10"><img src="https://blog.callmewhy.com/post-images/1576728364938.png" alt="" loading="lazy"></figure>
+<hr>
+<h2 id="附录一如何实现高可用">附录一：如何实现高可用</h2>
+<p>方法论上，高可用是通过冗余+自动故障转移来实现的。<br>
+整个互联网分层系统架构的高可用，又是通过每一层的冗余+自动故障转移来综合实现的，具体的：</p>
+<p>（1）【客户端层】到【反向代理层】的高可用，是通过反向代理层的冗余实现的，常见实践是keepalived + virtual IP自动故障转移<br>
+（2）【反向代理层】到【站点层】的高可用，是通过站点层的冗余实现的，常见实践是 nginx 与 web-server 之间的存活性探测与自动故障转移<br>
+（3）【站点层】到【服务层】的高可用，是通过服务层的冗余实现的，常见实践是通过 service-connection-pool 来保证自动故障转移<br>
+（4）【服务层】到【缓存层】的高可用，是通过缓存数据的冗余实现的，常见实践是缓存客户端双读双写，或者利用缓存集群的主从数据同步与 sentinel 保活与自动故障转移；更多的业务场景，对缓存没有高可用要求，可以使用缓存服务化来对调用方屏蔽底层复杂性<br>
+（5）【服务层】到【数据库读】的高可用，是通过读库的冗余实现的，常见实践是通过 db-connection-pool 来保证自动故障转移<br>
+（6）【服务层】到【数据库写】的高可用，是通过写库的冗余实现的，常见实践是 keepalived + virtual IP 自动故障转移</p>
+<h2 id="附录二常用的优化方案和原理">附录二：常用的优化方案和原理</h2>
+<ul>
+<li>DNS：加权轮询调度、基于延迟路由、基于地理位置路由</li>
+<li>CDN：从靠近用户的位置提供内容，加速静态资源的加载速度</li>
+<li>Load Balance 负载均衡：将传入的请求分发到应用服务器
+<ul>
+<li>优点：
+<ul>
+<li>防止请求进入不好的服务器</li>
+<li>防止过载</li>
+<li>帮助消除单一的故障点</li>
+</ul>
+</li>
+<li>缺点：
+<ul>
+<li>如果没有足够的资源配置或配置错误，负载均衡器会变成一个性能瓶颈</li>
+<li>引入负载均衡器以帮助消除单点故障但导致了额外的复杂性</li>
+<li>单个负载均衡器会导致单点故障，但配置多个负载均衡器会进一步增加复杂性</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>垂直扩展：提升单机处理能力。垂直扩展的方式分为两种：
+<ul>
+<li>增强单机硬件性能，例如：升级 CPU、内存、硬盘、网卡等等</li>
+<li>提升单机架构性能，例如：使用缓存来减少IO次数，使用异步来增加单服务吞吐量，使用无锁数据结构来减少响应时间</li>
+</ul>
+</li>
+<li>水平扩展
+<ul>
+<li>缺点：
+<ul>
+<li>水平扩展引入了复杂度并涉及服务器复制</li>
+<li>服务器应该是无状态的:它们也不该包含像 session 或资料图片等与用户关联的数据。</li>
+<li>session 可以集中存储在数据库或持久化缓存（Redis、Memcached）的数据存储区中。</li>
+<li>缓存和数据库等下游服务器需要随着上游服务器进行扩展，以处理更多的并发连接。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>反向代理（web 服务器）
+<ul>
+<li>优点：
+<ul>
+<li>增加安全性：隐藏后端服务器的信息，屏蔽黑名单中的 IP，限制每个客户端的连接数</li>
+<li>提高可扩展性和灵活性：客户端只能看到反向代理服务器的 IP，这使你可以增减服务器或者修改它们的配置</li>
+<li>本地处理 SSL 会话</li>
+<li>压缩、缓存、直接提供静态内容等优化</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>应用层
+<ul>
+<li>服务层和应用层分离，可以单独扩展和配置这两层</li>
+<li>通过微服务和服务发现技术对业务进行解耦</li>
+</ul>
+</li>
+<li>数据库
+<ul>
+<li>主从复制：主库写入复制，从库只读，如果主库离线，系统可以以只读模式运行，直到某个从库被提升为主库或有新的主库出现</li>
+<li>主主复制：两个主库都负责读操作和写操作，写入操作时互相协调。如果其中一个主库挂机，系统可以继续读取和写入</li>
+<li>联合：将数据库按对应功能分割</li>
+<li>分片：将数据分配在不同的数据库上，使得每个数据库仅管理整个数据集的一个子集</li>
+<li>非规范化：以写入性能为代价来换取读取性能。在多个表中冗余数据副本，以避免高成本的联结操作</li>
+<li>SQL 调优：利用基准测试和性能分析来模拟和发现系统瓶颈，比如 CHAR、索引、拆分、避免 BLOB</li>
+</ul>
+</li>
+<li>缓存：缓存可以提高页面加载速度，并减少服务器和数据库的负载，可以解决热门访问导致读取不均匀的问题</li>
+</ul>
+<hr>
+<p>参考资料：</p>
+<ul>
+<li><a href="https://github.com/donnemartin/system-design-primer/blob/master/README-zh-Hans.md">系统设计入门</a></li>
+<li><a href="https://github.com/donnemartin/system-design-primer/blob/master/solutions/system_design/pastebin/README-zh-Hans.md">设计 Pastebin.com (或者 Bit.ly)</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/43723276">什么是高可用</a></li>
+</ul>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Leetcode 基础题]]></title>
+        <id>https://blog.callmewhy.com/post/leetcode-ji-chu-mian-shi-ti/</id>
+        <link href="https://blog.callmewhy.com/post/leetcode-ji-chu-mian-shi-ti/">
+        </link>
+        <updated>2017-12-17T15:34:10.000Z</updated>
+        <content type="html"><![CDATA[<p>简单整理了一下 Leetcode 上 easy 题目的常见分类和解题思路，easy 的题目思路都比较简单，主要考察基础的编程能力和常见数据结构的使用。</p>
+<h2 id="数组">数组</h2>
+<ul>
+<li>set/hash：常用于计数、去重
+<ul>
+<li><a href="https://leetcode.com/problems/contains-duplicate/">Contains Duplicate</a>：set 做去重</li>
+<li><a href="https://leetcode.com/problems/single-number/">Single Number</a>：解法比较多，可以 set 计数后找 count = 1 ，或者异或运算也行</li>
+<li><a href="https://leetcode.com/problems/intersection-of-two-arrays-ii/">Intersection of Two Arrays II</a>：word count 之后在 hash 里取 count 最小值</li>
+<li><a href="https://leetcode.com/problems/two-sum">Two Sum</a>：把 target - i 存进 hash ，这样下次遍历寻找的时候就是 O(1)</li>
+</ul>
+</li>
+<li>in-place：不用额外空间的数组操作，主要是 index 相关，比如记录删除后 index 的偏差
+<ul>
+<li><a href="https://leetcode.com/problems/remove-duplicates-from-sorted-array">Remove Duplicates from Sorted Array</a>：inplace remove，标记 deleted count</li>
+<li><a href="https://leetcode.com/problems/rotate-array">Rotate Array</a>：从 k 位开始轮转数组，等于 reverse 之后再分别 reverse 0-k 和 k+1:length-1</li>
+<li><a href="https://leetcode.com/problems/rotate-image/">Rotate Image</a>：顺时针旋转二维数组，reverse 后在做斜对称的反转比较方便</li>
+<li><a href="https://leetcode.com/problems/move-zeroes">Move Zeroes</a>：第一次遍历标记 zero count ，先把数字移到正确位置，再补零</li>
+<li><a href="https://leetcode.com/problems/merge-sorted-array">Merge Sorted Array</a>：遍历两个数组，不断把第一个数组的元素往右移，同时操作 i1 i2 坐标</li>
+</ul>
+</li>
+<li>traverse：遍历计算 min/max 来获得最优解的问题可以画图辅助理解，其他很多是基础的遍历操作
+<ul>
+<li><a href="https://leetcode.com/problems/best-time-to-buy-and-sell-stock-ii/">Best Time to Buy and Sell Stock II</a>：不限次数卖卖，所以 price 做差算出 profit ，然后 &gt; 0 的 profit 求和即可</li>
+<li><a href="https://leetcode.com/problems/valid-sudoku">Valid Sudoku</a>：纯粹的考察 for loop，主要在于大小九宫格的遍历，<code>board[i//3*3+j//3][i%3*3+j%3]</code></li>
+</ul>
+</li>
+<li>binary search
+<ul>
+<li><a href="https://leetcode.com/problems/first-bad-version">First Bad Version</a>：二分查找的经典题，<code>right = mid or left = mid + 1</code></li>
+</ul>
+</li>
+</ul>
+<h2 id="链表">链表</h2>
+<ul>
+<li>delete
+<ul>
+<li><a href="https://leetcode.com/problems/delete-node-in-a-linked-list">Delete Node in a Linked List</a>：删掉当前 node 的方法，就是把 next 赋值给 curr 然后删掉 next</li>
+<li><a href="https://leetcode.com/problems/remove-nth-node-from-end-of-list/">Remove Nth Node From End of List</a>：用一个 queue 缓存 last N</li>
+</ul>
+</li>
+<li>reverse
+<ul>
+<li><a href="https://leetcode.com/problems/reverse-linked-list">Reverse Linked List</a>：经典的双指针操作，<code>curr.next, prev, curr = prev, curr, curr.next</code></li>
+</ul>
+</li>
+<li>merge
+<ul>
+<li><a href="https://leetcode.com/problems/merge-two-sorted-lists">Merge Two Sorted Lists</a>：两个指针比大小，head 存结果，curr 做合并</li>
+</ul>
+</li>
+<li>双指针
+<ul>
+<li><a href="https://leetcode.com/problems/palindrome-linked-list/">Palindrome Linked List</a>：两个指针一个跳单一个跳双，跳单的时候反转链表，跳双的是为了帮跳单的指针找到中点，然后从中点开始左右对比即可</li>
+<li><a href="https://leetcode.com/problems/linked-list-cycle/">Linked List Cycle</a>：两个指针一个跳单一个跳双，跳双的比跳单的每次多跑一个节点，所以如果有环，跳得快的一定可以追上跳得慢的指针。</li>
+</ul>
+</li>
+</ul>
+<h2 id="树">树</h2>
+<p>大部分二叉树题目都可以用递归解决，思路是找到 F 使得 f(n) = F(f(n.left), f(n.right))。在某些情况下，递归本函数并不能解决问题，需要创建一个新函数来辅助做递归。</p>
+<ul>
+<li>binary tree
+<ul>
+<li><a href="https://leetcode.com/problems/maximum-depth-of-binary-tree/">Maximum Depth of Binary Tree</a>：f(n) = 1 + max(f(n.left), f(n.right))</li>
+<li><a href="https://leetcode.com/problems/symmetric-tree/">Symmetric Tree</a>：注意不能直接用 isSymmetric 递归 left right，左右子树各自对称并不代表整个树对称，应该是 l-r、l.left-r.right、l.right-r.left 分别对称，需要写一个 <code>isMirror</code> 的辅助函数</li>
+<li><a href="https://leetcode.com/problems/binary-tree-level-order-traversal/">Binary Tree Level Order Traversal</a>：宽度优先遍历，用 <code>queue</code> 遍历即可</li>
+<li><a href="https://leetcode.com/problems/convert-sorted-array-to-binary-search-tree/">Convert Sorted Array to Binary Search Tree</a>：找到 mid 后左右递归，返回 mid 组成的 node 即可</li>
+</ul>
+</li>
+<li>binary search tree
+<ul>
+<li><a href="https://leetcode.com/problems/validate-binary-search-tree/">Validate Binary Search Tree</a>：可以中序遍历得到所有数，然后比较是否严格递增。也可以递归的方法解决，写一个函数 <code>isValid(node, lower, upper)</code> 来递归遍历，<code>return isValid(n.left, lower, n.val) and isValid(n.right, n.val, upper) and n.val &lt; upper and and n.val &gt; lower</code></li>
+</ul>
+</li>
+</ul>
+<h2 id="动态规划">动态规划</h2>
+<ul>
+<li><a href="https://leetcode.com/problems/climbing-stairs">Climbing Stairs</a>：fn = fn-1 + fn-2 ，就是斐波那契数列，加上缓存提高效率</li>
+<li><a href="https://leetcode.com/problems/best-time-to-buy-and-sell-stock/">Best Time to Buy and Sell Stock</a>：遍历的过程中，缓存一下当前的最小值 min，然后计算 <code>max_profit = max(max_profit, curr - min)</code></li>
+<li><a href="https://leetcode.com/problems/maximum-subarray/">Maximum Subarray</a>：经典题，可以按照依次计算『以当前元素结束的子数组的和的最大值』，然后找出最大值即结果，方程是 <code>f(n) = max(f(n-1)+n, n)</code>。</li>
+<li><a href="https://leetcode.com/problems/house-robber/">House Robber</a>：和求最大子数组一样，关键都在于不求当前数的最佳解，而是求『以当前元素结束的子数组的最优解』，这个方程也是 <code>f(n) = max(f(n-2)+n, f(n-1))</code>。</li>
+</ul>
+<h2 id="位运算">位运算</h2>
+<ul>
+<li><a href="https://leetcode.com/problems/number-of-1-bits/">Number of 1 Bits</a>：通过 <code>n &amp;= (n-1)</code> 删除最后的一个 1 ，直到 <code>n == 0</code></li>
+<li><a href="https://leetcode.com/problems/reverse-bits/">Reverse Bits</a>：字符串方案直接 reverse 比较简单，位运算方案就一个左移一个右移重复 32 次</li>
+<li><a href="https://leetcode.com/problems/missing-number/">Missing Number</a>：寻找数组中缺失的数字，利用异或 a<sup>b</sup>a = b 的特性可以遍历后再和 1-n 异或一遍，这样剩下的数字就是缺失的数字</li>
+</ul>
+<h2 id="其他">其他</h2>
+<ul>
+<li><a href="https://leetcode.com/problems/shuffle-an-array/">Shuffle an Array</a>：正常 pop+random 是 O(n^2) ，可以用 Fisher–Yates 洗牌算法优化：从 n-1到1，交换 i 和 random(i-1) 这两个元素</li>
+<li><a href="https://leetcode.com/problems/min-stack/">Min Stack</a>：push 的时候同步缓存一个记录当前最小值的数组</li>
+<li><a href="https://leetcode.com/problems/count-primes">Count Primes</a>：挨个遍历然后判断是否是质数的方法效率很低，优化的方案是先用一个数组记录 i 位置的数是否是质数，如果当前位置是质数，那么 i<em>2,i</em>3... 位置的数都标记为非质数，然后再找到下一个质数重复该流程</li>
+<li><a href="https://leetcode.com/problems/power-of-three">Power of Three</a>：判断一个数是否是 3 的整数幂。除了暴力除之外，还有两种方案，一个是看 log(n)/log(3) 是否是整数，另一个是看 n 能否被最大的 3^i 整数，比如 <code>1162261467 % n == 0</code></li>
+<li><a href="https://leetcode.com/problems/roman-to-integer/">Roman to Integer</a>：用一个 hash 存一下罗马数字到整数的映射，然后遍历输入的字符串，如果 i &lt; i+1 则减去当前数，否则加上当前数</li>
+<li><a href="https://leetcode.com/problems/valid-parentheses/">Valid Parentheses</a>：栈的标准操作，是开始的括号就 push ，是结束的括号就 pop 然后比较是否是一对</li>
+</ul>
+<hr>
+<p>参考资料：</p>
+<ul>
+<li><a href="https://leetcode.com/explore/featured/card/top-interview-questions-easy/92/array/">Top Interview Questions - Easy Collection</a></li>
+</ul>
+]]></content>
+    </entry>
+</feed>

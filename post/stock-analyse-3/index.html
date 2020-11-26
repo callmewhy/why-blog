@@ -1,0 +1,540 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>股票分析（三）：谁与我生死与共 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              股票分析（三）：谁与我生死与共
+            </h2>
+            <div class="post-info">
+              <span>
+                2016-03-24
+              </span>
+              <span>
+                15 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/kvnAZyCRIA/" class="post-tag">
+                  # Quant
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="背景介绍">背景介绍</h2>
+<p>刚开始炒股的时候，心中一直有个疑问：什么是大盘？为什么大家都在看大盘而不是看自己的股票呢？大盘的涨跌和个股的走势有什么关联吗？</p>
+<p>然后看新闻资讯的时候，也常常听到什么拉动所在板块上升之类的话。某个行业的利多利空消息是否对所有股票都适用？哪些个股比较随大流，它涨我也涨？又是哪些股总是带头冲锋，苟利国家生死以，岂因祸福避趋之？</p>
+<p>这篇文章，尝试从数据出发，挖掘股票价格之间的关系，寻找那些生死与共的好股友们。</p>
+<h2 id="概念扫盲">概念扫盲</h2>
+<p>在继续深入之前，先对一些名词有个简单的了解：</p>
+<ul>
+<li>大盘：通常指上证综合指数，以上海证券交易所挂牌上市的全部股票为样本，以发行量为权数，以加权平均法计算，以1990年12月19日为基日，基日指数定为100点的股价指数。</li>
+<li>板块：由股票组成的群体，因为有某一共同特征而被归类在一起。板块特征可能是地理上的，例如江苏板块、浦东板块；可能是业绩上的，如绩优板块；可能是上市公司经营行为方面的，如购并板块；可能行业分类方面的，如钢铁板块、科技板块、金融板块、房地产板块等。</li>
+</ul>
+<h2 id="收集数据">收集数据</h2>
+<p>可以通过 <a href="http://tushare.org/">tushare</a> 下载历年的数据：</p>
+<pre><code class="language-python">import tushare as ts
+import pandas as pd
+
+def download(code, name, index=False):
+    filename = 'get_h_2000/'+code+'-'+name+str('.csv')
+    if os.path.exists(filename):
+        os.remove(filename)
+        print '%s已存在，删除源文件' % filename
+    df = ts.get_h_data(code, start='2000-01-01', end='2016-01-01', index=index)
+    df = df.sort_index(ascending=True).reset_index()
+    df.to_csv(filename, mode='a', index=False)
+
+download('000001','上证指数',index=True)
+</code></pre>
+<p>有需要的朋友可以在 Gist 下载：<a href="https://gist.github.com/callmewhy/ea99287cab8217cf2048">000001-上证指数-2000-2015.csv</a>。</p>
+<h2 id="观察数据">观察数据</h2>
+<p>通过 <code>plot</code> 方法可以很方便的绘制上证指数这15年的走势：</p>
+<figure data-type="image" tabindex="1"><img src="http://ww3.sinaimg.cn/large/61d238c7gw1f233sdm3jlj20q00a9t9x.jpg" alt="" loading="lazy"></figure>
+<p>可以用 Pandas 自带的 <code>describe()</code> 方法观察一下目前的数据：</p>
+<pre><code class="language-python">pd.set_option('display.float_format', lambda x: '%.02f' % x)
+df.describe().transpose()
+</code></pre>
+<p>数据统计如下：</p>
+<figure data-type="image" tabindex="2"><img src="http://ww3.sinaimg.cn/large/61d238c7jw1f1zw9z5g9sj21gw0bmdkl.jpg" alt="" loading="lazy"></figure>
+<p>数字看着比较抽象，我们可以通过箱线图展示统计信息：</p>
+<pre><code class="language-python">ax = df.boxplot(column=['close','high','low','open'],return_type='axes')
+</code></pre>
+<p>箱线图展示结果如下：</p>
+<figure data-type="image" tabindex="3"><img src="http://ww1.sinaimg.cn/large/61d238c7jw1f1zwm45nuwj20dp09mwex.jpg" alt="" loading="lazy"></figure>
+<p>从图中可以很清晰的看到各列的最小值、第一四分位数、中位数、第三四分位数、最大值等等。</p>
+<p>接下来再来看看每天的涨幅如何。这里用『收盘价-开盘价』来表示每天的涨跌幅，并且将涨跌幅除以开盘价，计算并绘制涨跌率：</p>
+<pre><code class="language-python">df['price_change'] = df['close'] - df['open']
+df['price_change_p'] = df['price_change'] / df['open']
+fig,ax = plt.subplots(figsize=(16,6))
+ax.bar(df.index,df['price_change_p'])
+plt.show()
+</code></pre>
+<p>绘制结果如下：</p>
+<figure data-type="image" tabindex="4"><img src="http://ww3.sinaimg.cn/large/61d238c7jw1f1zxlxvr4zj20q80abmz6.jpg" alt="" loading="lazy"></figure>
+<p>可以看到，08年和15年有比较大的起伏，这分别对应着07年和15年的两次牛市。</p>
+<p>通过 <code>hist</code> 方法可以绘制涨跌率的频率分布直方图：</p>
+<pre><code class="language-python">fig,ax = plt.subplots(figsize=(16,6))
+ax.hist(df['price_change_p'],bins=100)
+plt.show()
+</code></pre>
+<p>绘图如下：</p>
+<figure data-type="image" tabindex="5"><img src="http://ww3.sinaimg.cn/large/61d238c7gw1f2094cyxtyj20q40a93z9.jpg" alt="" loading="lazy"></figure>
+<p>可以看到，大盘的涨跌率基本呈正态分布，涨的部分靠近零轴，跌的部分则略为分散。翻译成大白话大致是：涨的天数多，但是磨磨蹭蹭，幅度不大。跌的天数少，但是来势凶猛，幅度较大。</p>
+<p>接下来看下银行板块的个股股价。通过前面的 <code>download</code> 函数下载好数据之后，通过 <code>read</code> 函数读取数据：</p>
+<pre><code class="language-python">def read(filename):
+    path = 'get_h_2000/%s.csv' % filename
+    df = pd.read_csv(path)
+    df['date'] = pd.to_datetime(df['date'])
+    df = df.set_index('date')
+    df['price_change'] = df['close'] - df['open']
+    df['price_change_p'] = df['price_change'] / df['open']
+    return df
+</code></pre>
+<p>然后列出所有银行股的数据名，并随机选择三个股票作为对比参照，依次读取数据：</p>
+<pre><code class="language-python">stocks = np.array([
+            '000001-平安银行','002142-宁波银行','600000-浦发银行','600015-华夏银行',
+            '600016-民生银行','600036-招商银行','601009-南京银行','601166-兴业银行',
+            '601169-北京银行','601288-农业银行','601328-交通银行','601398-工商银行',
+            '601818-光大银行','601939-建设银行','601988-中国银行','601998-中信银行'])
+dfs = {}
+for name in stocks:
+    dfs[name] = read(name)
+
+stocks_o = np.array(['601233-桐昆股份','002134-天津普林','600362-江西铜业'])
+dfs_o = {}
+for name in stocks_o:
+    dfs_o[name] = read(name)
+</code></pre>
+<p>由于各股上市时间不一致，我们只取2010年往后的数据做展示：：</p>
+<pre><code class="language-python">temp_stocks = np.concatenate((stocks, stocks_o))
+stock_count = len(temp_stocks)
+f, axes = plt.subplots(stock_count, 1, sharex=True, figsize=(16,4*stock_count))
+useds_axes = []
+for name in temp_stocks:
+    df = dfs[name] if dfs.has_key(name) else dfs_o[name]
+    df = df[df.index &gt; '2010-01-01']
+    ax = axes[len(useds_axes)]
+    ax.plot(df.index, df['close'], label=name)
+    ax.plot(df_000001.index, df_000001['close']/(df_000001['close'][0]/df['close'][0]), label='上证指数')
+    ax.set_title(name)
+    ax.legend(loc='upper left')
+    useds_axes.append(ax)
+plt.show()
+</code></pre>
+<p>绘图结果如下：</p>
+<figure data-type="image" tabindex="6"><img src="http://ww4.sinaimg.cn/large/61d238c7jw1f280sx48l6j20pt3b0hcl.jpg" alt="" loading="lazy"></figure>
+<p>从图中来看，大部分银行股的起伏十分相似，而且和大盘的走势相近。不过，民生银行、浦发银行、江西铜业，这三个股票和大盘似乎有些不相关。</p>
+<p>接下来可以从数据的角度具体分析一下它们之间的关联程度。</p>
+<h2 id="寻找相关">寻找相关</h2>
+<p>在找到相关的特征之前，我们首先要了解有哪些量化关联度的方法。比如三个比较常见度量方法：</p>
+<ul>
+<li>欧式距离：两点间的直线距离，不同特征的量级差异对结果影响较大。</li>
+<li>皮尔逊相关系数：用于度量两个变量 X 和 Y 之间的线性相关，值介于-1与1之间，对量级不敏感。</li>
+<li>余弦相似度：计算两个向量的夹角，注重向量在方向上的差异，对量级不敏感。</li>
+</ul>
+<p>在这里我选择的是皮尔逊相关系数做实验。</p>
+<p><code>scipy</code> 中自带了 <code>pearsonr</code> 函数，输入 X 和 Y 返回皮尔逊相关系数和 p-value 。p-value 简单来说，就是在假设原假设正确时，出现现状或更差的情况的概率。</p>
+<p>一个小例子演示一下如何使用：</p>
+<pre><code class="language-python">np.random.seed(0)
+size = 1000
+x = np.random.normal(0, 1, size)
+print stats.pearsonr(x, x + np.random.normal(0, 1, size))
+print stats.pearsonr(x, x + np.random.normal(0, 100, size))
+</code></pre>
+<p>运行结果是：</p>
+<pre><code class="language-python">(0.7029971477605752, 6.8891376644515863e-150)
+(-0.027349877570630021, 0.38761043588940391)
+</code></pre>
+<p>可以看到，噪音较小的那一串数列的相关性更高，p 值也更低。接下来我们尝试用皮尔逊相关系数来探索股价之间的相关性。</p>
+<h2 id="大盘的影响">大盘的影响</h2>
+<p>先来看下各个银行股和大盘之间的相关性。为了有所参照，我们随机生成了一个数字序列作为参照，完整代码如下：</p>
+<pre><code class="language-python">p_result = {}
+start_time = '2010-01-01'
+print '----------随机数列----------'
+np.random.seed(0)
+x1 = df_000001[df_000001.index &gt; start_time]['close'].values
+x0 = np.random.normal(0,100,len(x1))
+r = stats.pearsonr(x1, x0)
+p_result['000000-随机数列'] = r
+print '000000-随机数列：{0}'.format(r)
+
+print '----------随机个股----------'
+for i in stocks_o:
+    df = dfs_o[i]
+    df = df[df.index &gt; start_time]
+    x = df['close'].values
+    x1 = [df_000001.loc[si]['close'] for si in df.index.values]
+    r = stats.pearsonr(x1, x)
+    p_result[i] = r
+    print '{0}：{1}'.format(i ,r)
+
+print '----------银行板块----------'
+for i in stocks:
+    df = dfs[i]
+    df = df[df.index &gt; start_time]
+    x = df['close'].values
+    x1 = [df_000001.loc[si]['close'] for si in df.index.values]
+    r = stats.pearsonr(x1, x)
+    p_result[i] = r
+    print '{0}：{1}'.format(i ,r)
+</code></pre>
+<p>运算结果：</p>
+<pre><code class="language-python">----------随机数列----------
+000000-随机数列：(-0.018379229354344717, 0.48345058165702948)
+----------随机个股----------
+601233-桐昆股份：(0.82394024147340494, 1.4846471908590122e-276)
+002134-天津普林：(0.87070295523388863, 0.0)
+600362-江西铜业：(0.29074317824804269, 1.1115439379128497e-29)
+----------银行板块----------
+000001-平安银行：(0.83230166489115542, 0.0)
+002142-宁波银行：(0.95071984964658407, 0.0)
+600000-浦发银行：(0.83177504090683074, 0.0)
+600015-华夏银行：(0.86944980096838431, 0.0)
+600016-民生银行：(0.47921539730721252, 6.7671691831972994e-84)
+600036-招商银行：(0.88739800637271515, 0.0)
+601009-南京银行：(0.89395777699351697, 0.0)
+601166-兴业银行：(0.79369148744309614, 6.16023876965882e-313)
+601169-北京银行：(0.91317333851684301, 0.0)
+601288-农业银行：(0.83442809587466238, 0.0)
+601328-交通银行：(0.92295526522170779, 0.0)
+601398-工商银行：(0.84993313219224631, 0.0)
+601818-光大银行：(0.96153251745347235, 0.0)
+601939-建设银行：(0.84982759873987823, 0.0)
+601988-中国银行：(0.88002650449792652, 0.0)
+601998-中信银行：(0.88759530896504257, 0.0)
+</code></pre>
+<p>为了更好的展示相关性的结果，可以通过柱状图把结果绘制出来：</p>
+<pre><code class="language-python">prs = []
+pvs = []
+for name in p_result.keys():
+    prs.append(p_result[name][0])
+    pvs.append(p_result[name][1])
+
+fig, ax = plt.subplots(figsize=(16,5))
+ind = np.arange(len(prs))
+width = 0.35
+rects1 = ax.bar(ind, prs, width, color='b')
+rects2 = ax.bar(ind + width, pvs, width, color='r')
+
+ax.set_ylabel('Value')
+ax.set_title('股票与大盘的相关性系数')
+ax.set_xticks(ind + width)
+ax.set_xticklabels(p_result.keys(), rotation='vertical')
+
+legend = ax.legend((rects1[0], rects2[0]), ('Pearson\'s', 'P-Value'), frameon=True, shadow=True)
+plt.show()
+</code></pre>
+<p>绘制结果如下：</p>
+<figure data-type="image" tabindex="7"><img src="http://ww1.sinaimg.cn/large/61d238c7jw1f283viuvsrj20qb0atac2.jpg" alt="" loading="lazy"></figure>
+<p>可以看到，随机数列的相关性明显很低，另外相关性比较差的还有民生银行、江西铜业、浦发银行、桐昆股份、平安银行。这个和之前的肉眼观测结果是相同的。</p>
+<p>不过，光看价格的相关性并不是很准确，因为不同股票的价位不同，相关性的计算结果可能也会受到影响。其实我们应该关注的是股价涨跌幅的相关性。调整一下代码：</p>
+<pre><code class="language-python">temp_stocks = np.concatenate((stocks, stocks_o))
+stock_count = len(temp_stocks)
+f, axes = plt.subplots(stock_count, 1, sharex=True, figsize=(16,4*stock_count))
+useds_axes = []
+for name in temp_stocks:
+    df = dfs[name] if dfs.has_key(name) else dfs_o[name]
+    start_time = '2015-10-01'
+    df = df[df.index &gt; start_time]
+    df0 = df_000001[df_000001.index &gt; start_time]
+    ax = axes[len(useds_axes)]
+    ax.bar(df.index, df['price_change_p'], label=name, alpha=0.5, color='r')
+    ax.bar(df0.index, df0['price_change_p'], label='上证指数', alpha=0.5, color='g')
+    ax.set_title(name)
+    ax.legend(loc='upper left')
+    useds_axes.append(ax)
+plt.show()
+</code></pre>
+<p>为了方便展示，只取了2015年最后三个月的数据，展示如下：</p>
+<figure data-type="image" tabindex="8"><img src="http://ww3.sinaimg.cn/large/61d238c7jw1f2838grr7bj20qb3b07pu.jpg" alt="" loading="lazy"></figure>
+<p>红色超出绿色的部分为个股超出大盘的涨跌幅，绿色超出的部分为大盘超出个股的涨跌幅。从图表来看，相关性不是很明显。</p>
+<p>用代码计算一下相关性：</p>
+<pre><code class="language-python">p_result = {}
+start_time = '2010-01-01'
+print '----------随机数列----------'
+np.random.seed(0)
+x1 = df_000001[df_000001.index &gt; start_time]['price_change_p'].values
+x0 = np.random.normal(-1,1,len(x1))
+r = stats.pearsonr(x1, x0)
+p_result['000000-随机数列'] = r
+print '000000-随机数列：{0}'.format(r)
+
+print '----------随机个股----------'
+for i in stocks_o:
+    df = dfs_o[i]
+    df = df[df.index &gt; start_time]
+    x = df['price_change_p'].values
+    x1 = [df_000001.loc[si]['price_change_p'] for si in df.index.values]
+    r = stats.pearsonr(x1, x)
+    p_result[i] = r
+    print '{0}：{1}'.format(i ,r)
+
+print '----------银行板块----------'
+for i in stocks:
+    df = dfs[i]
+    df = df[df.index &gt; start_time]
+    x = df['price_change_p'].values
+    x1 = [df_000001.loc[si]['price_change_p'] for si in df.index.values]
+    r = stats.pearsonr(x1, x)
+    p_result[i] = r
+    print '{0}：{1}'.format(i ,r)
+</code></pre>
+<p>计算结果如下：</p>
+<pre><code class="language-python">----------随机数列----------
+000000-随机数列：(-0.01170938101429754, 0.65528444998797009)
+----------随机个股----------
+601233-桐昆股份：(0.5926213844273559, 1.3768416303873001e-106)
+002134-天津普林：(0.55037020105007528, 1.9031317037476984e-115)
+600362-江西铜业：(0.76021449109055472, 7.0259968513985565e-274)
+----------银行板块----------
+000001-平安银行：(0.7051512083759307, 6.6891609215087728e-209)
+002142-宁波银行：(0.72612012412782501, 2.4079706518655618e-237)
+600000-浦发银行：(0.7167360945341158, 3.4557547788647287e-225)
+600015-华夏银行：(0.69668869104482156, 4.1601778321466699e-209)
+600016-民生银行：(0.62750442079223367, 3.9126027918308307e-159)
+600036-招商银行：(0.67017991271658717, 1.208446093582849e-187)
+601009-南京银行：(0.70304459154675281, 5.5004160013777059e-215)
+601166-兴业银行：(0.72086996034908235, 2.2042255646943599e-231)
+601169-北京银行：(0.70007100804010169, 1.8158330878777684e-208)
+601288-农业银行：(0.63124751196123652, 4.2460567821792627e-148)
+601328-交通银行：(0.67157367944285129, 7.08859346030525e-190)
+601398-工商银行：(0.59367541046236361, 3.7205953256769839e-138)
+601818-光大银行：(0.66338500488771768, 6.6439318291648056e-164)
+601939-建设银行：(0.64247755967824627, 6.6203452504774864e-169)
+601988-中国银行：(0.60765522028795782, 2.1780341191010662e-146)
+601998-中信银行：(0.62940968812629339, 1.688815329830977e-159)
+</code></pre>
+<p>涨跌幅的相关性明显不如价格的相关性。绘制图表如下：</p>
+<figure data-type="image" tabindex="9"><img src="http://ww3.sinaimg.cn/large/61d238c7jw1f284p1ntaej20qb0atjtk.jpg" alt="" loading="lazy"></figure>
+<p>最高的不到0.8，最低0.5，江西铜业反而成了相关性最高的股了，感觉难以置信。不妨计算一下股票和大盘的涨跌一致的比例：</p>
+<pre><code class="language-python">start_time = '2010-01-01'
+def count_p(name):
+    if name == '000000-随机数列':
+        return 0
+    df = dfs[name] if  dfs.has_key(name) else dfs_o[name]
+    df = df[df.index &gt; start_time]
+    df.loc[:, 'A'] = pd.Series([df_000001.loc[si]['price_change_p'] for si in df.index.values], index=df.index)
+    df.loc[:, 'same_change_p'] = (df['price_change_p'] * df['A']) &gt; 0
+    vc = df['same_change_p'].value_counts()
+    return vc[True] * 1.0 / (vc[False] + vc[True])
+
+result = map(count_p, p_result.keys())
+</code></pre>
+<p>将计算结果绘制在前面的一张图上：</p>
+<figure data-type="image" tabindex="10"><img src="http://ww3.sinaimg.cn/large/61d238c7jw1f286m67b0tj20qb0atn09.jpg" alt="" loading="lazy"></figure>
+<p>在过去的六年中，江南铜业有76%的概率涨跌与大盘一致，相关性高也可以理解了。</p>
+<h2 id="板块的影响">板块的影响</h2>
+<p>通过前面的探索，基本可以确定板块内的股票也是有一定相关性的，这里就不啰嗦了，直接贴出最后的运算结果：</p>
+<figure data-type="image" tabindex="11"><img src="http://ww4.sinaimg.cn/large/61d238c7jw1f2881bo8g3j20vq4fr4qp.jpg" alt="" loading="lazy"></figure>
+<h2 id="小结">小结</h2>
+<p>以上就是本次股票相关性分析的全部内容了。回顾一下前面的分析，主要有以下问题：</p>
+<ul>
+<li>皮尔逊相关系数只对线性相关敏感，而且结果和数据量有关，用于股票涨跌趋势的相关性分析其实并不合适。</li>
+<li>对股票价格的分析，光看价格的涨跌趋势是远远不够，股票的分析难点在于特征值的提取。</li>
+<li>考虑使用时间序列模型（ARIMA、GARCH）对股票价格进行分析。</li>
+</ul>
+<p>股海茫茫，涨涨跌跌，若即若离，如梦如幻。一首《刀剑如梦》，献给各位股票，以及它们的爱恨情仇。</p>
+<blockquote>
+<p>我剑 何去何从<br>
+爱与恨 情难独钟<br>
+我刀 割破长空<br>
+是与非 懂也不懂<br>
+我醉 一片朦胧<br>
+恩和怨 是幻是空<br>
+我醒 一场春梦<br>
+生与死 一切成空</p>
+<p>来也匆匆 去也匆匆<br>
+恨不能相逢<br>
+爱也匆匆 恨也匆匆<br>
+一切都随风</p>
+<p>狂笑一声 长叹一声<br>
+快活一生 悲哀一生<br>
+谁与我生死与共</p>
+</blockquote>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E8%83%8C%E6%99%AF%E4%BB%8B%E7%BB%8D">背景介绍</a></li>
+<li><a href="#%E6%A6%82%E5%BF%B5%E6%89%AB%E7%9B%B2">概念扫盲</a></li>
+<li><a href="#%E6%94%B6%E9%9B%86%E6%95%B0%E6%8D%AE">收集数据</a></li>
+<li><a href="#%E8%A7%82%E5%AF%9F%E6%95%B0%E6%8D%AE">观察数据</a></li>
+<li><a href="#%E5%AF%BB%E6%89%BE%E7%9B%B8%E5%85%B3">寻找相关</a></li>
+<li><a href="#%E5%A4%A7%E7%9B%98%E7%9A%84%E5%BD%B1%E5%93%8D">大盘的影响</a></li>
+<li><a href="#%E6%9D%BF%E5%9D%97%E7%9A%84%E5%BD%B1%E5%93%8D">板块的影响</a></li>
+<li><a href="#%E5%B0%8F%E7%BB%93">小结</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/predict-plate-price-with-linear-regression/">
+              <h3 class="post-title">
+                线性回归：预测上海车牌成交价格
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>

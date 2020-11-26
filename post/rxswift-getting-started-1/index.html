@@ -1,0 +1,726 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RxSwift 入坑手册 Part1 - 示例实战 | Why&#39;s Blog</title>
+<meta name="description" content="" />
+<link rel="shortcut icon" href="https://blog.callmewhy.com/favicon.ico?v=1606396339938">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://blog.callmewhy.com/styles/main.css">
+
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-92598519-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-92598519-1');
+</script>
+
+
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://blog.callmewhy.com">
+  <img class="avatar" src="https://blog.callmewhy.com/images/avatar.png?v=1606396339938" alt="">
+  </a>
+  <h1 class="site-title">
+    Why&#39;s Blog
+  </h1>
+  <p class="site-description">
+    
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+        <a href="https://github.com/callmewhy" target="_blank">
+          <i class="fab fa-github"></i>
+        </a>
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              RxSwift 入坑手册 Part1 - 示例实战
+            </h2>
+            <div class="post-info">
+              <span>
+                2015-09-23
+              </span>
+              <span>
+                17 min read
+              </span>
+              
+                <a href="https://blog.callmewhy.com/tag/fthQHH2l27/" class="post-tag">
+                  # Swift
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <h2 id="intro">Intro</h2>
+<p>这部分主要是学习 <a href="https://github.com/ReactiveX/RxSwift/">RxSwift</a> 项目中的示例项目，了解 <code>RxSwift</code> 在实际 iOS 开发中的正确打开方式。</p>
+<h2 id="demo1-github-signup">Demo1: <a href="https://github.com/ReactiveX/RxSwift/tree/master/RxExample/RxExample/Examples/GitHubSignup">GitHub Signup</a></h2>
+<p>第一个示例是 GitHub 注册账号的例子。输入用户名、密码、重复密码，然后提交注册。</p>
+<h3 id="username">username</h3>
+<p>在注册流程中，用户名校验是一个很常见的功能。我们一般需要对用户名做如下检查和流程：</p>
+<ul>
+<li>是否不为空</li>
+<li>是否不包含非法字符</li>
+<li>是否没有被注册过</li>
+<li>以上均通过，联网注册</li>
+<li>是否成功连接上服务器</li>
+<li>服务器是否正确处理并返回结果</li>
+</ul>
+<p>要通过 RxSwift 实现以上流程，可以划分成如下几步。</p>
+<h4 id="rx_text">rx_text</h4>
+<p>如果想监听文字输入，我们最好能有一个 <code>Observable</code> 的对象不断地给我们发送新的输入值。<code>rx_text</code> 是 RxSwift 针对 Cocoa 库做的各种封装中的一个，可以简单看下它的定义：</p>
+<pre><code class="language-swift">    extension UITextField {
+        /**
+        Reactive wrapper for `text` property.
+        */
+        public var rx_text: ControlProperty&lt;String&gt; {
+            return rx_value(getter: { [weak self] in
+                self?.text ?? &quot;&quot;
+            }, setter: { [weak self] value in
+                self?.text = value
+            })
+        }
+    }
+</code></pre>
+<p>返回的 <code>ControlProperty</code> 遵循 <code>ControlPropertyType</code> 协议：</p>
+<pre><code class="language-swift">    public protocol ControlPropertyType : ObservableType, ObserverType {
+        
+        /**
+        - returns: `ControlProperty` interface
+        */
+        func asControlProperty() -&gt; ControlProperty&lt;E&gt;
+    }
+</code></pre>
+<p>可以看到，它既是一个可被订阅者 (<code>ObservableType</code>)，又是一个订阅者 (<code>ObserverType</code>)，也就是说它是一个 <a href="http://blog.callmewhy.com/2015/09/21/rxswift-getting-started-0/#Subjects"><code>Subject</code></a> 对象。由于它是 <code>Observable</code> 的，所以我们可以通过 <code>map</code> 把它转换成想要的输出，例如下面这段代码会实现『每输入一个字就在控制台输出当前内容』的功能（记得 RAC 的系列教程似乎也是这个节奏）：</p>
+<pre><code class="language-swift">    @IBOutlet weak var usernameOutlet: UITextField!
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        let username = usernameOutlet.rx_text
+        username.subscribeNext {
+            print($0)
+        }
+}
+</code></pre>
+<h4 id="validate">validate</h4>
+<p>接下来就是验证用户名的阶段了。首先需要一个方法，将用户名转换成一串流。为什么是流？为了统一口径。先看代码：</p>
+<pre><code class="language-swift">    typealias ValidationResult = (valid: Bool?, message: String?)
+
+    func validateUsername(username: String) -&gt; Observable&lt;ValidationResult&gt; {
+        // 如果用户名为空
+        if username.characters.count == 0 {
+            return just((false, nil))
+        }
+        
+        // 如果用户名中出现非法字符
+        if username.rangeOfCharacterFromSet(NSCharacterSet.alphanumericCharacterSet().invertedSet) != nil {
+            return just((false, &quot;Username can only contain numbers or digits&quot;))
+        }
+        
+        // 加载中的值
+        let loadingValue = (valid: nil as Bool?, message: &quot;Checking availabilty ...&quot; as String?)
+        
+        // 校验用户名
+        return API.usernameAvailable(username)
+            .map { available in
+                if available {
+                    return (true, &quot;Username available&quot;)
+                }
+                else {
+                    return (false, &quot;Username already taken&quot;)
+                }
+            }
+            .startWith(loadingValue)    // 在加载结果之前插入 加载中 这个状态的事件值
+    }
+</code></pre>
+<p>梳理一下：</p>
+<ul>
+<li>如果用户名为空，返回 <code>(false, nil)</code> 完事儿</li>
+<li>如果用户名有非法字符，返回 <code>(false, &quot;Username can only contain numbers or digits&quot;)</code> 完事儿</li>
+<li>如果本地检查没问题，发给服务器检查，先发送一个事件 <code>loadingValue</code> 表示正在加载，加载成功再发送结果事件</li>
+</ul>
+<p>这就是我所理解的『统一口径』。虽然本地检查分分钟就能给你个结果，但是如果统一都用『流』来表述，外部处理起来会简单得多。不用管具体的结果是什么，只需要知道是一个 <code>Observable</code> 对象，并且随之而来的是一串事件，就足够了。这一串事件，有可能只有一个，提示用户名不能为空；也有可能有很多，先提示正在加载，然后再提示注册成功。在外部来看，这就是一个事件流。</p>
+<p>试想一下如果用 UIKit 的那一套来写这个流程，肯定要监听个 <code>valueChanged</code> 事件然后在委托方法里先判断 A ，如果不符合就刷新 UI ；再判断 B ，不符合就刷新 UI ；最后发请求给服务器，刷新 UI 提示等待，然后加载完了再刷新个 UI 。。。</p>
+<h4 id="switch">switch</h4>
+<p>把上面的验证代码用到项目中大概就是这样：</p>
+<pre><code class="language-swift">    let usernameValidation = username
+        .map { username in
+            return validationService.validateUsername(username)
+        }
+</code></pre>
+<p>如果把每次的文字改动事件用 v 来表示，那整个事件序列应该是这样的：</p>
+<pre><code>----V------V--V---V---V----
+</code></pre>
+<p>而用了 <code>validateUsername</code> 之后，它会把以前的值转换成一个新的序列，就成了这样：</p>
+<pre><code>----|------|--|---|---|----
+    |      |  |   |   |
+    V      V  V   V   V
+    |      |  |   |   |
+    |      V  |   V   |
+    |      |  |   |   |
+</code></pre>
+<p>瞬间变成了二维世界了，我们可以用 <a href="http://blog.callmewhy.com/2015/09/21/rxswift-getting-started-0/#switch"><code>switch</code></a> 来『降维』（这名词是我自己起的，如果有更好的称呼欢迎随时打脸(￣ε(#￣)☆╰╮(￣▽￣///))。这里我们选用 <code>switchLastest</code> ：</p>
+<pre><code class="language-swift">    let usernameValidation = username
+        .map { username in
+            return validationService.validateUsername(username)
+        }
+        .switchLatest()
+</code></pre>
+<p>不妨看一下 ObservableType 的定义：</p>
+<pre><code class="language-swift">    extension ObservableType where E : ObservableType {
+        public func switchLatest() -&gt; Observable&lt;E.E&gt; {
+            return Switch(sources: self.asObservable())
+        }
+    }
+</code></pre>
+<p>这个扩展是针对『自己是 <code>ObservableType</code> 且自己监听的事件也是 <code>ObservableType</code> 』这一类对象的。通过 <code>switchLatest</code> 方法我们可以将前面的二维结构梳理成一维结构，每次自动切换到新的序列的最新事件上。</p>
+<pre><code>----|------|--|---|---|----
+    V      |  |   |   |
+    |------|  |   |   |
+    |      V  |   |   |
+    |      V  |   |   |
+    |      |--|   |   |
+    |      |  V   |   |
+    |      |  |---|   |
+    |      |  |   V   |
+    |      |  |   V   |
+    |      |  |   |---|
+    |      |  |   |   V
+</code></pre>
+<p>执行结果如下：</p>
+<pre><code class="language-swift">    let usernameValidation = username
+            .map { username in
+                return validationService.validateUsername(username)
+            }
+            .switchLatest()
+            .subscribe {
+                print(&quot;Event: - \($0)&quot;)
+            }
+
+    ----- Output -----
+    // 输入 12!
+    Event: - Next((Optional(false), Optional(&quot;Username can only contain numbers or digits&quot;)))
+    // 输出 abc
+    Event: - Next((nil, Optional(&quot;Checking availabilty ...&quot;)))
+    Event: - Next((Optional(false), Optional(&quot;Username already taken&quot;)))
+</code></pre>
+<h4 id="replay">replay</h4>
+<p>我们在 <code>map</code> 里调用了 <code>validateUsername</code> 方法，这会导致如果有多个订阅者的话，会重复调用多次。</p>
+<p>例如这个例子：</p>
+<pre><code class="language-swift">    let sequenceOfElements = sequenceOf(0).map { r -&gt; Int in
+        print(&quot;MAP&quot;)    // twice
+        return r * 2
+    }    
+    let subscription = sequenceOfElements
+        .subscribe { event in
+            print(&quot;1 - \(event)&quot;)
+    }
+    let subscription2 = sequenceOfElements
+        .subscribe { event in
+            print(&quot;2 - \(event)&quot;)
+    }
+
+    --- map example ---
+    MAP
+    1 - Next(0)
+    1 - Completed
+    MAP
+    2 - Next(0)
+    2 - Completed
+</code></pre>
+<p>我一开始很疑惑，明明订阅的是 <code>map</code> 之后的队列，但是为什么 <code>subscribe</code> 每次都会重新 <code>map</code> 一次呢？</p>
+<p>经提醒之后又去仔细翻阅了入门文档 <a href="https://github.com/ReactiveX/RxSwift/blob/master/Documentation/GettingStarted.md">Getting Started</a> ，看到了下面这段话：</p>
+<blockquote>
+<p>Every subscriber upon subscription usually generates it's own separate sequence of elements. Operators are stateless by default. There is vastly more stateless operators then stateful ones.</p>
+</blockquote>
+<p>这么一想就说得通了，一切都是为了 <code>stateless</code> 。如果 <code>subscribe</code> 的是 <code>map</code> 后的结果，那就意味着需要多存储一个状态，而状态的增加往往意味着复杂度的指数级增长。</p>
+<p>为了解决这个多次订阅会多次执行的问题，我们需要 <code>shareReplay</code> ，看下这个示例：</p>
+<pre><code class="language-swift">    let sequenceOfInts = PublishSubject&lt;Int&gt;()
+    let a = sequenceOfInts.map{ i -&gt; Int in
+        print(&quot;MAP---\(i)&quot;)
+        return i * 2
+    }.shareReplay(3)
+    let b = a.subscribeNext {
+        print(&quot;--1--\($0)&quot;)
+    }
+    sequenceOfInts.on(.Next(1))
+    sequenceOfInts.on(.Next(2))
+    let c = a.subscribeNext {
+        print(&quot;--2--\($0)&quot;)
+    }
+    sequenceOfInts.on(.Next(3))
+    sequenceOfInts.on(.Next(4))
+    let d = a.subscribeNext {
+        print(&quot;--3--\($0)&quot;)
+    }
+    sequenceOfInts.on(.Completed)
+
+    --- shareReplay example ---
+    MAP---1
+    --1--2
+    MAP---2
+    --1--4
+    --2--2
+    --2--4
+    MAP---3
+    --1--6
+    --2--6
+    MAP---4
+    --1--8
+    --2--8
+    --3--4
+    --3--6
+    --3--8
+</code></pre>
+<p><code>shareReplay</code> 会返回一个新的事件序列，它监听底层序列的事件，并且通知自己的订阅者们。不过和传统的订阅不同的是，它是通过『重播』的方式通知自己的订阅者。就像是过目不忘的看书，但是每次都只记得最后几行的内容，在有人询问的时候就背诵出来。从上面的例子可以看到，通过 <code>shareReplay</code> 订阅的 <code>map</code> 并不会调用多次。所以我们也可以把它应用到 <code>validateUsername</code> 上：</p>
+<pre><code class="language-swift">    let usernameValidation = username
+        .map { username in
+            return validationService.validateUsername(username)
+        }
+        .switchLatest()
+        .shareReplay(1)
+</code></pre>
+<p>这样就不会出现『多次订阅导致重复地检查用户名是否可用』的情况了。</p>
+<h4 id="usernameavailable">usernameAvailable</h4>
+<p>前面梳理了基本的用户名校验流程，接下来看下联网检测这部分是如何实现的。</p>
+<p>联网检测用户名是否可用主要是访问用户名对应的 github 地址然后查看是否是 404 ，如果不是那就说明已经被注册了。核心代码如下：</p>
+<pre><code class="language-swift">    func usernameAvailable(username: String) -&gt; Observable&lt;Bool&gt; {
+        let URL = NSURL(string: &quot;https://github.com/\(URLEscape(username))&quot;)!
+        let request = NSURLRequest(URL: URL)
+        return self.URLSession.rx_response(request)
+            .map { (maybeData, maybeResponse) in
+                if let response = maybeResponse as? NSHTTPURLResponse {
+                    return response.statusCode == 404
+                }
+                else {
+                    return false
+                }
+            }
+            .observeOn(self.dataScheduler)
+            .catchErrorJustReturn(false)
+    }
+</code></pre>
+<p>和前面的 <code>rx_value</code> 相似， <code>rx_response</code> 是针对 <code>NSURLSession</code> 的扩展。通过 <code>observeOn</code> 将监听事件绑定在了 <code>dataScheduler</code> 上。最后 <code>catchErrorJustReturn(false)</code> 表明如果出现异常就返回个 <code>false</code> 。</p>
+<p><a href="https://github.com/ReactiveX/RxSwift/blob/master/Documentation/Schedulers.md"><code>Scheduler</code></a> 是一种 Rx 里的任务运行机制，类似的 <code>gcd</code> 里的 <code>dispatch queue</code> 。可以通过 <code>observeOn</code> 切换 <code>scheduler</code> ：</p>
+<pre><code class="language-swift">    sequence1
+        .observeOn(backgroundScheduler)
+        .map { n in
+          println(&quot;This is performed on background scheduler&quot;)
+        }
+        .observeOn(MainScheduler.sharedInstance)
+        .map { n in
+          println(&quot;This is performed on main scheduler&quot;)
+        }
+</code></pre>
+<h3 id="password">password</h3>
+<p>密码的检测相比较用户名而言就简单很多，核心代码如下：</p>
+<pre><code class="language-swift">    func validatePassword(password: String) -&gt; ValidationResult {
+        let numberOfCharacters = password.characters.count
+        if numberOfCharacters == 0 {
+            return (false, nil)
+        }
+        if numberOfCharacters &lt; minPasswordCount {
+            return (false, &quot;Password must be at least \(minPasswordCount) characters&quot;)
+        }
+        return (true, &quot;Password acceptable&quot;)
+    }
+</code></pre>
+<p>注意这里返回了 <code>ValidationResult</code> ，因为所有校验都是本地完成的。</p>
+<p>接下来就是重复密码的校验，这部分比较有意思，通过 <a href="http://blog.callmewhy.com/2015/09/21/rxswift-getting-started-0/#combineLatest"><code>combineLatest</code></a> 将两个序列合并起来：</p>
+<pre><code class="language-swift">    let repeatPasswordValidation = combineLatest(password, repeatPassword) { (password, repeatedPassword) in
+            validationService.validateRepeatedPassword(password, repeatedPassword: repeatedPassword)
+        }
+        .shareReplay(1)
+</code></pre>
+<p>然后 <code>validateRepeatedPassword</code> 方法如下：</p>
+<pre><code class="language-swift">    func validateRepeatedPassword(password: String, repeatedPassword: String) -&gt; ValidationResult {
+        if repeatedPassword.characters.count == 0 {
+            return (false, nil)
+        }
+        
+        if repeatedPassword == password {
+            return (true, &quot;Password repeated&quot;)
+        }
+        else {
+            return (false, &quot;Password different&quot;)
+        }
+    }
+</code></pre>
+<p>这几个例子基本都是把事件序列进行组装然后『外包』给其他对象去处理。</p>
+<h3 id="bindvalidationresulttoui">bindValidationResultToUI</h3>
+<p>检查也检查好了，接下来的就是更新 UI 了，用户名非法、两次密码不一致，这些都需要通过刷新 UI 告知用户。也就是说，需要把前面定义的『事件流』和『用户界面』绑定起来。看下这个绑定的方法：</p>
+<pre><code class="language-swift">    func bindValidationResultToUI(source: Observable&lt;ValidationResult&gt;,
+        validationErrorLabel: UILabel) {
+        source
+            .subscribeNext { v in
+                let validationColor: UIColor
+                
+                if let valid = v.valid {
+                    validationColor = valid ? okColor : errorColor
+                }
+                else {
+                   validationColor = UIColor.grayColor()
+                }
+                
+                validationErrorLabel.textColor = validationColor
+                validationErrorLabel.text = v.message ?? &quot;&quot;
+            }
+            .addDisposableTo(disposeBag)
+    }
+</code></pre>
+<p>在这里出现了 <code>addDisposableTo(disposeBag)</code> ，在此需要解释一下 <a href="https://github.com/ReactiveX/RxSwift/blob/master/Documentation/GettingStarted.md#disposing"><code>disposing</code></a>  的相关概念。</p>
+<p>一个事件流的终结除了前面了解的各种事件之外，还有一种方法，就是 <code>dispose</code> ，释放掉所有的资源。比如这个例子：</p>
+<pre><code class="language-swift">    let subscription = interval(0.3, scheduler)
+        .subscribe { (e: Event&lt;Int64&gt;) in
+            println(e)
+        }
+
+    NSThread.sleepForTimeInterval(2)
+
+    subscription.dispose()
+
+    ----- Dispose Sample -----
+    0
+    1
+    2
+    3
+    4
+    5
+</code></pre>
+<p>然而 <code>dispose</code> 方法是不推荐使用的，推荐使用更好的解决方案， <code>DisposeBag</code> 就是一个。<code>addDisposableTo(disposeBag)</code> 有点像是 ARC ，先把分配的资源统一丢到袋子里 (有点像是 <code>autoreleasepool</code>) ，然后当 <code>disposeBag</code> 销毁的时候就一起销毁这些资源。在代码里可以看到，只要有 <code>subscribe</code> 的基本在最后都会兜上一个 <code>.addDisposableTo(disposeBag)</code> 用来处理资源自动销毁的问题。</p>
+<h3 id="signupenabled">signupEnabled</h3>
+<p>检查完毕之后，如果所有条件都符合，那就需要把 <code>Signup</code> 按钮高亮，高亮的逻辑是把多个数据流合并在了一起：</p>
+<pre><code class="language-swift">   let signupEnabled = combineLatest(
+        usernameValidation,
+        passwordValidation,
+        repeatPasswordValidation,
+        signingProcess
+    ) { un, p, pr, signingState in
+        return (un.valid ?? false) &amp;&amp; (p.valid ?? false) &amp;&amp; (pr.valid ?? false) &amp;&amp; signingState != SignupState.SigningUp
+    }
+</code></pre>
+<p>在基本的流都构建完毕的情况下，各种需求更多的是对流的组合拼装。比如这里就再次用到了 <code>usernameValidation</code> 这个流，还好前面有 <a href="http://blog.callmewhy.com/2015/09/23/rxswift-getting-started-1/#replay"><code>shareReplay</code></a> 罩着，我们想复用多少次都没问题。</p>
+<h3 id="signingprocess">signingProcess</h3>
+<p>在点击注册按钮之后，就是具体的注册流程了，注册流程的代码是这样的：</p>
+<pre><code class="language-swift">    let signingProcess = combineLatest(username, password) { ($0, $1) }
+        .sampleLatest(signupSampler)
+        .map { (username, password) in
+            return API.signup(username, password: password)
+        }
+        .switchLatest()
+        .startWith(SignupState.InitialState)
+        .shareReplay(1)
+</code></pre>
+<p>这里有个 <code>sampleLatest</code> ，在了解它之前先要了解什么是 <code>sample</code> 。</p>
+<h4 id="sample">sample</h4>
+<p><code>sample</code> 就是一次『采样』，当收到采样事件的时候，就会从事件队列中取出一个事件作为『样本』，并发送到事件流里。如果下一次又要采样了，就会从两次采样之间的事件队列中选择最后一个事件，如果两次采集之间没有新的事件就不会进行任何操作。</p>
+<p>可以看下这个例子帮助理解：</p>
+<pre><code class="language-swift">    let s = PublishSubject&lt;Int&gt;()
+    let o = PublishSubject&lt;String&gt;()
+    
+    let subscription = s
+        .sample(o)
+        .subscribe { event in
+            print(event)
+    }
+    
+    s.on(.Next(1))
+    o.on(.Next(&quot;A&quot;))
+    s.on(.Next(2))
+    s.on(.Next(3))
+    o.on(.Next(&quot;B&quot;))
+    o.on(.Next(&quot;C&quot;))
+
+    --- sample example ---
+    Next(1)
+    Next(3)
+</code></pre>
+<p><code>sampleLatest</code> 就是，即使两次采样期间没有新的事件也没关系，取整个队列的最后一个事件作为输出。还是上面那个例子：</p>
+<pre><code class="language-swift">    let s = PublishSubject&lt;Int&gt;()
+    let o = PublishSubject&lt;String&gt;()
+    
+    let subscription = s
+        .sampleLatest(o)
+        .subscribe { event in
+            print(event)
+    }
+    
+    s.on(.Next(1))
+    o.on(.Next(&quot;1&quot;))
+    s.on(.Next(2))
+    s.on(.Next(3))
+    o.on(.Next(&quot;2&quot;))
+    o.on(.Next(&quot;3&quot;))
+
+    --- sample example ---
+    Next(1)
+    Next(3)
+    Next(3)
+</code></pre>
+<p>所以上面的注册流程代码也就可以理解了：</p>
+<ul>
+<li>先把 username 和 password 绑起来</li>
+<li>将注册按钮的点击事件作为一个触发点，每次点击都会获取最新的账号密码走下面的流程</li>
+<li>调用 <code>API.signup</code> 进行注册</li>
+<li>将 <code>map</code> 之后的二维队列拍平，切换到最新的队列上</li>
+<li>将状态置为初始状态</li>
+<li>通过 <code>shareReplay</code> 避免重复订阅导致的反复执行的问题</li>
+</ul>
+<h4 id="signup">signup</h4>
+<p>项目里的注册功能只是一个 <code>mock</code> 而已，并没有真的访问 API ：</p>
+<pre><code class="language-swift">    func signup(username: String, password: String) -&gt; Observable&lt;SignupState&gt; {
+        // this is also just a mock
+        let signupResult = SignupState.SignedUp(signedUp: arc4random() % 5 == 0 ? false : true)
+        return [just(signupResult), never()]
+            .concat()
+            .throttle(2, MainScheduler.sharedInstance)
+            .startWith(SignupState.SigningUp)
+    }
+</code></pre>
+<p>在这里可以看到 <code>never()</code> 的正确打开方式：用于无限等待。  <code>concat</code> 将上面两个序列首尾拼接起来，然后 <code>throttle</code> 等价于 <a href="http://rxmarbles.com/#debounce"><code>debounce</code></a> ：如果两个事件的时间间隔小于某个特定值，就会忽视掉前面一个。通过 <code>never</code> + <code>throttle</code> 伪造了一种等待加载2秒然后返回注册结果的错觉。</p>
+<h4 id="disposebag">disposeBag</h4>
+<p>定义了事件流之后，我们就可以通过 <code>subscribeNext</code> 来刷新 UI 了：</p>
+<pre><code class="language-swift">    signingProcess
+        .subscribeNext { [unowned self] signingResult in
+            switch signingResult {
+            case .SigningUp:
+                self.signingUpOulet.hidden = false
+            case .SignedUp(let signed):
+                self.signingUpOulet.hidden = true
+                
+                let alertView: UIAlertView
+                
+                if signed {
+                    alertView = UIAlertView(title: &quot;GitHub&quot;, message: &quot;Mock signed up to GitHub&quot;, delegate: nil, cancelButtonTitle: &quot;OK&quot;)
+                }
+                else {
+                    alertView = UIAlertView(title: &quot;GitHub&quot;, message: &quot;Mock signed up failed&quot;, delegate: nil, cancelButtonTitle: &quot;OK&quot;)
+                }
+                
+                alertView.show()
+            default:
+                self.signingUpOulet.hidden = true
+            }
+        }
+        .addDisposableTo(disposeBag)
+</code></pre>
+<p>注意，每一次 <code>subscribe</code> 都要及时回收资源，在示例代码中是都通过 <code>addDisposableTo(disposeBag)</code> 统一处理了。在 <code>disposeBag</code> 重新赋值的时候就会自动清理资源。</p>
+<p>项目中一共有三个地方调用了 <code>disposeBag = DisposeBag()</code> ：</p>
+<ul>
+<li>定义变量的时候：</li>
+</ul>
+<pre><code class="language-swift">    var disposeBag = DisposeBag()
+</code></pre>
+<ul>
+<li><code>viewDidLoad</code> 里：</li>
+</ul>
+<pre><code class="language-swift">    override func viewDidLoad() {
+        super.viewDidLoad()
+        self.disposeBag = DisposeBag()
+        ...
+    }
+</code></pre>
+<ul>
+<li><code>willMoveToParentViewController</code> 里：</li>
+</ul>
+<pre><code class="language-swift">    // This is one of the reasons why it's a good idea for disposal to be detached from allocations.
+    // If resources weren't disposed before view controller is being deallocated, signup alert view
+    // could be presented on top of wrong screen or crash your app if it was being presented while
+    // navigation stack is popping.
+    // This will work well with UINavigationController, but has an assumption that view controller will
+    // never be readded as a child view controller.
+    // It it was readded UI wouldn't be bound anymore.
+    override func willMoveToParentViewController(parent: UIViewController?) {
+        if let parent = parent {
+            assert(parent.isKindOfClass(UINavigationController), &quot;Please read comments&quot;)
+        }
+        else {
+            self.disposeBag = DisposeBag()
+        }
+    }
+</code></pre>
+<p>在 <code>UINavigationController</code> 中，这样的代码没有问题，但是当把这个 <code>view controller</code> 作为 <code>child view controller</code> 添加到其他界面的时候，会直接走到断言处。原因是在 <code>child view controller</code> 中，会先调用 <code>viewDidLoad</code> 再调用 <code>willMoveToParentViewController</code> ，好不容易绑定好的界面和事件流，结果直接 <code>self.disposeBag = DisposeBag()</code> 就给解绑了，自然出了问题。</p>
+<h2 id="demo2-wiki">Demo2: <a href="https://github.com/ReactiveX/RxSwift/tree/master/RxExample/RxExample/Examples/WikipediaImageSearch">Wiki</a></h2>
+<p>为什么在第一篇开头我就说：我又要挖坑了？因为我预见到。。。这个系列可能还没来得及写完就出其他事情了=。=</p>
+<p>果然。</p>
+<p>接下来专心前端和推荐算法了。有缘我们坑里再见。。。</p>
+<h2 id="next">Next</h2>
+<p>各种异步各种回调的好处是整个应用行云流水让人感觉十分舒适，坏处是和 RAC 一样断点调试基本就是噩梦：</p>
+<figure data-type="image" tabindex="1"><img src="http://ww2.sinaimg.cn/large/61d238c7gw1ewdy2ss0l9j21kw0xdtlw.jpg" alt="" loading="lazy"></figure>
+<p>参考文献：</p>
+<ul>
+<li><a href="http://reactivex.io/documentation/operators/replay.html">replay</a></li>
+<li><a href="https://github.com/ReactiveX/RxSwift/blob/master/Documentation/GettingStarted.md">Getting Started</a></li>
+</ul>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#intro">Intro</a></li>
+<li><a href="#demo1-github-signup">Demo1: GitHub Signup</a>
+<ul>
+<li><a href="#username">username</a>
+<ul>
+<li><a href="#rx_text">rx_text</a></li>
+<li><a href="#validate">validate</a></li>
+<li><a href="#switch">switch</a></li>
+<li><a href="#replay">replay</a></li>
+<li><a href="#usernameavailable">usernameAvailable</a></li>
+</ul>
+</li>
+<li><a href="#password">password</a></li>
+<li><a href="#bindvalidationresulttoui">bindValidationResultToUI</a></li>
+<li><a href="#signupenabled">signupEnabled</a></li>
+<li><a href="#signingprocess">signingProcess</a>
+<ul>
+<li><a href="#sample">sample</a></li>
+<li><a href="#signup">signup</a></li>
+<li><a href="#disposebag">disposeBag</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#demo2-wiki">Demo2: Wiki</a></li>
+<li><a href="#next">Next</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://blog.callmewhy.com/post/rxswift-getting-started-0/">
+              <h3 class="post-title">
+                RxSwift 入坑手册 Part0 - 基础概念
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+
+          
+            <link rel="stylesheet" href="https://unpkg.com/disqusjs@1.1/dist/disqusjs.css">
+<script src="https://unpkg.com/disqusjs@1.1/dist/disqus.js"></script>
+
+<div id="disqus_thread"></div>
+
+<script>
+
+var options = {
+  shortname: 'callmewhy',
+  apikey: '',
+}
+if ('') {
+  options.api = ''
+}
+var dsqjs = new DisqusJS(options)
+
+</script>
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | 
+  <a class="rss" href="https://blog.callmewhy.com/atom.xml" target="_blank">RSS</a>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+
+  let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+  // This should probably be throttled.
+  // Especially because it triggers during smooth scrolling.
+  // https://lodash.com/docs/4.17.10#throttle
+  // You could do like...
+  // window.addEventListener("scroll", () => {
+  //    _.throttle(doThatStuff, 100);
+  // });
+  // Only not doing it here to keep this Pen dependency-free.
+
+  window.addEventListener("scroll", event => {
+    let fromTop = window.scrollY;
+
+    mainNavLinks.forEach((link, index) => {
+      let section = document.getElementById(decodeURI(link.hash).substring(1));
+      let nextSection = null
+      if (mainNavLinks[index + 1]) {
+        nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+      }
+      if (section.offsetTop <= fromTop) {
+        if (nextSection) {
+          if (nextSection.offsetTop > fromTop) {
+            link.classList.add("current");
+          } else {
+            link.classList.remove("current");    
+          }
+        } else {
+          link.classList.add("current");
+        }
+      } else {
+        link.classList.remove("current");
+      }
+    });
+  });
+
+</script>
+
+      </div>
+    </div>
+  </body>
+</html>
